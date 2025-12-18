@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교사 대시보드 - ExamOnline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --primary-light: #34D399;
+            --bg-light: #F0FDF4;
+            --surface: #FFFFFF;
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --border: #E5E7EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Poppins', sans-serif;
+            background: var(--bg-light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            padding: 2rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        .user-profile {
+            margin-top: 3rem;
+            padding: 1.25rem;
+            background: var(--bg-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .user-info h4 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .user-info p {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 2rem 3rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .header-left h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--primary);
+            opacity: 0.05;
+            border-radius: 50%;
+            transform: translate(30%, -30%);
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .stat-icon svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        .stat-change {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            color: var(--error);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .btn-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+        }
+
+        .btn-link:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Exam Results Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--bg-light);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9375rem;
+        }
+
+        tbody tr {
+            transition: background 0.3s;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        .exam-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .exam-subject {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success);
+        }
+
+        .badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge.primary {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+        }
+
+        .score-cell {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .score-good {
+            color: var(--success);
+        }
+
+        .score-average {
+            color: var(--warning);
+        }
+
+        .score-poor {
+            color: var(--error);
+        }
+
+        /* Recent Activity */
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .activity-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .activity-icon.success {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .activity-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .activity-icon.primary {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+        }
+
+        .activity-desc {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Distribution Chart */
+        .chart-container {
+            margin-top: 1.5rem;
+        }
+
+        .chart-item {
+            margin-bottom: 1.25rem;
+        }
+
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .chart-label-text {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .chart-label-value {
+            color: var(--text-secondary);
+        }
+
+        .chart-bar-bg {
+            height: 32px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 0.75rem;
+            font-weight: 700;
+            font-size: 0.8125rem;
+            color: white;
+            transition: width 0.5s ease;
+        }
+
+        .chart-bar-fill.excellent {
+            background: linear-gradient(90deg, #059669, #10B981);
+        }
+
+        .chart-bar-fill.good {
+            background: linear-gradient(90deg, #10B981, #34D399);
+        }
+
+        .chart-bar-fill.average {
+            background: linear-gradient(90deg, #F59E0B, #FCD34D);
+        }
+
+        .chart-bar-fill.poor {
+            background: linear-gradient(90deg, #DC2626, #EF4444);
+        }
+
+        @media (max-width: 1280px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">E</div>
+                ExamOnline
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i data-lucide="layout-dashboard" class="nav-icon"></i>
+                        대시보드
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i data-lucide="file-text" class="nav-icon"></i>
+                        문제 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i data-lucide="files" class="nav-icon"></i>
+                        시험지 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i data-lucide="clipboard-check" class="nav-icon"></i>
+                        시험 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i data-lucide="users" class="nav-icon"></i>
+                        학생 관리
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i data-lucide="trending-up" class="nav-icon"></i>
+                        통계 분석
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i data-lucide="settings" class="nav-icon"></i>
+                        설정
+                    </a>
+                </li>
+            </ul>
+
+            <div class="user-profile">
+                <div class="user-avatar">박</div>
+                <div class="user-info">
+                    <h4>박교수</h4>
+                    <p>컴퓨터공학과</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <div class="header-left">
+                    <h1>환영합니다, 박교수님</h1>
+                    <p>현재 3개의 시험이 진행 중이며, 새로운 알림이 5개 있습니다.</p>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-outline">
+                        <i data-lucide="plus" style="width: 18px; height: 18px;"></i>
+                        문제 추가
+                    </button>
+                    <button class="btn btn-primary">
+                        <i data-lucide="file-plus" style="width: 18px; height: 18px;"></i>
+                        시험 생성
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i data-lucide="file-text"></i>
+                    </div>
+                    <div class="stat-value">245</div>
+                    <div class="stat-label">생성한 문제</div>
+                    <div class="stat-change positive">
+                        ↑ 12개 증가
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i data-lucide="files"></i>
+                    </div>
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">시험지 수</div>
+                    <div class="stat-change positive">
+                        ↑ 3개 추가
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i data-lucide="users"></i>
+                    </div>
+                    <div class="stat-value">1,234</div>
+                    <div class="stat-label">총 응시자</div>
+                    <div class="stat-change positive">
+                        ↑ 156명 증가
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i data-lucide="award"></i>
+                    </div>
+                    <div class="stat-value">82.5</div>
+                    <div class="stat-label">평균 점수</div>
+                    <div class="stat-change negative">
+                        ↓ 1.2점 감소
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Recent Exam Results -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">최근 시험 결과</h2>
+                        <a href="#" class="btn-link">전체 보기 →</a>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>시험명</th>
+                                    <th>응시자</th>
+                                    <th>평균 점수</th>
+                                    <th>합격률</th>
+                                    <th>상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="exam-name">자료구조 중간고사</div>
+                                        <div class="exam-subject">자료구조 및 알고리즘</div>
+                                    </td>
+                                    <td>87명</td>
+                                    <td class="score-cell score-good">85.2점</td>
+                                    <td>
+                                        <span class="badge success">92%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge primary">진행 중</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="exam-name">데이터베이스 기말고사</div>
+                                        <div class="exam-subject">데이터베이스 설계</div>
+                                    </td>
+                                    <td>124명</td>
+                                    <td class="score-cell score-average">78.5점</td>
+                                    <td>
+                                        <span class="badge success">88%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge success">완료</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="exam-name">알고리즘 실습 평가</div>
+                                        <div class="exam-subject">고급 알고리즘</div>
+                                    </td>
+                                    <td>65명</td>
+                                    <td class="score-cell score-good">88.7점</td>
+                                    <td>
+                                        <span class="badge success">95%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge success">완료</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="exam-name">운영체제 중간고사</div>
+                                        <div class="exam-subject">운영체제</div>
+                                    </td>
+                                    <td>92명</td>
+                                    <td class="score-cell score-average">72.3점</td>
+                                    <td>
+                                        <span class="badge warning">75%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge success">완료</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="exam-name">네트워크 과제 평가</div>
+                                        <div class="exam-subject">컴퓨터 네트워크</div>
+                                    </td>
+                                    <td>78명</td>
+                                    <td class="score-cell score-good">90.1점</td>
+                                    <td>
+                                        <span class="badge success">97%</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge warning">예정</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sidebar Content -->
+                <div>
+                    <!-- Recent Activity -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <div class="card-header">
+                            <h2 class="card-title">최근 활동</h2>
+                        </div>
+
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon success">
+                                    <i data-lucide="check-circle" style="color: #22C55E;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">자동 채점 완료</div>
+                                    <div class="activity-desc">자료구조 중간고사 87명 채점 완료</div>
+                                    <div class="activity-time">5분 전</div>
+                                </div>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-icon primary">
+                                    <i data-lucide="file-plus" style="color: #10B981;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">새 문제 추가</div>
+                                    <div class="activity-desc">데이터베이스 설계 문제 12개 추가</div>
+                                    <div class="activity-time">1시간 전</div>
+                                </div>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-icon warning">
+                                    <i data-lucide="user-plus" style="color: #F59E0B;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">학생 등록</div>
+                                    <div class="activity-desc">새로운 학생 15명 등록됨</div>
+                                    <div class="activity-time">3시간 전</div>
+                                </div>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-icon success">
+                                    <i data-lucide="clipboard-check" style="color: #22C55E;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">시험 종료</div>
+                                    <div class="activity-desc">알고리즘 실습 평가 종료됨</div>
+                                    <div class="activity-time">5시간 전</div>
+                                </div>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-icon primary">
+                                    <i data-lucide="file-text" style="color: #10B981;"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">시험지 생성</div>
+                                    <div class="activity-desc">운영체제 기말고사 시험지 완성</div>
+                                    <div class="activity-time">1일 전</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Score Distribution -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">점수 분포</h2>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-item">
+                                <div class="chart-label">
+                                    <span class="chart-label-text">90-100점 (우수)</span>
+                                    <span class="chart-label-value">245명</span>
+                                </div>
+                                <div class="chart-bar-bg">
+                                    <div class="chart-bar-fill excellent" style="width: 85%;">
+                                        35%
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chart-item">
+                                <div class="chart-label">
+                                    <span class="chart-label-text">80-89점 (양호)</span>
+                                    <span class="chart-label-value">312명</span>
+                                </div>
+                                <div class="chart-bar-bg">
+                                    <div class="chart-bar-fill good" style="width: 100%;">
+                                        45%
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chart-item">
+                                <div class="chart-label">
+                                    <span class="chart-label-text">70-79점 (보통)</span>
+                                    <span class="chart-label-value">98명</span>
+                                </div>
+                                <div class="chart-bar-bg">
+                                    <div class="chart-bar-fill average" style="width: 42%;">
+                                        14%
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chart-item">
+                                <div class="chart-label">
+                                    <span class="chart-label-text">60점 미만 (미흡)</span>
+                                    <span class="chart-label-value">42명</span>
+                                </div>
+                                <div class="chart-bar-bg">
+                                    <div class="chart-bar-fill poor" style="width: 18%;">
+                                        6%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
