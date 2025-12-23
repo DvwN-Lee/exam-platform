@@ -9,7 +9,7 @@ from testpaper.api.views import TestPaperViewSet
 from testpaper.api.scores_views import ScoresViewSet
 
 router = DefaultRouter()
-router.register(r'papers', TestPaperViewSet, basename='paper')
+router.register(r'testpapers', TestPaperViewSet, basename='testpaper')
 router.register(r'scores', ScoresViewSet, basename='score')
 
 urlpatterns = [

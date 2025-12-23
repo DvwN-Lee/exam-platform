@@ -342,8 +342,9 @@ class TestSubjectManagement:
         response = api_client.get('/api/v1/subjects/')
 
         assert response.status_code == 200
-        assert len(response.data['data']) == 1
-        assert response.data['data'][0]['subject_name'] == 'Test Subject'
+        # StandardResultsSetPagination 사용 시 'results' 키 사용
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['subject_name'] == 'Test Subject'
 
     def test_create_subject_as_teacher(self, api_client, teacher_user):
         """교사가 과목 생성"""

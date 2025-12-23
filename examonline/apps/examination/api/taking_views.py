@@ -2,12 +2,15 @@
 Exam Taking API Views.
 학생의 시험 응시 관련 API.
 """
+import logging
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestScores, TestPaperTestQ
@@ -18,7 +21,11 @@ from .serializers import (
     AnswerSubmissionSerializer,
     ExamStatusSerializer,
     SaveDraftSerializer,
+    SaveAnswerSerializer,
     ExamQuestionSerializer,
+    StartExamResponseSerializer,
+    ExamSubmissionSerializer,
+    ExamResultSerializer,
 )
 
 
@@ -37,6 +44,76 @@ class ExamTakingViewSet(viewsets.ViewSet):
             return user.studentsinfo
         except Exception:
             return None
+
+    @action(detail=False, methods=['get'], url_path='available')
+    def available_exams(self, request):
+        """
+        응시 가능한 시험 목록 조회.
+        GET /api/v1/exams/available/
+        """
+        student_info = self.get_student_info(request.user)
+        if not student_info:
+            return Response({'detail': '학생 정보를 찾을 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 학생이 등록된 시험 중 아직 제출하지 않은 시험 조회
+        now = timezone.now()
+        student_exams = ExamStudentsInfo.objects.filter(
+            student=student_info
+        ).select_related('exam').values_list('exam_id', flat=True)
+
+        available_exams = ExaminationInfo.objects.filter(
+            id__in=student_exams,
+            start_time__lte=now,
+            end_time__gte=now
+        ).select_related('subject')
+
+        # 시험 목록 구성
+        exams_data = []
+        for exam in available_exams:
+            # 제출 여부 확인
+            test_score = TestScores.objects.filter(exam=exam, user=student_info).first()
+            is_submitted = test_score and test_score.is_submitted
+
+            if not is_submitted:
+                # 시험지 정보 조회
+                exam_paper = ExamPaperInfo.objects.filter(exam=exam).select_related('paper').first()
+                if exam_paper:
+                    exam_data = {
+                        'id': exam.id,
+                        'exam_name': exam.name,
+                        'testpaper': {
+                            'id': exam_paper.paper.id,
+                            'name': exam_paper.paper.name,
+                            'subject': {
+                                'id': exam.subject.id,
+                                'subject_name': exam.subject.subject_name
+                            },
+                            'question_count': exam_paper.paper.question_count,
+                            'create_user': {
+                                'id': exam.create_user.id,
+                                'nick_name': exam.create_user.nick_name
+                            },
+                            'questions': [],
+                            'created_at': exam_paper.paper.create_time.isoformat(),
+                            'updated_at': exam_paper.paper.edit_time.isoformat()
+                        },
+                        'start_time': exam.start_time.isoformat(),
+                        'end_time': exam.end_time.isoformat(),
+                        'create_user': {
+                            'id': exam.create_user.id,
+                            'nick_name': exam.create_user.nick_name
+                        },
+                        'created_at': exam.create_time.isoformat(),
+                        'updated_at': exam.create_time.isoformat()
+                    }
+                    exams_data.append(exam_data)
+
+        return Response({
+            'count': len(exams_data),
+            'next': None,
+            'previous': None,
+            'results': exams_data
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], url_path='info')
     def exam_info(self, request, pk=None):
@@ -160,14 +237,14 @@ class ExamTakingViewSet(viewsets.ViewSet):
                     detail_records={},
                 )
 
-        return Response(
-            {
-                'detail': '시험이 시작되었습니다.',
-                'start_time': test_score.start_time,
-                'end_time': exam.end_time,
-            },
-            status=status.HTTP_200_OK,
-        )
+        # Frontend 호환 응답 구조
+        response_data = {
+            'submission_id': test_score.id,
+            'exam': exam,
+            'started_at': test_score.start_time,
+        }
+        serializer = StartExamResponseSerializer(response_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):
@@ -199,9 +276,21 @@ class ExamTakingViewSet(viewsets.ViewSet):
 
         # 제한 시간 확인
         now = timezone.now()
+        is_auto_submitted = False
+
         if now > exam.end_time:
-            # 자동 제출 처리
-            pass
+            # 시간 초과 - 자동 제출 처리
+            is_auto_submitted = True
+            logger.info(f"[AUTO_SUBMIT] Time exceeded for exam {exam.id}, user {student_info.id}")
+
+            # 임시 저장된 답안이 있으면 사용, 없으면 빈 답안으로 처리
+            if not answers and test_score.detail_records:
+                # 임시 저장된 답안에서 answer 정보 추출
+                answers = [
+                    {'question_id': int(q_id), 'answer': record.get('answer', '')}
+                    for q_id, record in test_score.detail_records.items()
+                    if isinstance(record, dict)
+                ]
 
         # 자동 채점
         total_score = 0
@@ -252,13 +341,19 @@ class ExamTakingViewSet(viewsets.ViewSet):
             test_score.time_used = time_used
             test_score.save()
 
+        submit_type = 'AUTO_SUBMIT' if is_auto_submitted else 'SUBMIT'
+        logger.info(f"[{submit_type}] Saved TestScores ID: {test_score.id}, is_submitted: {test_score.is_submitted}, exam: {exam.id}, user: {student_info.id}")
+
+        detail_message = '시간 초과로 자동 제출되었습니다.' if is_auto_submitted else '답안이 제출되었습니다.'
+
         return Response(
             {
-                'detail': '답안이 제출되었습니다.',
+                'detail': detail_message,
                 'score': total_score,
                 'total_possible': test_score.test_paper.total_score,
                 'passed': total_score >= test_score.test_paper.passing_score,
                 'time_used': time_used,
+                'is_auto_submitted': is_auto_submitted,
             },
             status=status.HTTP_200_OK,
         )
@@ -345,3 +440,162 @@ class ExamTakingViewSet(viewsets.ViewSet):
         return Response(
             {'detail': '임시 저장되었습니다.', 'saved_at': timezone.now()}, status=status.HTTP_200_OK
         )
+
+    @action(detail=True, methods=['post'], url_path='save-answer')
+    def save_answer(self, request, pk=None):
+        """
+        단일 답안 저장 (Frontend 호환).
+        POST /api/v1/exams/{exam_id}/save-answer/
+        """
+        student_info = self.get_student_info(request.user)
+        if not student_info:
+            return Response({'detail': '학생 정보를 찾을 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            exam = ExaminationInfo.objects.get(id=pk)
+        except ExaminationInfo.DoesNotExist:
+            return Response({'detail': '시험을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = SaveAnswerSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        test_score = TestScores.objects.filter(exam=exam, user=student_info).first()
+        if not test_score or not test_score.start_time:
+            return Response({'detail': '시험을 시작하지 않았습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if test_score.is_submitted:
+            return Response({'detail': '이미 제출한 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 단일 답안을 detail_records에 추가/업데이트
+        question_id = str(serializer.validated_data['question_id'])
+        answer_data = {
+            'answer': serializer.validated_data.get('answer', ''),
+            'selected_options': serializer.validated_data.get('selected_options', []),
+        }
+
+        if not test_score.detail_records:
+            test_score.detail_records = {}
+
+        test_score.detail_records[question_id] = answer_data
+        test_score.save()
+
+        return Response({'detail': '답안이 저장되었습니다.'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='my')
+    def my_submissions(self, request):
+        """
+        사용자의 모든 제출 내역 조회.
+        GET /api/v1/submissions/my/
+        """
+        student_info = self.get_student_info(request.user)
+        if not student_info:
+            return Response({'detail': '학생 정보를 찾을 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 제출된 시험만 조회
+        submissions = TestScores.objects.filter(
+            user=student_info, is_submitted=True
+        ).select_related('exam__subject', 'exam__create_user', 'test_paper').order_by('-submit_time')
+
+        submissions_data = []
+        for submission in submissions:
+            # 답안 상세 정보 구성
+            answers = []
+            if submission.detail_records:
+                for q_id, record in submission.detail_records.items():
+                    try:
+                        question = TestQuestionInfo.objects.get(id=int(q_id))
+                        answers.append({
+                            'id': int(q_id),
+                            'question': question,
+                            'answer': record.get('answer', ''),
+                            'selected_options': record.get('selected_options', []),
+                            'is_correct': record.get('is_correct', False),
+                            'score': record.get('score', 0),
+                            'max_score': record.get('max_score', 0),
+                        })
+                    except TestQuestionInfo.DoesNotExist:
+                        continue
+
+            submission_data = {
+                'id': submission.id,
+                'exam': submission.exam,
+                'student': student_info,
+                'answers': answers,
+                'score': submission.test_score,
+                'total_score': submission.test_paper.total_score if submission.test_paper else 0,
+                'submitted_at': submission.submit_time,
+                'created_at': submission.create_time,
+            }
+            submissions_data.append(submission_data)
+
+        serializer = ExamSubmissionSerializer(submissions_data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'])
+    def result(self, request, pk=None):
+        """
+        시험 결과 조회.
+        GET /api/v1/exams/{exam_id}/result/
+        """
+        student_info = self.get_student_info(request.user)
+        if not student_info:
+            return Response({'detail': '학생 정보를 찾을 수 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            exam = ExaminationInfo.objects.get(id=pk)
+        except ExaminationInfo.DoesNotExist:
+            return Response({'detail': '시험을 찾을 수 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+        logger.info(f"[RESULT] Querying TestScores for exam: {exam.id}, user: {student_info.id}")
+        test_score = TestScores.objects.select_related('test_paper__subject').filter(exam=exam, user=student_info).first()
+        logger.info(f"[RESULT] Found test_score: {test_score.id if test_score else None}, is_submitted: {test_score.is_submitted if test_score else None}")
+
+        if not test_score or not test_score.is_submitted:
+            return Response({'detail': '제출된 시험이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 답안 상세 정보 구성
+        answers = []
+        if test_score.detail_records:
+            for q_id, record in test_score.detail_records.items():
+                try:
+                    question = TestQuestionInfo.objects.select_related('subject').prefetch_related('optioninfo_set').get(id=int(q_id))
+                    answers.append({
+                        'id': int(q_id),
+                        'question': question,
+                        'answer': record.get('answer', ''),
+                        'selected_options': record.get('selected_options', []),
+                        'is_correct': record.get('is_correct', False),
+                        'score': record.get('score', 0),
+                        'max_score': record.get('max_score', 0),
+                    })
+                except TestQuestionInfo.DoesNotExist:
+                    continue
+
+        submission_data = {
+            'id': test_score.id,
+            'exam': exam,
+            'test_paper': test_score.test_paper,
+            'student': student_info,
+            'answers': answers,
+            'score': test_score.test_score,
+            'total_score': test_score.test_paper.total_score if test_score.test_paper else 0,
+            'submitted_at': test_score.submit_time,
+            'created_at': test_score.create_time,
+        }
+
+        # 합격 여부 및 정답률 계산
+        pass_score = test_score.test_paper.passing_score if test_score.test_paper else 0
+        passed = test_score.test_score >= pass_score
+        total_questions = len(answers)
+        correct_answers = sum(1 for ans in answers if ans['is_correct'])
+        accuracy = (correct_answers / total_questions * 100) if total_questions > 0 else 0
+
+        result_data = {
+            'submission': submission_data,
+            'pass': passed,
+            'pass_score': pass_score,
+            'accuracy': accuracy,
+        }
+
+        serializer = ExamResultSerializer(result_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

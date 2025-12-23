@@ -46,9 +46,14 @@ class ExaminationViewSet(viewsets.ModelViewSet):
     ordering = ['-create_time']
 
     def get_queryset(self):
-        """QuerySet 최적화"""
+        """QuerySet 최적화 (N+1 쿼리 방지)"""
         user = self.request.user
-        base_qs = ExaminationInfo.objects.all().select_related('subject', 'create_user')
+        base_qs = ExaminationInfo.objects.all().select_related(
+            'subject', 'create_user'
+        ).prefetch_related(
+            'exampaperinfo_set__paper__subject',  # N+1 방지: 시험지 정보 미리 로드
+            'exampaperinfo_set__paper__create_user',
+        )
 
         # 학생: 자신이 등록된 시험만
         if user.user_type == 'student':
@@ -179,6 +184,41 @@ class ExaminationViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=True, methods=['post'])
+    def publish(self, request, pk=None):
+        """
+        시험 게시 (시험 중 상태로 변경).
+
+        시험을 시작하여 학생들이 응시할 수 있도록 합니다.
+        """
+        exam = self.get_object()
+
+        # 이미 시작된 경우
+        if exam.exam_state != '0':
+            return Response(
+                {'detail': '이미 시작되었거나 종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 시험지가 없는 경우 시작 불가
+        if not ExamPaperInfo.objects.filter(exam=exam).exists():
+            return Response(
+                {'detail': '시험지가 없어 시작할 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 등록된 학생이 없는 경우 시작 불가
+        if exam.student_num == 0:
+            return Response(
+                {'detail': '등록된 학생이 없어 시작할 수 없습니다.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 시험 시작 (시험 중 상태로 변경)
+        exam.exam_state = '1'
+        exam.save()
+
+        serializer = ExaminationDetailSerializer(exam)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         """시험 삭제"""

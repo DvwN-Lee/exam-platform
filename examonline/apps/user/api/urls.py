@@ -9,7 +9,9 @@ from user.api.views import (
     CustomTokenObtainPairView,
     CustomTokenRefreshView,
     PasswordChangeView,
+    StudentDashboardView,
     SubjectViewSet,
+    TeacherDashboardView,
     UserProfileView,
     UserRegistrationView,
 )
@@ -26,6 +28,10 @@ urlpatterns = [
     # User profile endpoints
     path('users/me/', UserProfileView.as_view(), name='user-profile'),
     path('users/me/change-password/', PasswordChangeView.as_view(), name='change-password'),
+
+    # Dashboard endpoints
+    path('dashboard/student/', StudentDashboardView.as_view(), name='student-dashboard'),
+    path('dashboard/teacher/', TeacherDashboardView.as_view(), name='teacher-dashboard'),
 
     # Subject endpoints
     path('', include(router.urls)),

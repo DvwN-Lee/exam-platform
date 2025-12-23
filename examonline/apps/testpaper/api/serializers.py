@@ -19,11 +19,11 @@ class PaperQuestionReadSerializer(serializers.ModelSerializer):
     문제 정보와 배점, 순서 포함.
     """
 
-    test_question = QuestionListSerializer(read_only=True)
+    question = QuestionListSerializer(source='test_question', read_only=True)
 
     class Meta:
         model = TestPaperTestQ
-        fields = ['id', 'test_question', 'score', 'order']
+        fields = ['id', 'question', 'score', 'order']
         read_only_fields = ['id']
 
 
@@ -47,7 +47,9 @@ class TestPaperListSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
     tp_degree_display = serializers.CharField(source='get_tp_degree_display', read_only=True)
 
     class Meta:
@@ -61,11 +63,20 @@ class TestPaperListSerializer(serializers.ModelSerializer):
             'total_score',
             'passing_score',
             'question_count',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'created_at',
+            'updated_at',
+            'creat_user',
         ]
-        read_only_fields = ['id', 'total_score', 'question_count', 'create_time', 'edit_time', 'create_user_name']
+        read_only_fields = ['id', 'total_score', 'question_count', 'created_at', 'updated_at', 'creat_user']
+
+    def get_creat_user(self, obj):
+        """Frontend 호환성을 위한 create_user 정보"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
 
 
 class TestPaperDetailSerializer(serializers.ModelSerializer):
@@ -75,7 +86,9 @@ class TestPaperDetailSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
     tp_degree_display = serializers.CharField(source='get_tp_degree_display', read_only=True)
     questions = PaperQuestionReadSerializer(source='testpapertestq_set', many=True, read_only=True)
 
@@ -90,20 +103,29 @@ class TestPaperDetailSerializer(serializers.ModelSerializer):
             'total_score',
             'passing_score',
             'question_count',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'created_at',
+            'updated_at',
+            'creat_user',
             'questions',
         ]
         read_only_fields = [
             'id',
             'total_score',
             'question_count',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'created_at',
+            'updated_at',
+            'creat_user',
             'questions',
         ]
+
+    def get_creat_user(self, obj):
+        """Return create_user as object with id and nick_name"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
 
 
 class TestPaperCreateSerializer(serializers.ModelSerializer):

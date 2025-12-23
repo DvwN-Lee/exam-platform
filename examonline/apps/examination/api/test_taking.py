@@ -175,7 +175,7 @@ class TestExamInfo:
         ExamStudentsInfo.objects.create(exam=ongoing_examination, student=student_info)
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.get(f'/api/v1/taking/{ongoing_examination.id}/info/')
+        response = api_client.get(f'/api/v1/exams/{ongoing_examination.id}/info/')
 
         assert response.status_code == 200
         assert response.data['exam_name'] == 'Ongoing Exam'
@@ -192,7 +192,7 @@ class TestExamInfo:
     def test_get_exam_info_not_enrolled_fails(self, api_client, student_user, ongoing_examination):
         """등록되지 않은 학생이 시험 정보 조회 실패"""
         api_client.force_authenticate(user=student_user)
-        response = api_client.get(f'/api/v1/taking/{ongoing_examination.id}/info/')
+        response = api_client.get(f'/api/v1/exams/{ongoing_examination.id}/info/')
 
         assert response.status_code == 403
         assert '등록되지 않았습니다' in response.data['detail']
@@ -200,7 +200,7 @@ class TestExamInfo:
     def test_get_exam_info_no_student_info(self, api_client, teacher_user, ongoing_examination):
         """학생 정보가 없는 사용자 조회 실패"""
         api_client.force_authenticate(user=teacher_user)
-        response = api_client.get(f'/api/v1/taking/{ongoing_examination.id}/info/')
+        response = api_client.get(f'/api/v1/exams/{ongoing_examination.id}/info/')
 
         assert response.status_code == 403
         assert '학생 정보를 찾을 수 없습니다' in response.data['detail']
@@ -208,7 +208,7 @@ class TestExamInfo:
     def test_get_exam_info_not_found(self, api_client, student_user):
         """존재하지 않는 시험 조회 실패"""
         api_client.force_authenticate(user=student_user)
-        response = api_client.get('/api/v1/taking/99999/info/')
+        response = api_client.get('/api/v1/exams/99999/info/')
 
         assert response.status_code == 404
 
@@ -223,12 +223,12 @@ class TestExamStart:
         ExamStudentsInfo.objects.create(exam=ongoing_examination, student=student_info)
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/start/')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/start/')
 
         assert response.status_code == 200
-        assert '시작되었습니다' in response.data['detail']
-        assert 'start_time' in response.data
-        assert 'end_time' in response.data
+        # StartExamResponseSerializer 응답 구조 확인
+        assert 'submission_id' in response.data
+        assert 'started_at' in response.data
 
         # TestScores 기록 확인
         test_score = TestScores.objects.filter(exam=ongoing_examination, user=student_info).first()
@@ -242,7 +242,7 @@ class TestExamStart:
         ExamStudentsInfo.objects.create(exam=future_examination, student=student_info)
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.post(f'/api/v1/taking/{future_examination.id}/start/')
+        response = api_client.post(f'/api/v1/exams/{future_examination.id}/start/')
 
         assert response.status_code == 400
         assert '시작 시간이 아닙니다' in response.data['detail']
@@ -253,7 +253,7 @@ class TestExamStart:
         ExamStudentsInfo.objects.create(exam=past_examination, student=student_info)
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.post(f'/api/v1/taking/{past_examination.id}/start/')
+        response = api_client.post(f'/api/v1/exams/{past_examination.id}/start/')
 
         assert response.status_code == 400
         assert '종료 시간이 지났습니다' in response.data['detail']
@@ -261,7 +261,7 @@ class TestExamStart:
     def test_start_exam_not_enrolled_fails(self, api_client, student_user, ongoing_examination):
         """등록되지 않은 학생의 시험 시작 실패"""
         api_client.force_authenticate(user=student_user)
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/start/')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/start/')
 
         assert response.status_code == 403
 
@@ -279,7 +279,7 @@ class TestExamStart:
         )
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/start/')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/start/')
 
         assert response.status_code == 200
         assert '이미 시작한 시험입니다' in response.data['detail']
@@ -299,7 +299,7 @@ class TestExamStart:
         )
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/start/')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/start/')
 
         assert response.status_code == 400
         assert '이미 제출한 시험입니다' in response.data['detail']
@@ -336,7 +336,7 @@ class TestExamSubmit:
             ]
         }
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/submit/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/submit/', data, format='json')
 
         assert response.status_code == 200
         assert response.data['score'] == 15  # 만점
@@ -376,7 +376,7 @@ class TestExamSubmit:
             ]
         }
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/submit/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/submit/', data, format='json')
 
         assert response.status_code == 200
         assert response.data['score'] == 0  # 0점
@@ -407,7 +407,7 @@ class TestExamSubmit:
             ]
         }
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/submit/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/submit/', data, format='json')
 
         assert response.status_code == 200
         assert response.data['score'] == 10  # 첫 문제만 정답
@@ -421,7 +421,7 @@ class TestExamSubmit:
         api_client.force_authenticate(user=student_user)
         data = {'answers': [{'question_id': 1, 'answer': '1'}]}
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/submit/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/submit/', data, format='json')
 
         assert response.status_code == 400
         assert '시작하지 않았습니다' in response.data['detail']
@@ -443,7 +443,7 @@ class TestExamSubmit:
         api_client.force_authenticate(user=student_user)
         data = {'answers': [{'question_id': 1, 'answer': '1'}]}
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/submit/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/submit/', data, format='json')
 
         assert response.status_code == 400
         assert '이미 제출한 시험입니다' in response.data['detail']
@@ -459,7 +459,7 @@ class TestExamStatus:
         ExamStudentsInfo.objects.create(exam=ongoing_examination, student=student_info)
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.get(f'/api/v1/taking/{ongoing_examination.id}/status/')
+        response = api_client.get(f'/api/v1/exams/{ongoing_examination.id}/status/')
 
         assert response.status_code == 200
         assert response.data['is_started'] is False
@@ -480,7 +480,7 @@ class TestExamStatus:
         )
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.get(f'/api/v1/taking/{ongoing_examination.id}/status/')
+        response = api_client.get(f'/api/v1/exams/{ongoing_examination.id}/status/')
 
         assert response.status_code == 200
         assert response.data['is_started'] is True
@@ -505,7 +505,7 @@ class TestExamStatus:
         )
 
         api_client.force_authenticate(user=student_user)
-        response = api_client.get(f'/api/v1/taking/{ongoing_examination.id}/status/')
+        response = api_client.get(f'/api/v1/exams/{ongoing_examination.id}/status/')
 
         assert response.status_code == 200
         assert response.data['is_submitted'] is True
@@ -532,7 +532,7 @@ class TestSaveDraft:
         api_client.force_authenticate(user=student_user)
         data = {'answers': {'1': {'answer': 'draft answer 1'}, '2': {'answer': 'draft answer 2'}}}
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/save-draft/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/save-draft/', data, format='json')
 
         assert response.status_code == 200
         assert '임시 저장되었습니다' in response.data['detail']
@@ -549,7 +549,7 @@ class TestSaveDraft:
         api_client.force_authenticate(user=student_user)
         data = {'answers': {'1': {'answer': 'draft'}}}
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/save-draft/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/save-draft/', data, format='json')
 
         assert response.status_code == 400
         assert '시작하지 않았습니다' in response.data['detail']
@@ -570,7 +570,7 @@ class TestSaveDraft:
         api_client.force_authenticate(user=student_user)
         data = {'answers': {'1': {'answer': 'draft'}}}
 
-        response = api_client.post(f'/api/v1/taking/{ongoing_examination.id}/save-draft/', data, format='json')
+        response = api_client.post(f'/api/v1/exams/{ongoing_examination.id}/save-draft/', data, format='json')
 
         assert response.status_code == 400
         assert '이미 제출한 시험입니다' in response.data['detail']

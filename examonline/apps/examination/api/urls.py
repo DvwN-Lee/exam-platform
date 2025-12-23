@@ -8,8 +8,9 @@ from examination.api.views import ExaminationViewSet
 from examination.api.taking_views import ExamTakingViewSet
 
 router = DefaultRouter()
-router.register(r'exams', ExaminationViewSet, basename='exam')
-router.register(r'taking', ExamTakingViewSet, basename='taking')
+router.register(r'examinations', ExaminationViewSet, basename='examination')
+router.register(r'exams', ExamTakingViewSet, basename='exam')
+router.register(r'submissions', ExamTakingViewSet, basename='submission')
 
 urlpatterns = [
     path('', include(router.urls)),

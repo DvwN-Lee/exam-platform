@@ -60,16 +60,21 @@ class ExaminationListSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
+    exam_name = serializers.CharField(source='name', read_only=True)
     exam_state_display = serializers.CharField(source='get_exam_state_display', read_only=True)
     exam_type_display = serializers.CharField(source='get_exam_type_display', read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    testpaper = serializers.SerializerMethodField()
+    is_public = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='create_time', read_only=True)
     duration = serializers.SerializerMethodField()
 
     class Meta:
         model = ExaminationInfo
         fields = [
             'id',
-            'name',
+            'exam_name',
             'subject',
             'start_time',
             'end_time',
@@ -80,14 +85,49 @@ class ExaminationListSerializer(serializers.ModelSerializer):
             'exam_state_display',
             'exam_type',
             'exam_type_display',
-            'create_user_name',
-            'create_time',
+            'creat_user',
+            'testpaper',
+            'is_public',
+            'created_at',
+            'updated_at',
         ]
 
     def get_duration(self, obj):
         """시험 시간 (분 단위)"""
         duration = obj.end_time - obj.start_time
         return int(duration.total_seconds() / 60)
+
+    def get_creat_user(self, obj):
+        """Frontend 호환성을 위한 create_user 정보"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
+
+    def get_testpaper(self, obj):
+        """첫 번째 연결된 시험지 정보 (Frontend 호환성)
+
+        Note: prefetch_related로 미리 로드된 데이터 사용 (N+1 방지)
+        """
+        # prefetch된 데이터 사용 (DB 쿼리 없음)
+        exam_papers = getattr(obj, '_prefetched_objects_cache', {}).get('exampaperinfo_set')
+        if exam_papers is None:
+            # prefetch가 안 된 경우 fallback (단일 조회 시)
+            exam_papers = obj.exampaperinfo_set.all()
+
+        for exam_paper in exam_papers:
+            if exam_paper.paper:
+                return {
+                    'id': exam_paper.paper.id,
+                    'name': exam_paper.paper.name,
+                }
+        return None
+
+    def get_is_public(self, obj):
+        """Frontend 호환성을 위한 공개 여부 (exam_state != '0'이면 공개)"""
+        return obj.exam_state != '0'
 
 
 class ExaminationDetailSerializer(serializers.ModelSerializer):
@@ -97,10 +137,14 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
+    exam_name = serializers.CharField(source='name', read_only=True)
     exam_state_display = serializers.CharField(source='get_exam_state_display', read_only=True)
     exam_type_display = serializers.CharField(source='get_exam_type_display', read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
-    papers = serializers.SerializerMethodField()
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='create_time', read_only=True)
+    testpaper = serializers.SerializerMethodField()
+    is_public = serializers.SerializerMethodField()
     enrolled_students_count = serializers.SerializerMethodField()
     duration = serializers.SerializerMethodField()
 
@@ -108,7 +152,7 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
         model = ExaminationInfo
         fields = [
             'id',
-            'name',
+            'exam_name',
             'subject',
             'start_time',
             'end_time',
@@ -119,16 +163,42 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
             'exam_state_display',
             'exam_type',
             'exam_type_display',
-            'create_user_name',
-            'create_time',
-            'papers',
+            'creat_user',
+            'created_at',
+            'updated_at',
+            'testpaper',
+            'is_public',
             'enrolled_students_count',
         ]
 
-    def get_papers(self, obj):
-        """시험에 포함된 시험지 목록"""
-        exam_papers = ExamPaperInfo.objects.filter(exam=obj).select_related('paper__subject')
-        return ExamPaperSerializer(exam_papers, many=True).data
+    def get_creat_user(self, obj):
+        """Return create_user as object with id and nick_name"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
+
+    def get_testpaper(self, obj):
+        """첫 번째 연결된 시험지 정보 (Frontend 호환성)"""
+        from examination.models import ExamPaperInfo
+        exam_paper = ExamPaperInfo.objects.filter(exam=obj).select_related('paper', 'paper__subject').first()
+        if exam_paper and exam_paper.paper:
+            return {
+                'id': exam_paper.paper.id,
+                'name': exam_paper.paper.name,
+                'subject': {
+                    'id': exam_paper.paper.subject.id,
+                    'subject_name': exam_paper.paper.subject.subject_name,
+                } if exam_paper.paper.subject else None,
+                'question_count': exam_paper.paper.question_count,
+            }
+        return None
+
+    def get_is_public(self, obj):
+        """Frontend 호환성을 위한 공개 여부"""
+        return obj.exam_state != '0'
 
     def get_enrolled_students_count(self, obj):
         """등록된 학생 수"""
@@ -418,3 +488,176 @@ class SaveDraftSerializer(serializers.Serializer):
         if not isinstance(value, dict):
             raise serializers.ValidationError('answers는 객체(object) 형식이어야 합니다.')
         return value
+
+
+class SaveAnswerSerializer(serializers.Serializer):
+    """
+    단일 답안 저장용 Serializer (Frontend 호환).
+    """
+
+    question_id = serializers.IntegerField()
+    answer = serializers.CharField(allow_blank=True, required=False)
+    selected_options = serializers.ListField(
+        child=serializers.IntegerField(), required=False, allow_empty=True
+    )
+
+
+class StartExamResponseSerializer(serializers.Serializer):
+    """
+    시험 시작 응답 Serializer (Frontend 호환).
+    """
+
+    submission_id = serializers.IntegerField()
+    examination = serializers.SerializerMethodField()
+    started_at = serializers.DateTimeField()
+
+    def get_examination(self, obj):
+        """Examination 객체 반환"""
+        from examination.models import ExaminationInfo
+
+        exam = obj.get('exam')
+        if not exam:
+            return None
+
+        return {
+            'id': exam.id,
+            'exam_name': exam.name,
+            'subject': {
+                'id': exam.subject.id,
+                'subject_name': exam.subject.subject_name,
+            } if exam.subject else None,
+            'start_time': exam.start_time.isoformat(),
+            'end_time': exam.end_time.isoformat(),
+            'create_user': {
+                'id': exam.create_user.id,
+                'nick_name': exam.create_user.nick_name,
+            } if exam.create_user else None,
+            'created_at': exam.create_time.isoformat(),
+            'updated_at': exam.create_time.isoformat(),
+        }
+
+
+class ExamAnswerDetailSerializer(serializers.Serializer):
+    """
+    답안 상세 정보 Serializer (Frontend 호환).
+    """
+
+    id = serializers.IntegerField()
+    question = serializers.SerializerMethodField()
+    answer = serializers.CharField()
+    selected_options = serializers.ListField(child=serializers.IntegerField())
+    is_correct = serializers.BooleanField()
+    score = serializers.FloatField()
+    max_score = serializers.FloatField()
+
+    def get_question(self, obj):
+        """Question 객체 반환"""
+        question = obj.get('question')
+        if not question:
+            return None
+
+        # Options 정보 포함
+        options_data = []
+        if hasattr(question, 'optioninfo_set'):
+            options = question.optioninfo_set.all()
+            options_data = [
+                {
+                    'id': opt.id,
+                    'option': opt.option,
+                    'is_right': opt.is_right,
+                }
+                for opt in options
+            ]
+
+        return {
+            'id': question.id,
+            'name': question.name,
+            'tq_type': question.tq_type,
+            'tq_degree': question.tq_degree,
+            'image': question.image.url if question.image else None,
+            'subject': {
+                'id': question.subject.id,
+                'subject_name': question.subject.subject_name,
+            } if question.subject else None,
+            'options': options_data,
+        }
+
+
+class ExamSubmissionSerializer(serializers.Serializer):
+    """
+    시험 제출 정보 Serializer (Frontend 호환).
+    """
+
+    id = serializers.IntegerField()
+    examination = serializers.SerializerMethodField()
+    student = serializers.SerializerMethodField()
+    answers = ExamAnswerDetailSerializer(many=True)
+    score = serializers.FloatField()
+    total_score = serializers.FloatField()
+    submitted_at = serializers.DateTimeField()
+    created_at = serializers.DateTimeField()
+
+    def get_examination(self, obj):
+        """Examination 객체 반환"""
+        exam = obj.get('exam')
+        if not exam:
+            return None
+
+        # TestPaper 정보 포함
+        test_paper = obj.get('test_paper') or (hasattr(obj, 'test_paper') and obj.test_paper)
+        testpaper_data = None
+        if test_paper:
+            testpaper_data = {
+                'id': test_paper.id,
+                'name': test_paper.name,
+                'subject': {
+                    'id': test_paper.subject.id,
+                    'subject_name': test_paper.subject.subject_name,
+                } if test_paper.subject else None,
+            }
+
+        return {
+            'id': exam.id,
+            'exam_name': exam.name,
+            'testpaper': testpaper_data,
+            'subject': {
+                'id': exam.subject.id,
+                'subject_name': exam.subject.subject_name,
+            } if exam.subject else None,
+            'start_time': exam.start_time.isoformat(),
+            'end_time': exam.end_time.isoformat(),
+            'create_user': {
+                'id': exam.create_user.id,
+                'nick_name': exam.create_user.nick_name,
+            } if exam.create_user else None,
+            'created_at': exam.create_time.isoformat(),
+            'updated_at': exam.create_time.isoformat(),
+        }
+
+    def get_student(self, obj):
+        """Student 정보 반환"""
+        student = obj.get('student')
+        if not student:
+            return None
+
+        return {
+            'id': student.id,
+            'nick_name': student.user.nick_name if student.user else None,
+        }
+
+
+class ExamResultSerializer(serializers.Serializer):
+    """
+    시험 결과 Serializer (Frontend 호환).
+    """
+
+    submission = ExamSubmissionSerializer()
+    pass_field = serializers.BooleanField(source='pass', write_only=False)
+    pass_score = serializers.FloatField()
+    accuracy = serializers.FloatField()
+
+    def to_representation(self, instance):
+        """pass 필드명으로 반환 (Frontend 호환)"""
+        representation = super().to_representation(instance)
+        representation['pass'] = representation.pop('pass_field')
+        return representation
