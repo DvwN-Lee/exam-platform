@@ -2,6 +2,7 @@
 Examination API Views.
 """
 from django.db import transaction
+from django.db.models import Prefetch
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -46,13 +47,21 @@ class ExaminationViewSet(viewsets.ModelViewSet):
     ordering = ['-create_time']
 
     def get_queryset(self):
-        """QuerySet 최적화 (N+1 쿼리 방지)"""
+        """QuerySet 최적화 (N+1 query 방지)
+
+        Prefetch + to_attr 사용으로 Django 내부 API 의존성 제거
+        """
         user = self.request.user
         base_qs = ExaminationInfo.objects.all().select_related(
             'subject', 'create_user'
         ).prefetch_related(
-            'exampaperinfo_set__paper__subject',  # N+1 방지: 시험지 정보 미리 로드
-            'exampaperinfo_set__paper__create_user',
+            Prefetch(
+                'exampaperinfo_set',
+                queryset=ExamPaperInfo.objects.select_related(
+                    'paper__subject', 'paper__create_user'
+                ),
+                to_attr='prefetched_exam_papers'
+            ),
         )
 
         # 학생: 자신이 등록된 시험만

@@ -109,10 +109,10 @@ class ExaminationListSerializer(serializers.ModelSerializer):
     def get_testpaper(self, obj):
         """첫 번째 연결된 시험지 정보 (Frontend 호환성)
 
-        Note: prefetch_related로 미리 로드된 데이터 사용 (N+1 방지)
+        Note: Prefetch + to_attr로 미리 load된 data 사용 (N+1 방지)
         """
-        # prefetch된 데이터 사용 (DB 쿼리 없음)
-        exam_papers = getattr(obj, '_prefetched_objects_cache', {}).get('exampaperinfo_set')
+        # to_attr로 지정된 attribute 사용 (추가 DB query 없음)
+        exam_papers = getattr(obj, 'prefetched_exam_papers', None)
         if exam_papers is None:
             # prefetch가 안 된 경우 fallback (단일 조회 시)
             exam_papers = obj.exampaperinfo_set.all()
