@@ -10,26 +10,50 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Question } from '@/types/question'
 
-const questionSchema = z.object({
-  name: z.string().min(1, '문제 제목을 입력해주세요'),
-  subject_id: z.number().min(1, '과목을 선택해주세요'),
-  score: z.number().min(1, '배점은 1점 이상이어야 합니다'),
-  tq_type: z.enum(['xz', 'pd', 'tk']),
-  tq_degree: z.enum(['jd', 'zd', 'kn']),
-  options: z
-    .array(
+const questionSchema = z
+  .object({
+    name: z.string().min(1, '문제 제목을 입력해주세요'),
+    subject_id: z.number().min(1, '과목을 선택해주세요'),
+    score: z.number().min(1, '배점은 1점 이상이어야 합니다'),
+    tq_type: z.enum(['xz', 'pd', 'tk']),
+    tq_degree: z.enum(['jd', 'zd', 'kn']),
+    options: z.array(
       z.object({
         id: z.number().optional(),
-        option: z.string().min(1, '선택지를 입력해주세요'),
+        option: z.string(),
         is_right: z.boolean(),
       })
-    )
-    .min(1, '최소 1개의 선택지가 필요합니다')
-    .refine(
-      (options) => options.some((opt) => opt.is_right),
-      '최소 1개의 정답이 필요합니다'
     ),
-})
+  })
+  .superRefine((data, ctx) => {
+    // 객관식(xz)인 경우에만 options validation 적용
+    if (data.tq_type === 'xz') {
+      if (data.options.length < 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '최소 1개의 선택지가 필요합니다',
+          path: ['options'],
+        })
+      }
+      // 각 옵션의 텍스트가 비어있지 않은지 검증
+      data.options.forEach((opt, index) => {
+        if (!opt.option || opt.option.trim().length === 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '선택지를 입력해주세요',
+            path: ['options', index, 'option'],
+          })
+        }
+      })
+      if (!data.options.some((opt) => opt.is_right)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '최소 1개의 정답이 필요합니다',
+          path: ['options'],
+        })
+      }
+    }
+  })
 
 type QuestionFormData = z.infer<typeof questionSchema>
 
@@ -110,10 +134,20 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
 
   const onSubmit = (data: QuestionFormData) => {
     setIsSubmitting(true)
+
+    // 주관식(pd)과 빈칸채우기(tk)는 빈 옵션 제거
+    const submitData = {
+      ...data,
+      options:
+        data.tq_type === 'xz'
+          ? data.options
+          : data.options.filter((opt) => opt.option && opt.option.trim().length > 0),
+    }
+
     if (questionId) {
-      updateMutation.mutate(data)
+      updateMutation.mutate(submitData)
     } else {
-      createMutation.mutate(data)
+      createMutation.mutate(submitData)
     }
   }
 

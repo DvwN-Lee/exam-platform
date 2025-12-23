@@ -18,7 +18,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
     }
 
     if (!isLoading && requireRole && user?.user_type !== requireRole) {
-      alert('\uc811\uadfc \uad8c\ud55c\uc774 \uc5c6\uc2b5\ub2c8\ub2e4.')
+      alert('접근 권한이 없습니다.')
       navigate({ to: '/' })
     }
   }, [isAuthenticated, isLoading, user, requireRole, navigate])
@@ -27,7 +27,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="text-lg">\ub85c\ub529 \uc911...</div>
+          <div className="text-lg">로딩 중...</div>
         </div>
       </div>
     )

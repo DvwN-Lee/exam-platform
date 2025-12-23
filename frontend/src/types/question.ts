@@ -32,6 +32,19 @@ export interface Question {
 }
 
 export interface QuestionListResponse {
+  data: Question[]
+  meta: {
+    count: number
+    page: number
+    page_size: number
+    total_pages: number
+    next: string | null
+    previous: string | null
+  }
+}
+
+// For backward compatibility
+export interface QuestionListResponseLegacy {
   count: number
   next: string | null
   previous: string | null

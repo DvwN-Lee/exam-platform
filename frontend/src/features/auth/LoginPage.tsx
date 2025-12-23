@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,17 +9,21 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { GraduationCap, User, BookOpen } from 'lucide-react'
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username\uc744 \uc785\ub825\ud574\uc8fc\uc138\uc694'),
-  password: z.string().min(1, 'Password\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694'),
+  username: z.string().min(1, '아이디를 입력해주세요'),
+  password: z.string().min(1, 'Password를 입력해주세요'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
+type UserRole = 'student' | 'teacher'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
+  const [selectedRole, setSelectedRole] = useState<UserRole>('student')
 
   const {
     register,
@@ -35,7 +40,7 @@ export function LoginPage() {
       navigate({ to: '/' })
     },
     onError: (error: any) => {
-      alert(error.response?.data?.detail || '\ub85c\uadf8\uc778\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.')
+      alert(error.response?.data?.detail || '로그인에 실패했습니다.')
     },
   })
 
@@ -44,61 +49,192 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">\ub85c\uadf8\uc778</h1>
-          <p className="text-muted-foreground">
-            \uc628\ub77c\uc778 \uc2dc\ud5d8 \uc2dc\uc2a4\ud15c\uc5d0 \uc624\uc2e0 \uac83\uc744 \ud658\uc601\ud569\ub2c8\ub2e4
-          </p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background to-[rgba(16,185,129,0.1)] px-4 py-12">
+      {/* Decorative circles */}
+      <div className="absolute -right-48 -top-48 size-[500px] rounded-full bg-primary opacity-5" />
+      <div className="absolute -bottom-36 -left-36 size-96 rounded-full bg-primary-light opacity-5" />
+
+      <div className="relative z-10 w-full max-w-[1000px] overflow-hidden rounded-[32px] bg-card shadow-2xl md:grid md:grid-cols-2">
+        {/* Login Form - Left Side */}
+        <div className="flex flex-col justify-center p-8 md:p-12">
+          {/* Logo */}
+          <div className="mb-10 flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light text-2xl font-bold text-white">
+              E
+            </div>
+            <div className="text-[1.75rem] font-bold text-primary">ExamOnline</div>
+          </div>
+
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="mb-2 text-3xl font-bold text-foreground">환영합니다</h1>
+            <p className="text-muted-foreground">계정에 로그인하여 시작하세요</p>
+          </div>
+
+          {/* Role Selector */}
+          <div className="mb-8 flex gap-4">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('student')}
+              className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
+                selectedRole === 'student'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-transparent bg-accent hover:border-primary-light'
+              }`}
+            >
+              <GraduationCap className="size-8 text-primary" />
+              <span className="text-[0.9375rem] font-semibold text-foreground">학생</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('teacher')}
+              className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
+                selectedRole === 'teacher'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-transparent bg-accent hover:border-primary-light'
+              }`}
+            >
+              <User className="size-8 text-primary" />
+              <span className="text-[0.9375rem] font-semibold text-foreground">교사</span>
+            </button>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-[0.9375rem] font-semibold">
+                아이디
+              </Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="아이디를 입력하세요"
+                className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                {...register('username')}
+              />
+              {errors.username && (
+                <p className="text-sm text-destructive">{errors.username.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-[0.9375rem] font-semibold">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password를 입력하세요"
+                className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                {...register('password')}
+              />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Checkbox id="remember" />
+                <label
+                  htmlFor="remember"
+                  className="cursor-pointer text-sm text-muted-foreground"
+                >
+                  로그인 유지
+                </label>
+              </div>
+              <a
+                href="#"
+                className="text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
+              >
+                비밀번호 찾기
+              </a>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loginMutation.isPending}
+              className="h-[3.375rem] w-full rounded-[12px] bg-primary text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-lg"
+            >
+              {loginMutation.isPending ? '로그인 중...' : '로그인'}
+            </Button>
+          </form>
+
+          {/* Divider */}
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-sm text-muted-foreground">또는</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Social Login */}
+          <div className="mb-6 flex gap-4">
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-[12px] border-2 border-border bg-card p-4 font-semibold transition-all hover:-translate-y-0.5 hover:border-primary">
+              <span className="text-base">G</span>
+              Google
+            </button>
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-[12px] border-2 border-border bg-card p-4 font-semibold transition-all hover:-translate-y-0.5 hover:border-primary">
+              <span className="text-base">K</span>
+              Kakao
+            </button>
+          </div>
+
+          {/* Sign up link */}
+          <div className="text-center text-[0.9375rem] text-muted-foreground">
+            계정이 없으신가요?{' '}
+            <button
+              onClick={() => navigate({ to: '/register' })}
+              className="font-semibold text-primary transition-colors hover:text-primary-dark hover:underline"
+            >
+              회원가입
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              type="text"
-              placeholder="Username\uc744 \uc785\ub825\ud558\uc138\uc694"
-              {...register('username')}
-            />
-            {errors.username && (
-              <p className="text-sm text-destructive">{errors.username.message}</p>
-            )}
+        {/* Illustration - Right Side */}
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-primary to-primary-dark p-12 text-white md:flex md:flex-col md:items-center md:justify-center">
+          {/* Decorative circles */}
+          <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white opacity-10" />
+          <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white opacity-5" />
+
+          {/* Illustration content */}
+          <div className="relative z-10 text-center">
+            <div className="mb-6 inline-block animate-float">
+              <BookOpen className="size-32 text-white" />
+            </div>
+            <h2 className="mb-4 text-[2rem] font-bold">스마트한 학습 관리</h2>
+            <p className="mb-8 text-lg opacity-90">
+              효과적인 평가와 성적 관리를 한 곳에서
+            </p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Password\ub97c \uc785\ub825\ud558\uc138\uc694"
-              {...register('password')}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loginMutation.isPending}
-          >
-            {loginMutation.isPending ? '\ub85c\uadf8\uc778 \uc911...' : '\ub85c\uadf8\uc778'}
-          </Button>
-        </form>
-
-        <div className="text-center text-sm">
-          <span className="text-muted-foreground">\uacc4\uc815\uc774 \uc5c6\uc73c\uc2e0\uac00\uc694? </span>
-          <button
-            onClick={() => navigate({ to: '/register' })}
-            className="text-primary hover:underline"
-          >
-            \ud68c\uc6d0\uac00\uc785
-          </button>
+          {/* Features list */}
+          <ul className="relative z-10 space-y-3">
+            <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+              실시간 자동 채점 시스템
+            </li>
+            <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+              상세한 성적 분석 리포트
+            </li>
+            <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+              맞춤형 학습 진도 관리
+            </li>
+            <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+              모바일 친화적 인터페이스
+            </li>
+          </ul>
         </div>
       </div>
+
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   )
 }

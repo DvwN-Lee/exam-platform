@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 const profileSchema = z.object({
-  email: z.string().email('\uc62c\ubc14\ub978 \uc774\uba54\uc77c \uc8fc\uc18c\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694'),
-  nick_name: z.string().min(2, '\ub2c9\ub124\uc784\uc740 2\uc790 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4'),
+  email: z.string().email('올바른 이메일 주소를 입력해주세요'),
+  nick_name: z.string().min(2, '닉네임은 2자 이상이어야 합니다'),
 })
 
 type ProfileForm = z.infer<typeof profileSchema>
@@ -43,10 +43,10 @@ export function ProfilePage() {
     onSuccess: (data) => {
       setUser(data)
       refetch()
-      alert('\ud504\ub85c\ud544\uc774 \uc5c5\ub370\uc774\ud2b8\ub418\uc5c8\uc2b5\ub2c8\ub2e4.')
+      alert('프로필이 업데이트되었습니다.')
     },
     onError: () => {
-      alert('\ud504\ub85c\ud544 \uc5c5\ub370\uc774\ud2b8\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.')
+      alert('프로필 업데이트에 실패했습니다.')
     },
   })
 
@@ -62,7 +62,7 @@ export function ProfilePage() {
   if (!profileData) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div>\ub85c\ub529 \uc911...</div>
+        <div>로딩 중...</div>
       </div>
     )
   }
@@ -71,25 +71,25 @@ export function ProfilePage() {
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">\ud504\ub85c\ud544</h1>
-          <p className="text-muted-foreground">\ub0b4 \uc815\ubcf4\ub97c \uad00\ub9ac\ud558\uc138\uc694</p>
+          <h1 className="text-3xl font-bold tracking-tight">프로필</h1>
+          <p className="text-muted-foreground">내 정보를 관리하세요</p>
         </div>
 
         <div className="rounded-lg border bg-card p-6 space-y-4">
           <div>
-            <Label className="text-muted-foreground">Username</Label>
+            <Label className="text-muted-foreground">아이디</Label>
             <div className="mt-1 text-lg font-medium">{profileData.username}</div>
           </div>
 
           <div>
-            <Label className="text-muted-foreground">\uc0ac\uc6a9\uc790 \uc720\ud615</Label>
+            <Label className="text-muted-foreground">사용자 유형</Label>
             <div className="mt-1 text-lg font-medium">
-              {profileData.user_type === 'student' ? '\ud559\uc0dd' : '\uad50\uc0ac'}
+              {profileData.user_type === 'student' ? '학생' : '교사'}
             </div>
           </div>
 
           <div>
-            <Label className="text-muted-foreground">\uac00\uc785\uc77c</Label>
+            <Label className="text-muted-foreground">가입일</Label>
             <div className="mt-1 text-lg">
               {new Date(profileData.created_at).toLocaleDateString('ko-KR')}
             </div>
@@ -106,7 +106,7 @@ export function ProfilePage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nick_name">\ub2c9\ub124\uc784</Label>
+            <Label htmlFor="nick_name">닉네임</Label>
             <Input id="nick_name" type="text" {...register('nick_name')} />
             {errors.nick_name && (
               <p className="text-sm text-destructive">{errors.nick_name.message}</p>
@@ -119,21 +119,21 @@ export function ProfilePage() {
               disabled={updateMutation.isPending}
               className="flex-1"
             >
-              {updateMutation.isPending ? '\uc800\uc7a5 \uc911...' : '\ud504\ub85c\ud544 \uc5c5\ub370\uc774\ud2b8'}
+              {updateMutation.isPending ? '저장 중...' : '프로필 업데이트'}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={() => navigate({ to: '/profile/change-password' })}
             >
-              \ube44\ubc00\ubc88\ud638 \ubcc0\uacbd
+              비밀번호 변경
             </Button>
           </div>
         </form>
 
         <div className="pt-6 border-t">
           <Button variant="destructive" onClick={handleLogout} className="w-full">
-            \ub85c\uadf8\uc544\uc6c3
+            로그아웃
           </Button>
         </div>
       </div>

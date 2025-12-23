@@ -10,13 +10,13 @@ import { Label } from '@/components/ui/label'
 
 const changePasswordSchema = z
   .object({
-    old_password: z.string().min(1, '\ud604\uc7ac Password\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694'),
-    new_password: z.string().min(8, '\uc0c8 Password\ub294 8\uc790 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4'),
-    new_password_confirm: z.string(),
+    old_password: z.string().min(1, '현재 Password를 입력해주세요'),
+    new_password: z.string().min(8, '새 Password는 8자 이상이어야 합니다'),
+    new_password2: z.string(),
   })
-  .refine((data) => data.new_password === data.new_password_confirm, {
-    message: '\uc0c8 Password\uac00 \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4',
-    path: ['new_password_confirm'],
+  .refine((data) => data.new_password === data.new_password2, {
+    message: '새 Password가 일치하지 않습니다',
+    path: ['new_password2'],
   })
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>
@@ -36,7 +36,7 @@ export function ChangePasswordPage() {
   const changePasswordMutation = useMutation({
     mutationFn: authApi.changePassword,
     onSuccess: () => {
-      alert('\ube44\ubc00\ubc88\ud638\uac00 \ubcc0\uacbd\ub418\uc5c8\uc2b5\ub2c8\ub2e4.')
+      alert('비밀번호가 변경되었습니다.')
       reset()
       navigate({ to: '/profile' })
     },
@@ -44,7 +44,7 @@ export function ChangePasswordPage() {
       const errorMessage =
         error.response?.data?.old_password?.[0] ||
         error.response?.data?.detail ||
-        '\ube44\ubc00\ubc88\ud638 \ubcc0\uacbd\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.'
+        '비밀번호 변경에 실패했습니다.'
       alert(errorMessage)
     },
   })
@@ -57,17 +57,17 @@ export function ChangePasswordPage() {
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="mx-auto max-w-md space-y-6">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">\ube44\ubc00\ubc88\ud638 \ubcc0\uacbd</h1>
-          <p className="text-muted-foreground">\uc0c8 \ube44\ubc00\ubc88\ud638\ub97c \uc124\uc815\ud574\uc8fc\uc138\uc694</p>
+          <h1 className="text-3xl font-bold tracking-tight">비밀번호 변경</h1>
+          <p className="text-muted-foreground">새 비밀번호를 설정해주세요</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="old_password">\ud604\uc7ac Password</Label>
+            <Label htmlFor="old_password">현재 Password</Label>
             <Input
               id="old_password"
               type="password"
-              placeholder="\ud604\uc7ac Password"
+              placeholder="현재 Password"
               {...register('old_password')}
             />
             {errors.old_password && (
@@ -78,11 +78,11 @@ export function ChangePasswordPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="new_password">\uc0c8 Password</Label>
+            <Label htmlFor="new_password">새 Password</Label>
             <Input
               id="new_password"
               type="password"
-              placeholder="8\uc790 \uc774\uc0c1"
+              placeholder="8자 이상"
               {...register('new_password')}
             />
             {errors.new_password && (
@@ -93,16 +93,16 @@ export function ChangePasswordPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="new_password_confirm">\uc0c8 Password \ud655\uc778</Label>
+            <Label htmlFor="new_password2">새 Password 확인</Label>
             <Input
-              id="new_password_confirm"
+              id="new_password2"
               type="password"
-              placeholder="\uc0c8 Password \uc7ac\uc785\ub825"
-              {...register('new_password_confirm')}
+              placeholder="새 Password 재입력"
+              {...register('new_password2')}
             />
-            {errors.new_password_confirm && (
+            {errors.new_password2 && (
               <p className="text-sm text-destructive">
-                {errors.new_password_confirm.message}
+                {errors.new_password2.message}
               </p>
             )}
           </div>
@@ -114,7 +114,7 @@ export function ChangePasswordPage() {
               className="flex-1"
               onClick={() => navigate({ to: '/profile' })}
             >
-              \ucde8\uc18c
+              취소
             </Button>
             <Button
               type="submit"
@@ -122,8 +122,8 @@ export function ChangePasswordPage() {
               disabled={changePasswordMutation.isPending}
             >
               {changePasswordMutation.isPending
-                ? '\ubcc0\uacbd \uc911...'
-                : '\ube44\ubc00\ubc88\ud638 \ubcc0\uacbd'}
+                ? '변경 중...'
+                : '비밀번호 변경'}
             </Button>
           </div>
         </form>

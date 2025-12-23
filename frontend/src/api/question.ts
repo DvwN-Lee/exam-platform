@@ -22,7 +22,7 @@ export const questionApi = {
     }
 
     const response = await apiClient.get<QuestionListResponse>(
-      `/api/v1/questions/?${params.toString()}`
+      `/questions?${params.toString()}`
     )
     return response.data
   },
@@ -40,7 +40,7 @@ export const questionApi = {
     }
 
     const response = await apiClient.get<QuestionListResponse>(
-      `/api/v1/questions/my/?${params.toString()}`
+      `/questions/my?${params.toString()}`
     )
     return response.data
   },
@@ -58,38 +58,38 @@ export const questionApi = {
     }
 
     const response = await apiClient.get<QuestionListResponse>(
-      `/api/v1/questions/shared/?${params.toString()}`
+      `/questions/shared?${params.toString()}`
     )
     return response.data
   },
 
   // 문제 상세 조회
   getQuestion: async (id: number): Promise<Question> => {
-    const response = await apiClient.get<Question>(`/api/v1/questions/${id}/`)
+    const response = await apiClient.get<Question>(`/questions/${id}`)
     return response.data
   },
 
   // 문제 생성
   createQuestion: async (data: CreateQuestionRequest): Promise<Question> => {
-    const response = await apiClient.post<Question>('/api/v1/questions/', data)
+    const response = await apiClient.post<Question>('/questions/', data)
     return response.data
   },
 
   // 문제 수정
   updateQuestion: async (id: number, data: UpdateQuestionRequest): Promise<Question> => {
-    const response = await apiClient.patch<Question>(`/api/v1/questions/${id}/`, data)
+    const response = await apiClient.patch<Question>(`/questions/${id}`, data)
     return response.data
   },
 
   // 문제 삭제
   deleteQuestion: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/v1/questions/${id}/`)
+    await apiClient.delete(`/questions/${id}`)
   },
 
   // 문제 공유 설정
   shareQuestion: async (id: number, isShare: boolean): Promise<{ status: string }> => {
     const response = await apiClient.post<{ status: string }>(
-      `/api/v1/questions/${id}/share/`,
+      `/questions/${id}/share`,
       { is_share: isShare }
     )
     return response.data
@@ -97,7 +97,7 @@ export const questionApi = {
 
   // 과목 목록
   getSubjects: async (): Promise<Subject[]> => {
-    const response = await apiClient.get<Subject[]>('/api/v1/subjects/')
-    return response.data
+    const response = await apiClient.get<{ results: Subject[] }>('/subjects/')
+    return response.data.results
   },
 }

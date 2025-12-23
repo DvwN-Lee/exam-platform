@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { examApi } from '@/api/exam'
-import { examinationApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { ExamAnswer } from '@/types/exam'
@@ -16,9 +15,9 @@ export function ExamTakePage() {
   const [timeRemaining, setTimeRemaining] = useState<number>(0)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
 
-  const { data: examination } = useQuery({
-    queryKey: ['examination', id],
-    queryFn: () => examinationApi.getExamination(Number(id)),
+  const { data: examInfo } = useQuery({
+    queryKey: ['exam-info', id],
+    queryFn: () => examApi.getExamInfo(Number(id)),
     enabled: !!id,
   })
 
@@ -26,7 +25,7 @@ export function ExamTakePage() {
     mutationFn: () => examApi.startExam(Number(id)),
     onSuccess: (data) => {
       setSubmissionId(data.submission_id)
-      const endTime = new Date(examination!.end_time).getTime()
+      const endTime = new Date(examInfo!.end_time).getTime()
       const now = new Date().getTime()
       setTimeRemaining(Math.floor((endTime - now) / 1000))
     },
@@ -38,7 +37,7 @@ export function ExamTakePage() {
 
   const saveAnswerMutation = useMutation({
     mutationFn: (data: ExamAnswer) =>
-      examApi.saveAnswer(submissionId!, {
+      examApi.saveAnswer(Number(id), {
         question_id: data.question_id,
         answer: data.answer,
         selected_options: data.selected_options,
@@ -47,12 +46,12 @@ export function ExamTakePage() {
 
   const submitExamMutation = useMutation({
     mutationFn: () =>
-      examApi.submitExam(submissionId!, {
+      examApi.submitExam(Number(id), {
         answers: Array.from(answers.values()),
       }),
-    onSuccess: (data) => {
+    onSuccess: () => {
       alert('시험이 제출되었습니다.')
-      navigate({ to: `/exams/${data.id}/result` })
+      navigate({ to: `/exams/${id}/result` })
     },
     onError: () => {
       alert('시험 제출에 실패했습니다.')
@@ -60,10 +59,10 @@ export function ExamTakePage() {
   })
 
   useEffect(() => {
-    if (examination && !submissionId) {
+    if (examInfo && !submissionId) {
       startExamMutation.mutate()
     }
-  }, [examination])
+  }, [examInfo])
 
   useEffect(() => {
     if (timeRemaining <= 0 && submissionId) {
@@ -125,8 +124,8 @@ export function ExamTakePage() {
   }
 
   const handleSubmit = () => {
-    const unanswered = examination!.testpaper.questions.filter(
-      (q) => !answers.has(q.question.id)
+    const unanswered = examInfo!.questions.filter(
+      (q) => !answers.has(q.id)
     )
 
     if (unanswered.length > 0) {
@@ -147,7 +146,7 @@ export function ExamTakePage() {
     submitExamMutation.mutate()
   }
 
-  if (!examination || !submissionId) {
+  if (!examInfo || !submissionId) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div>시험을 준비 중입니다...</div>
@@ -155,7 +154,7 @@ export function ExamTakePage() {
     )
   }
 
-  const questions = examination.testpaper.questions.sort((a, b) => a.order - b.order)
+  const questions = examInfo.questions
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
@@ -164,7 +163,7 @@ export function ExamTakePage() {
       <div className="sticky top-0 z-10 border-b bg-card px-4 py-3">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold">{examination.exam_name}</h2>
+            <h2 className="text-lg font-semibold">{examInfo.exam_name}</h2>
             <p className="text-sm text-muted-foreground">
               {currentQuestionIndex + 1} / {questions.length} 문제
             </p>
@@ -198,7 +197,7 @@ export function ExamTakePage() {
                     className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
                       index === currentQuestionIndex
                         ? 'border-primary bg-primary text-primary-foreground'
-                        : answers.has(q.question.id)
+                        : answers.has(q.id)
                         ? 'border-green-500 bg-green-50 text-green-700'
                         : 'border-border hover:bg-accent'
                     }`}
@@ -233,18 +232,18 @@ export function ExamTakePage() {
                     문제 {currentQuestionIndex + 1}
                   </span>
                   <span className="rounded bg-primary/10 px-2 py-1 text-sm">
-                    {currentQuestion.score}점
+                    {currentQuestion.assigned_score}점
                   </span>
                 </div>
                 <h3 className="text-xl font-semibold">
-                  {currentQuestion.question.name}
+                  {currentQuestion.name}
                 </h3>
               </div>
 
-              {currentQuestion.question.tq_img && (
+              {currentQuestion.tq_img && (
                 <div className="mb-6">
                   <img
-                    src={currentQuestion.question.tq_img}
+                    src={currentQuestion.tq_img}
                     alt="문제 이미지"
                     className="max-w-full rounded-lg"
                   />
@@ -253,9 +252,9 @@ export function ExamTakePage() {
 
               {/* Answer Input */}
               <div className="space-y-4">
-                {currentQuestion.question.tq_type === 'xz' && (
+                {currentQuestion.tq_type === 'xz' && (
                   <div className="space-y-2">
-                    {currentQuestion.question.options.map((option, index) => (
+                    {currentQuestion.options.map((option, index) => (
                       <label
                         key={option.id}
                         className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 hover:bg-accent"
@@ -263,11 +262,11 @@ export function ExamTakePage() {
                         <input
                           type="checkbox"
                           checked={answers
-                            .get(currentQuestion.question.id)
+                            .get(currentQuestion.id)
                             ?.selected_options?.includes(option.id!) || false}
                           onChange={() =>
                             handleOptionChange(
-                              currentQuestion.question.id,
+                              currentQuestion.id,
                               option.id!,
                               true
                             )
@@ -283,14 +282,14 @@ export function ExamTakePage() {
                   </div>
                 )}
 
-                {(currentQuestion.question.tq_type === 'pd' ||
-                  currentQuestion.question.tq_type === 'tk') && (
+                {(currentQuestion.tq_type === 'pd' ||
+                  currentQuestion.tq_type === 'tk') && (
                   <div>
                     <Input
                       placeholder="답안을 입력하세요"
-                      value={answers.get(currentQuestion.question.id)?.answer || ''}
+                      value={answers.get(currentQuestion.id)?.answer || ''}
                       onChange={(e) =>
-                        handleAnswerChange(currentQuestion.question.id, e.target.value)
+                        handleAnswerChange(currentQuestion.id, e.target.value)
                       }
                       className="text-lg"
                     />

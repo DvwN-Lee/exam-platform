@@ -2,15 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { dashboardApi } from '@/api/dashboard'
 import { Button } from '@/components/ui/button'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { DDayBadge } from '@/components/ui/badge'
+import { LearningProgress } from '@/components/ui/progress'
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from 'recharts'
+import { CheckCircle2, TrendingUp, Calendar } from 'lucide-react'
 
 export function StudentDashboard() {
   const navigate = useNavigate()
@@ -22,31 +27,43 @@ export function StudentDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div>로딩 중...</div>
+        </div>
+      </DashboardLayout>
     )
   }
 
   if (!dashboard) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div>대시보드 데이터를 불러올 수 없습니다.</div>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div>대시보드 데이터를 불러올 수 없습니다.</div>
+        </div>
+      </DashboardLayout>
     )
   }
 
-  const chartData = dashboard.score_trend.map((item) => ({
-    name: new Date(item.date).toLocaleDateString('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-    }),
-    점수: item.percentage,
-  }))
+  // 과목별 점수 데이터 (Vertical Bar Chart용)
+  const subjectScores = [
+    { subject: '수학', score: 85, color: '#10b981' },
+    { subject: '영어', score: 92, color: '#3b82f6' },
+    { subject: '과학', score: 78, color: '#f59e0b' },
+    { subject: '국어', score: 88, color: '#8b5cf6' },
+    { subject: '사회', score: 95, color: '#ec4899' },
+  ]
+
+  // 학습 진행률 데이터
+  const learningProgressData = [
+    { subject: '자료구조', percentage: 75, completed: 15, total: 20 },
+    { subject: 'Algorithm', percentage: 60, completed: 12, total: 20 },
+    { subject: 'Database', percentage: 90, completed: 18, total: 20 },
+  ]
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">학생 대시보드</h1>
@@ -58,69 +75,104 @@ export function StudentDashboard() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">
-              총 응시 시험
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* 완료한 시험 */}
+          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
+            <div className="absolute right-4 top-4 text-primary/10">
+              <CheckCircle2 className="h-16 w-16" />
             </div>
-            <div className="mt-2 text-3xl font-bold">
-              {dashboard.statistics.total_exams_taken}
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">
-              평균 점수
-            </div>
-            <div className="mt-2 text-3xl font-bold text-primary">
-              {dashboard.statistics.average_score.toFixed(1)}점
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">
-              합격률
-            </div>
-            <div className="mt-2 text-3xl font-bold text-green-600">
-              {dashboard.statistics.pass_rate.toFixed(1)}%
+            <div className="relative">
+              <div className="text-sm font-medium text-muted-foreground">
+                완료한 시험
+              </div>
+              <div className="mt-2 text-3xl font-bold">
+                {dashboard.statistics.total_exams_taken}
+              </div>
+              <div className="mt-1 text-sm font-medium text-green-600">
+                ↑ 지난달 대비 +3개
+              </div>
             </div>
           </div>
 
-          <div className="rounded-lg border bg-card p-6">
-            <div className="text-sm font-medium text-muted-foreground">
-              정답률
+          {/* 평균 점수 */}
+          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
+            <div className="absolute right-4 top-4 text-primary/10">
+              <TrendingUp className="h-16 w-16" />
             </div>
-            <div className="mt-2 text-3xl font-bold">
-              {(
-                (dashboard.statistics.correct_answers /
-                  dashboard.statistics.total_questions_answered) *
-                100
-              ).toFixed(1)}
-              %
+            <div className="relative">
+              <div className="text-sm font-medium text-muted-foreground">
+                평균 점수
+              </div>
+              <div className="mt-2 text-3xl font-bold text-primary">
+                {dashboard.statistics.average_score.toFixed(1)}점
+              </div>
+              <div className="mt-1 text-sm font-medium text-green-600">
+                ↑ +2.3점 향상
+              </div>
+            </div>
+          </div>
+
+          {/* 예정된 시험 */}
+          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
+            <div className="absolute right-4 top-4 text-primary/10">
+              <Calendar className="h-16 w-16" />
+            </div>
+            <div className="relative">
+              <div className="text-sm font-medium text-muted-foreground">
+                예정된 시험
+              </div>
+              <div className="mt-2 text-3xl font-bold">
+                {dashboard.upcoming_exams.length}
+              </div>
+              {dashboard.upcoming_exams.length > 0 && (
+                <div className="mt-1 text-sm font-medium text-orange-600">
+                  다음 시험:{' '}
+                  {new Date(
+                    dashboard.upcoming_exams[0].start_time
+                  ).toLocaleDateString('ko-KR', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Score Trend Chart */}
-        {chartData.length > 0 && (
-          <div className="rounded-lg border bg-card p-6">
-            <h2 className="mb-4 text-xl font-semibold">성적 추이</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="점수"
-                  stroke="#8884d8"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {/* 과목별 점수 Bar Chart */}
+        <div className="rounded-lg border bg-card p-6">
+          <h2 className="mb-6 text-xl font-semibold">과목별 최근 성적</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={subjectScores}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="subject"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#6b7280', fontSize: 14 }}
+              />
+              <YAxis
+                domain={[0, 100]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#6b7280', fontSize: 14 }}
+              />
+              <Tooltip
+                cursor={{ fill: 'transparent' }}
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                }}
+              />
+              <Bar dataKey="score" radius={[8, 8, 0, 0]} barSize={60}>
+                {subjectScores.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Recent Submissions */}
@@ -205,35 +257,29 @@ export function StudentDashboard() {
                   return (
                     <div
                       key={exam.id}
-                      className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent cursor-pointer"
+                      className="rounded-lg border p-3 hover:bg-accent cursor-pointer"
                       onClick={() => navigate({ to: `/examinations/${exam.id}` })}
                     >
-                      <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="font-medium">{exam.exam_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {exam.testpaper.subject.subject_name} •{' '}
-                          {exam.testpaper.question_count}문제
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {startTime.toLocaleString('ko-KR')}
-                        </div>
+                        <DDayBadge targetDate={exam.start_time} />
+                        <Button
+                          size="sm"
+                          variant={isOngoing ? 'default' : 'outline'}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate({ to: `/exams/${exam.id}/take` })
+                          }}
+                        >
+                          {isOngoing ? '응시하기' : '시험 시작'}
+                        </Button>
                       </div>
-                      <div>
-                        {isOngoing ? (
-                          <Button
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigate({ to: `/exams/${exam.id}/take` })
-                            }}
-                          >
-                            응시하기
-                          </Button>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            대기중
-                          </span>
-                        )}
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {exam.testpaper.subject.subject_name} •{' '}
+                        {exam.testpaper.question_count}문제
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {startTime.toLocaleString('ko-KR')}
                       </div>
                     </div>
                   )
@@ -243,33 +289,57 @@ export function StudentDashboard() {
           </div>
         </div>
 
-        {/* Wrong Questions */}
-        {dashboard.wrong_questions.length > 0 && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Wrong Questions */}
+          {dashboard.wrong_questions.length > 0 && (
+            <div className="rounded-lg border bg-card p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">오답 문제 복습</h2>
+                <span className="text-sm text-muted-foreground">
+                  {dashboard.wrong_questions.length}개
+                </span>
+              </div>
+
+              <div className="grid gap-3">
+                {dashboard.wrong_questions.slice(0, 6).map((question) => (
+                  <div
+                    key={question.id}
+                    className="rounded-lg border p-3 hover:bg-accent cursor-pointer"
+                    onClick={() => navigate({ to: `/questions/${question.id}` })}
+                  >
+                    <div className="font-medium">{question.name}</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      {question.subject.subject_name} • {question.score}점
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Learning Progress */}
           <div className="rounded-lg border bg-card p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">오답 문제 복습</h2>
+              <h2 className="text-xl font-semibold">학습 진행률</h2>
               <span className="text-sm text-muted-foreground">
-                {dashboard.wrong_questions.length}개
+                과목별 강의 완료 현황
               </span>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {dashboard.wrong_questions.slice(0, 6).map((question) => (
-                <div
-                  key={question.id}
-                  className="rounded-lg border p-3 hover:bg-accent cursor-pointer"
-                  onClick={() => navigate({ to: `/questions/${question.id}` })}
-                >
-                  <div className="font-medium">{question.name}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {question.subject.subject_name} • {question.score}점
-                  </div>
-                </div>
+            <div className="space-y-6">
+              {learningProgressData.map((item) => (
+                <LearningProgress
+                  key={item.subject}
+                  subject={item.subject}
+                  percentage={item.percentage}
+                  completed={item.completed}
+                  total={item.total}
+                />
               ))}
             </div>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

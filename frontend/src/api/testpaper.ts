@@ -18,20 +18,20 @@ export const testPaperApi = {
     if (page) params.append('page', String(page))
 
     const response = await apiClient.get<TestPaperListResponse>(
-      `/api/v1/testpapers/?${params.toString()}`
+      `/testpapers/?${params.toString()}`
     )
     return response.data
   },
 
   // 시험지 상세 조회
   getTestPaper: async (id: number): Promise<TestPaper> => {
-    const response = await apiClient.get<TestPaper>(`/api/v1/testpapers/${id}/`)
+    const response = await apiClient.get<TestPaper>(`/testpapers/${id}`)
     return response.data
   },
 
   // 시험지 생성
   createTestPaper: async (data: CreateTestPaperRequest): Promise<TestPaper> => {
-    const response = await apiClient.post<TestPaper>('/api/v1/testpapers/', data)
+    const response = await apiClient.post<TestPaper>('/testpapers/', data)
     return response.data
   },
 
@@ -41,7 +41,7 @@ export const testPaperApi = {
     data: UpdateTestPaperRequest
   ): Promise<TestPaper> => {
     const response = await apiClient.patch<TestPaper>(
-      `/api/v1/testpapers/${id}/`,
+      `/testpapers/${id}`,
       data
     )
     return response.data
@@ -49,7 +49,7 @@ export const testPaperApi = {
 
   // 시험지 삭제
   deleteTestPaper: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/v1/testpapers/${id}/`)
+    await apiClient.delete(`/testpapers/${id}`)
   },
 
   // 시험지에 문제 추가
@@ -60,11 +60,15 @@ export const testPaperApi = {
     order: number
   ): Promise<TestPaper> => {
     const response = await apiClient.post<TestPaper>(
-      `/api/v1/testpapers/${id}/questions/`,
+      `/testpapers/${id}/add_questions/`,
       {
-        question_id: questionId,
-        score,
-        order,
+        questions: [
+          {
+            test_question_id: questionId,
+            score,
+            order,
+          },
+        ],
       }
     )
     return response.data
@@ -75,7 +79,7 @@ export const testPaperApi = {
     id: number,
     questionId: number
   ): Promise<void> => {
-    await apiClient.delete(`/api/v1/testpapers/${id}/questions/${questionId}/`)
+    await apiClient.delete(`/testpapers/${id}/remove-question/${questionId}/`)
   },
 }
 
@@ -95,20 +99,20 @@ export const examinationApi = {
     }
 
     const response = await apiClient.get<ExaminationListResponse>(
-      `/api/v1/examinations/?${params.toString()}`
+      `/examinations/?${params.toString()}`
     )
     return response.data
   },
 
   // 시험 상세 조회
   getExamination: async (id: number): Promise<Examination> => {
-    const response = await apiClient.get<Examination>(`/api/v1/examinations/${id}/`)
+    const response = await apiClient.get<Examination>(`/examinations/${id}`)
     return response.data
   },
 
   // 시험 생성
   createExamination: async (data: CreateExaminationRequest): Promise<Examination> => {
-    const response = await apiClient.post<Examination>('/api/v1/examinations/', data)
+    const response = await apiClient.post<Examination>('/examinations/', data)
     return response.data
   },
 
@@ -118,7 +122,7 @@ export const examinationApi = {
     data: UpdateExaminationRequest
   ): Promise<Examination> => {
     const response = await apiClient.patch<Examination>(
-      `/api/v1/examinations/${id}/`,
+      `/examinations/${id}`,
       data
     )
     return response.data
@@ -126,13 +130,13 @@ export const examinationApi = {
 
   // 시험 삭제
   deleteExamination: async (id: number): Promise<void> => {
-    await apiClient.delete(`/api/v1/examinations/${id}/`)
+    await apiClient.delete(`/examinations/${id}`)
   },
 
   // 시험 게시
   publishExamination: async (id: number): Promise<Examination> => {
     const response = await apiClient.post<Examination>(
-      `/api/v1/examinations/${id}/publish/`
+      `/examinations/${id}/publish`
     )
     return response.data
   },

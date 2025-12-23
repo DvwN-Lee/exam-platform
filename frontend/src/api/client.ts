@@ -1,4 +1,41 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
+
+/**
+ * Backend 에러 응답 형식
+ * { error: { code, message, details } }
+ */
+interface BackendErrorResponse {
+  error?: {
+    code: string
+    message: string
+    details: Record<string, unknown>
+  }
+}
+
+/**
+ * 정규화된 에러 응답 형식
+ * Frontend에서 일관되게 사용할 수 있는 형식
+ */
+export interface NormalizedErrorResponse {
+  detail: string
+  code?: string
+  [key: string]: unknown
+}
+
+/**
+ * Backend 에러 응답을 Frontend 형식으로 변환
+ */
+function normalizeErrorResponse(data: BackendErrorResponse): NormalizedErrorResponse {
+  if (data?.error) {
+    const { code, message, details } = data.error
+    return {
+      detail: message,
+      code,
+      ...details,
+    }
+  }
+  return data as unknown as NormalizedErrorResponse
+}
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -21,14 +58,14 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor - 토큰 만료 시 자동 갱신
+// Response interceptor - 토큰 만료 시 자동 갱신 및 에러 정규화
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config
+  async (error: AxiosError<BackendErrorResponse>) => {
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean }
 
     // 401 에러이고 재시도하지 않은 요청인 경우
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true
 
       try {
@@ -56,6 +93,13 @@ apiClient.interceptors.response.use(
         window.location.href = '/login'
         return Promise.reject(refreshError)
       }
+    }
+
+    // Backend 에러 응답을 정규화하여 Frontend에서 일관되게 처리
+    if (error.response?.data) {
+      error.response.data = normalizeErrorResponse(
+        error.response.data
+      ) as unknown as BackendErrorResponse
     }
 
     return Promise.reject(error)

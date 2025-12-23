@@ -87,16 +87,48 @@ export function ExaminationForm({
   const onSubmit = (data: ExaminationFormData) => {
     setIsSubmitting(true)
 
-    const formattedData = {
-      ...data,
-      start_time: new Date(data.start_time).toISOString(),
-      end_time: new Date(data.end_time).toISOString(),
+    // 선택한 testpaper의 subject_id 찾기
+    const selectedTestPaper = testPapers?.results.find(
+      (tp) => tp.id === data.testpaper_id
+    )
+
+    if (!selectedTestPaper) {
+      alert('선택한 시험지를 찾을 수 없습니다.')
+      setIsSubmitting(false)
+      return
+    }
+
+    // start_time과 end_time의 차이를 분 단위로 계산
+    const startTime = new Date(data.start_time)
+    const endTime = new Date(data.end_time)
+    const durationMinutes = Math.floor(
+      (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+    )
+
+    // Backend API 형식에 맞게 데이터 변환
+    const backendData = {
+      name: data.exam_name,
+      subject_id: selectedTestPaper.subject.id,
+      start_time: startTime.toISOString(),
+      duration: durationMinutes,
+      exam_type: 'pt', // 기본값: 보통 ('pt'), 특수: 'ts'
+      papers: [
+        {
+          paper_id: data.testpaper_id,
+        },
+      ],
     }
 
     if (examinationId) {
+      // Update는 아직 backend API 형식이 다를 수 있으므로 원래 형식 사용
+      const formattedData = {
+        ...data,
+        start_time: new Date(data.start_time).toISOString(),
+        end_time: new Date(data.end_time).toISOString(),
+      }
       updateMutation.mutate(formattedData)
     } else {
-      createMutation.mutate(formattedData)
+      createMutation.mutate(backendData)
     }
   }
 

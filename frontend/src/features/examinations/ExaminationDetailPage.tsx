@@ -174,20 +174,22 @@ export function ExaminationDetailPage() {
                 {examination.testpaper.question_count}문제
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">총 배점</span>
-              <span className="font-medium">
-                {examination.testpaper.questions.reduce(
-                  (sum, q) => sum + q.score,
-                  0
-                )}
-                점
-              </span>
-            </div>
+            {examination.testpaper.questions && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">총 배점</span>
+                <span className="font-medium">
+                  {examination.testpaper.questions.reduce(
+                    (sum, q) => sum + q.score,
+                    0
+                  )}
+                  점
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {examination.testpaper.questions.length > 0 && (
+        {examination.testpaper.questions && examination.testpaper.questions.length > 0 && (
           <div className="rounded-lg border bg-card p-6">
             <h2 className="mb-4 text-xl font-semibold">문제 목록</h2>
             <div className="space-y-3">

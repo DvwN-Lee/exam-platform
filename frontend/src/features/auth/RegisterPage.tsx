@@ -1,81 +1,206 @@
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { authApi } from '@/api/auth'
+import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { GraduationCap, User, BookOpen } from 'lucide-react'
+import type { RegisterRequest } from '@/types/auth'
 
 const registerSchema = z
   .object({
     username: z
       .string()
-      .min(3, 'Username\uc740 3\uc790 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4')
-      .regex(/^[a-zA-Z0-9_]+$/, 'Username\uc740 \uc601\ubb38, \uc22b\uc790, \ubc11\uc904(_)\ub9cc \uc0ac\uc6a9 \uac00\ub2a5\ud569\ub2c8\ub2e4'),
-    email: z.string().email('\uc62c\ubc14\ub978 \uc774\uba54\uc77c \uc8fc\uc18c\ub97c \uc785\ub825\ud574\uc8fc\uc138\uc694'),
-    nick_name: z.string().min(2, '\ub2c9\ub124\uc784\uc740 2\uc790 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4'),
+      .min(3, '아이디는 3자 이상이어야 합니다')
+      .regex(/^[a-zA-Z0-9_]+$/, '아이디는 영문, 숫자, 밑줄(_)만 사용 가능합니다'),
+    email: z.string().email('올바른 이메일 주소를 입력해주세요'),
+    nick_name: z.string().min(2, '닉네임은 2자 이상이어야 합니다'),
     password: z
       .string()
-      .min(8, 'Password\ub294 8\uc790 \uc774\uc0c1\uc774\uc5b4\uc57c \ud569\ub2c8\ub2e4'),
-    password_confirm: z.string(),
+      .min(8, 'Password는 8자 이상이어야 합니다'),
+    password2: z.string(),
     user_type: z.enum(['student', 'teacher']),
+    student_name: z.string().optional(),
+    teacher_name: z.string().optional(),
+    subject_id: z.number().optional(),
   })
-  .refine((data) => data.password === data.password_confirm, {
-    message: 'Password\uac00 \uc77c\uce58\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4',
-    path: ['password_confirm'],
+  .refine((data) => data.password === data.password2, {
+    message: 'Password가 일치하지 않습니다',
+    path: ['password2'],
+  })
+  .refine((data) => {
+    if (data.user_type === 'student') {
+      return data.student_name && data.student_name.length >= 2
+    }
+    return true
+  }, {
+    message: '학생 이름은 2자 이상이어야 합니다',
+    path: ['student_name'],
+  })
+  .refine((data) => {
+    if (data.user_type === 'teacher') {
+      return data.teacher_name && data.teacher_name.length >= 2
+    }
+    return true
+  }, {
+    message: '교사 이름은 2자 이상이어야 합니다',
+    path: ['teacher_name'],
+  })
+  .refine((data) => {
+    if (data.user_type === 'teacher') {
+      return data.subject_id && data.subject_id > 0
+    }
+    return true
+  }, {
+    message: '과목을 선택해주세요',
+    path: ['subject_id'],
   })
 
 type RegisterForm = z.infer<typeof registerSchema>
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const [selectedUserType, setSelectedUserType] = useState<'student' | 'teacher'>('student')
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      user_type: 'student',
+    },
+  })
+
+  const userType = watch('user_type')
+
+  useEffect(() => {
+    setSelectedUserType(userType)
+  }, [userType])
+
+  // 과목 목록 조회
+  const { data: subjects } = useQuery({
+    queryKey: ['subjects'],
+    queryFn: questionApi.getSubjects,
   })
 
   const registerMutation = useMutation({
-    mutationFn: authApi.register,
+    mutationFn: (data: RegisterRequest) => authApi.register(data),
     onSuccess: () => {
-      alert('\ud68c\uc6d0\uac00\uc785\uc774 \uc644\ub8cc\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \ub85c\uadf8\uc778\ud574\uc8fc\uc138\uc694.')
+      alert('회원가입이 완료되었습니다. 로그인해주세요.')
       navigate({ to: '/login' })
     },
     onError: (error: any) => {
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.detail ||
-        '\ud68c\uc6d0\uac00\uc785\uc5d0 \uc2e4\ud328\ud588\uc2b5\ub2c8\ub2e4.'
+        '회원가입에 실패했습니다.'
       alert(errorMessage)
     },
   })
 
   const onSubmit = (data: RegisterForm) => {
-    registerMutation.mutate(data)
+    const requestData: RegisterRequest = {
+      username: data.username,
+      email: data.email,
+      password: data.password,
+      password2: data.password2,
+      nick_name: data.nick_name,
+      user_type: data.user_type,
+    }
+
+    if (data.user_type === 'student' && data.student_name) {
+      requestData.student_name = data.student_name
+    }
+
+    if (data.user_type === 'teacher') {
+      if (data.teacher_name) {
+        requestData.teacher_name = data.teacher_name
+      }
+      if (data.subject_id) {
+        requestData.subject_id = data.subject_id
+      }
+    }
+
+    registerMutation.mutate(requestData)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">\ud68c\uc6d0\uac00\uc785</h1>
-          <p className="text-muted-foreground">
-            \uc0c8 \uacc4\uc815\uc744 \ub9cc\ub4e4\uc5b4 \uc2dc\uc791\ud558\uc138\uc694
-          </p>
-        </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background to-[rgba(16,185,129,0.1)] px-4 py-12">
+      {/* Decorative circles */}
+      <div className="absolute -right-48 -top-48 size-[500px] rounded-full bg-primary opacity-5" />
+      <div className="absolute -bottom-36 -left-36 size-96 rounded-full bg-primary-light opacity-5" />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="relative z-10 w-full max-w-[1000px] overflow-hidden rounded-[32px] bg-card shadow-2xl md:grid md:grid-cols-2">
+        {/* Register Form - Left Side */}
+        <div className="flex flex-col justify-center p-8 md:p-12">
+          {/* Logo */}
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light text-2xl font-bold text-white">
+              E
+            </div>
+            <div className="text-[1.75rem] font-bold text-primary">ExamOnline</div>
+          </div>
+
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="mb-2 text-3xl font-bold text-foreground">회원가입</h1>
+            <p className="text-muted-foreground">새로운 계정을 만들어 시작하세요</p>
+          </div>
+
+          {/* Role Selector */}
+          <div className="mb-6 flex gap-4">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedUserType('student')
+                setValue('user_type', 'student')
+              }}
+              className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
+                selectedUserType === 'student'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-transparent bg-accent hover:border-primary-light'
+              }`}
+            >
+              <GraduationCap className="size-8 text-primary" />
+              <span className="text-[0.9375rem] font-semibold text-foreground">학생</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedUserType('teacher')
+                setValue('user_type', 'teacher')
+              }}
+              className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
+                selectedUserType === 'teacher'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-transparent bg-accent hover:border-primary-light'
+              }`}
+            >
+              <User className="size-8 text-primary" />
+              <span className="text-[0.9375rem] font-semibold text-foreground">교사</span>
+            </button>
+          </div>
+
+          {/* Register Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username" className="text-[0.9375rem] font-semibold">
+              아이디
+            </Label>
             <Input
               id="username"
               type="text"
-              placeholder="Username (\uc601\ubb38, \uc22b\uc790, _ \uac00\ub2a5)"
+              placeholder="아이디 (영문, 숫자, _ 가능)"
+              className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('username')}
             />
             {errors.username && (
@@ -84,11 +209,14 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-[0.9375rem] font-semibold">
+              이메일
+            </Label>
             <Input
               id="email"
               type="email"
-              placeholder="\uc774\uba54\uc77c \uc8fc\uc18c"
+              placeholder="your.email@example.com"
+              className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('email')}
             />
             {errors.email && (
@@ -97,11 +225,14 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nick_name">\ub2c9\ub124\uc784</Label>
+            <Label htmlFor="nick_name" className="text-[0.9375rem] font-semibold">
+              닉네임
+            </Label>
             <Input
               id="nick_name"
               type="text"
-              placeholder="\ub2c9\ub124\uc784"
+              placeholder="닉네임을 입력하세요"
+              className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('nick_name')}
             />
             {errors.nick_name && (
@@ -110,11 +241,14 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-[0.9375rem] font-semibold">
+              Password
+            </Label>
             <Input
               id="password"
               type="password"
-              placeholder="8\uc790 \uc774\uc0c1"
+              placeholder="8자 이상 입력하세요"
+              className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('password')}
             />
             {errors.password && (
@@ -123,66 +257,149 @@ export function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password_confirm">Password \ud655\uc778</Label>
+            <Label htmlFor="password2" className="text-[0.9375rem] font-semibold">
+              Password 확인
+            </Label>
             <Input
-              id="password_confirm"
+              id="password2"
               type="password"
-              placeholder="Password \uc7ac\uc785\ub825"
-              {...register('password_confirm')}
+              placeholder="Password를 다시 입력하세요"
+              className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              {...register('password2')}
             />
-            {errors.password_confirm && (
+            {errors.password2 && (
               <p className="text-sm text-destructive">
-                {errors.password_confirm.message}
+                {errors.password2.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label>\uc0ac\uc6a9\uc790 \uc720\ud615</Label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  value="student"
-                  {...register('user_type')}
-                  className="h-4 w-4"
-                />
-                <span className="text-sm">\ud559\uc0dd</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  value="teacher"
-                  {...register('user_type')}
-                  className="h-4 w-4"
-                />
-                <span className="text-sm">\uad50\uc0ac</span>
-              </label>
+          <input type="hidden" value={selectedUserType} {...register('user_type')} />
+
+          {selectedUserType === 'student' && (
+            <div className="space-y-2">
+              <Label htmlFor="student_name" className="text-[0.9375rem] font-semibold">
+                학생 이름
+              </Label>
+              <Input
+                id="student_name"
+                type="text"
+                placeholder="실명을 입력하세요"
+                className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                {...register('student_name')}
+              />
+              {errors.student_name && (
+                <p className="text-sm text-destructive">{errors.student_name.message}</p>
+              )}
             </div>
-            {errors.user_type && (
-              <p className="text-sm text-destructive">{errors.user_type.message}</p>
-            )}
-          </div>
+          )}
+
+          {selectedUserType === 'teacher' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="teacher_name" className="text-[0.9375rem] font-semibold">
+                  교사 이름
+                </Label>
+                <Input
+                  id="teacher_name"
+                  type="text"
+                  placeholder="실명을 입력하세요"
+                  className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  {...register('teacher_name')}
+                />
+                {errors.teacher_name && (
+                  <p className="text-sm text-destructive">{errors.teacher_name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject_id" className="text-[0.9375rem] font-semibold">
+                  담당 과목
+                </Label>
+                <select
+                  id="subject_id"
+                  {...register('subject_id', { valueAsNumber: true })}
+                  className="h-12 w-full rounded-[12px] border-2 border-input bg-background px-5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">과목을 선택하세요</option>
+                  {subjects?.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.subject_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.subject_id && (
+                  <p className="text-sm text-destructive">{errors.subject_id.message}</p>
+                )}
+              </div>
+            </>
+          )}
 
           <Button
             type="submit"
-            className="w-full"
             disabled={registerMutation.isPending}
+            className="h-[3.375rem] w-full rounded-[12px] bg-primary text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-lg"
           >
-            {registerMutation.isPending ? '\uac00\uc785 \uc911...' : '\ud68c\uc6d0\uac00\uc785'}
+            {registerMutation.isPending ? '가입 중...' : '회원가입'}
           </Button>
         </form>
 
-        <div className="text-center text-sm">
-          <span className="text-muted-foreground">\uc774\ubbf8 \uacc4\uc815\uc774 \uc788\uc73c\uc2e0\uac00\uc694? </span>
+        {/* Login link */}
+        <div className="mt-6 text-center text-[0.9375rem] text-muted-foreground">
+          이미 계정이 있으신가요?{' '}
           <button
             onClick={() => navigate({ to: '/login' })}
-            className="text-primary hover:underline"
+            className="font-semibold text-primary transition-colors hover:text-primary-dark hover:underline"
           >
-            \ub85c\uadf8\uc778
+            로그인
           </button>
         </div>
       </div>
-    </div>
+
+      {/* Illustration - Right Side */}
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-primary to-primary-dark p-12 text-white md:flex md:flex-col md:items-center md:justify-center">
+        {/* Decorative circles */}
+        <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white opacity-10" />
+        <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white opacity-5" />
+
+        {/* Illustration content */}
+        <div className="relative z-10 text-center">
+          <div className="mb-6 inline-block animate-float">
+            <BookOpen className="size-32 text-white" />
+          </div>
+          <h2 className="mb-4 text-[2rem] font-bold">학습의 새로운 시작</h2>
+          <p className="mb-8 text-lg opacity-90">
+            ExamOnline과 함께 효율적인 학습을 경험하세요
+          </p>
+        </div>
+
+        {/* Features list */}
+        <ul className="relative z-10 space-y-3">
+          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+            빠르고 간편한 회원가입
+          </li>
+          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+            학생과 교사 역할 선택
+          </li>
+          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+            안전한 데이터 보호
+          </li>
+          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
+            언제 어디서나 접속 가능
+          </li>
+        </ul>
+      </div>
+      </div>
+
+      <style>{`
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+    `}</style>
+  </div>
   )
 }

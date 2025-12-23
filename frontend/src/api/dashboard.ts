@@ -5,7 +5,7 @@ export const dashboardApi = {
   // 학생 대시보드 데이터 조회
   getStudentDashboard: async (): Promise<StudentDashboard> => {
     const response = await apiClient.get<StudentDashboard>(
-      '/api/v1/dashboard/student/'
+      '/dashboard/student/'
     )
     return response.data
   },
@@ -13,7 +13,7 @@ export const dashboardApi = {
   // 교사 대시보드 데이터 조회
   getTeacherDashboard: async (): Promise<TeacherDashboard> => {
     const response = await apiClient.get<TeacherDashboard>(
-      '/api/v1/dashboard/teacher/'
+      '/dashboard/teacher/'
     )
     return response.data
   },

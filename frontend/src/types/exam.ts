@@ -1,6 +1,21 @@
 import type { Question } from './question'
 import type { Examination } from './testpaper'
 
+export interface ExamInfo {
+  exam_id: number
+  exam_name: string
+  subject_name: string
+  start_time: string
+  end_time: string
+  duration: number
+  total_score: number
+  passing_score: number
+  question_count: number
+  questions: Question[]
+  is_started: boolean
+  is_submitted: boolean
+}
+
 export interface ExamAnswer {
   question_id: number
   answer: string

@@ -11,6 +11,10 @@ export interface TestPaper {
   id: number
   name: string
   subject: Subject
+  tp_degree: 'jd' | 'zd' | 'kn'
+  tp_degree_display: string
+  total_score: number
+  passing_score: number
   question_count: number
   creat_user: {
     id: number
@@ -31,6 +35,8 @@ export interface TestPaperListResponse {
 export interface CreateTestPaperRequest {
   name: string
   subject_id: number
+  tp_degree?: 'jd' | 'zd' | 'kn' // 쉬움/중간/어려움
+  passing_score?: number
   questions: Array<{
     question_id: number
     score: number
@@ -41,6 +47,8 @@ export interface CreateTestPaperRequest {
 export interface UpdateTestPaperRequest {
   name?: string
   subject_id?: number
+  tp_degree?: 'jd' | 'zd' | 'kn'
+  passing_score?: number
   questions?: Array<{
     id?: number
     question_id: number
@@ -52,7 +60,13 @@ export interface UpdateTestPaperRequest {
 export interface Examination {
   id: number
   exam_name: string
-  testpaper: TestPaper
+  testpaper: TestPaper | {
+    id: number
+    name: string
+    subject: Subject
+    question_count: number
+    questions?: TestPaperQuestion[]
+  }
   start_time: string
   end_time: string
   is_public: boolean
@@ -72,11 +86,14 @@ export interface ExaminationListResponse {
 }
 
 export interface CreateExaminationRequest {
-  exam_name: string
-  testpaper_id: number
+  name: string
+  subject_id: number
   start_time: string
-  end_time: string
-  is_public?: boolean
+  duration: number // 시험 시간 (분)
+  exam_type?: string
+  papers: Array<{
+    paper_id: number
+  }>
 }
 
 export interface UpdateExaminationRequest {

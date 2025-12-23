@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { testPaperApi } from '@/api/testpaper'
 import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
@@ -32,9 +32,24 @@ interface TestPaperFormProps {
   initialData?: TestPaper
 }
 
-export function TestPaperForm({ testPaperId, initialData }: TestPaperFormProps) {
+export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propInitialData }: TestPaperFormProps) {
   const navigate = useNavigate()
+  const params = useParams({ strict: false })
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Get testPaperId from props or URL params
+  const testPaperId = propTestPaperId || (params.id ? Number(params.id) : undefined)
+
+  // Fetch test paper data if in edit mode
+  const { data: fetchedTestPaper, isLoading: isLoadingTestPaper } = useQuery({
+    queryKey: ['testpaper', testPaperId],
+    queryFn: () => testPaperApi.getTestPaper(testPaperId!),
+    enabled: !!testPaperId,
+  })
+
+  // Use fetched data or prop data
+  const initialData = propInitialData || fetchedTestPaper
+
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | undefined>(
     initialData?.subject.id
   )
@@ -58,24 +73,31 @@ export function TestPaperForm({ testPaperId, initialData }: TestPaperFormProps) 
     handleSubmit,
     control,
     watch,
+    reset,
     formState: { errors },
   } = useForm<TestPaperFormData>({
     resolver: zodResolver(testPaperSchema),
-    defaultValues: initialData
-      ? {
-          name: initialData.name,
-          subject_id: initialData.subject.id,
-          questions: initialData.questions.map((q) => ({
-            question_id: q.question.id,
-            score: q.score,
-            order: q.order,
-          })),
-        }
-      : {
-          name: '',
-          questions: [],
-        },
+    defaultValues: {
+      name: '',
+      questions: [],
+    },
   })
+
+  // Update form when initialData is loaded
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        name: initialData.name,
+        subject_id: initialData.subject.id,
+        questions: initialData.questions.map((q) => ({
+          question_id: q.question.id,
+          score: q.score,
+          order: q.order,
+        })),
+      })
+      setSelectedSubjectId(initialData.subject.id)
+    }
+  }, [initialData, reset])
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -111,10 +133,24 @@ export function TestPaperForm({ testPaperId, initialData }: TestPaperFormProps) 
 
   const onSubmit = (data: TestPaperFormData) => {
     setIsSubmitting(true)
+
+    // 총점 계산
+    const totalScore = data.questions.reduce((sum, q) => sum + q.score, 0)
+
+    // 합격점을 총점의 60%로 설정
+    const calculatedPassingScore = Math.floor(totalScore * 0.6)
+
+    // Backend API requires tp_degree and passing_score
+    const submitData = {
+      ...data,
+      tp_degree: 'zd' as const, // 기본값: 중간 난이도
+      passing_score: calculatedPassingScore,
+    }
+
     if (testPaperId) {
-      updateMutation.mutate(data)
+      updateMutation.mutate(submitData)
     } else {
-      createMutation.mutate(data)
+      createMutation.mutate(submitData)
     }
   }
 
@@ -130,6 +166,14 @@ export function TestPaperForm({ testPaperId, initialData }: TestPaperFormProps) 
       score: 10,
       order: fields.length + 1,
     })
+  }
+
+  if (isLoadingTestPaper) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div>로딩 중...</div>
+      </div>
+    )
   }
 
   return (
