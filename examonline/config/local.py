@@ -2,6 +2,8 @@
 Django local development settings.
 """
 import os
+import warnings
+from django.core.management.utils import get_random_secret_key
 from dotenv import load_dotenv
 from .base import *
 
@@ -9,10 +11,16 @@ from .base import *
 load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv(
-    'SECRET_KEY',
-    'django-insecure-local-dev-key-change-in-production-12345'
-)
+SECRET_KEY = os.getenv('SECRET_KEY')
+
+# .env에 SECRET_KEY가 없으면 랜덤 키 생성 및 경고
+if not SECRET_KEY:
+    SECRET_KEY = get_random_secret_key()
+    warnings.warn(
+        'SECRET_KEY not found in .env file. Using randomly generated key for this session. '
+        'For consistent behavior, add SECRET_KEY to your .env file.',
+        RuntimeWarning
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
