@@ -35,7 +35,8 @@ class StudentDashboardService:
             dict: 통계, 성적 추이, 예정 시험, 진행률, 최근 제출 내역
         """
         # 1. 공통 데이터 조회 (Query Reuse)
-        submissions = self._get_submissions()
+        submissions_qs = self._get_submissions()
+        submissions_list = list(submissions_qs)  # QuerySet을 list로 변환 (1회 query)
 
         # 2. enrolled_exam_ids 한 번만 조회 (여러 메서드에서 재사용)
         enrolled_exam_ids = list(ExamStudentsInfo.objects.filter(
@@ -43,13 +44,22 @@ class StudentDashboardService:
         ).values_list('exam_id', flat=True))
 
         # 3. recent_submissions_list 한 번만 조회 (score_trend, recent_submissions에서 재사용)
-        recent_submissions_list = list(submissions.order_by('-submit_time')[:5])
+        recent_submissions_list = sorted(submissions_list, key=lambda x: x.submit_time, reverse=True)[:5]
 
-        # 4. 조회된 데이터를 각 메서드에 전달하여 재사용
-        statistics = self._get_statistics(submissions, enrolled_exam_ids)
+        # 4. subject_total_exams_dict 한 번만 조회 (progress에서 재사용, N+1 방지)
+        subject_total_exams_dict = dict(
+            ExamStudentsInfo.objects.filter(
+                student=self.student_info
+            ).values('exam__subject__subject_name').annotate(
+                total=Count('id')
+            ).values_list('exam__subject__subject_name', 'total')
+        )
+
+        # 5. 조회된 데이터를 각 메서드에 전달하여 재사용
+        statistics = self._get_statistics(submissions_list, enrolled_exam_ids)
         score_trend = self._get_score_trend(recent_submissions_list)
         upcoming_exams = self._get_upcoming_exams(enrolled_exam_ids)
-        progress = self._get_progress(submissions)
+        progress = self._get_progress(submissions_list, subject_total_exams_dict)
         recent_submissions = self._get_recent_submissions(recent_submissions_list)
 
         return {
@@ -78,27 +88,27 @@ class StudentDashboardService:
             )
         )
 
-    def _get_statistics(self, submissions, enrolled_exam_ids: list) -> dict:
+    def _get_statistics(self, submissions_list: list, enrolled_exam_ids: list) -> dict:
         """
         통계 데이터 계산
 
         Args:
-            submissions: 제출 내역 QuerySet
+            submissions_list: 제출 내역 목록 (재사용)
             enrolled_exam_ids: 등록된 시험 ID 목록 (재사용)
         """
-        total_exams_taken = submissions.count()
+        total_exams_taken = len(submissions_list)
 
         if total_exams_taken > 0:
-            # 평균 점수
-            avg_result = submissions.aggregate(avg=Avg('test_score'))
-            average_score = round(avg_result['avg'] or 0, 1)
+            # Python에서 평균 점수 계산 (DB query 절약)
+            total_score = sum(sub.test_score for sub in submissions_list)
+            average_score = round(total_score / total_exams_taken, 1)
 
             # 합격률 및 정답률 계산
             passed_count = 0
             total_correct = 0
             total_questions = 0
 
-            for sub in submissions:
+            for sub in submissions_list:
                 if sub.test_paper and sub.test_score >= sub.test_paper.passing_score:
                     passed_count += 1
 
@@ -217,29 +227,35 @@ class StudentDashboardService:
 
         return upcoming_exams
 
-    def _get_progress(self, submissions) -> list:
-        """과목별 진행률"""
+    def _get_progress(self, submissions_list: list, subject_total_exams_dict: dict) -> list:
+        """
+        과목별 진행률
+
+        Args:
+            submissions_list: 제출 내역 목록 (재사용)
+            subject_total_exams_dict: 과목별 전체 시험 수 dictionary (재사용, N+1 방지)
+        """
         progress = []
-        subject_stats = submissions.values('exam__subject__subject_name').annotate(
-            completed=Count('id')
-        )
 
-        for stat in subject_stats:
-            if stat['exam__subject__subject_name']:
-                # 해당 과목의 전체 시험 수
-                total_in_subject = ExamStudentsInfo.objects.filter(
-                    student=self.student_info,
-                    exam__subject__subject_name=stat['exam__subject__subject_name']
-                ).count()
+        # Python에서 과목별 완료 수 계산 (DB query 절약)
+        subject_completed = {}
+        for sub in submissions_list:
+            if sub.exam and sub.exam.subject:
+                subject_name = sub.exam.subject.subject_name
+                subject_completed[subject_name] = subject_completed.get(subject_name, 0) + 1
 
-                if total_in_subject > 0:
-                    pct = round((stat['completed'] / total_in_subject) * 100)
-                    progress.append({
-                        'subject': stat['exam__subject__subject_name'],
-                        'progress_percentage': pct,
-                        'completed_lectures': stat['completed'],
-                        'total_lectures': total_in_subject,
-                    })
+        # 과목별 진행률 계산
+        for subject_name, completed in subject_completed.items():
+            total_in_subject = subject_total_exams_dict.get(subject_name, 0)
+
+            if total_in_subject > 0:
+                pct = round((completed / total_in_subject) * 100)
+                progress.append({
+                    'subject': subject_name,
+                    'progress_percentage': pct,
+                    'completed_lectures': completed,
+                    'total_lectures': total_in_subject,
+                })
 
         return progress
 
