@@ -292,42 +292,72 @@ class ExamTakingViewSet(viewsets.ViewSet):
                     if isinstance(record, dict)
                 ]
 
-        # 자동 채점
+        # 자동 채점 (N+1 쿼리 최적화)
         total_score = 0
         detailed_records = {}
 
+        # Bulk 조회: 모든 필요한 데이터를 한 번에 가져오기
+        question_ids = [answer['question_id'] for answer in answers]
+
+        # 1. 문제 정보 bulk 조회
+        questions_dict = {
+            q.id: q for q in TestQuestionInfo.objects.filter(id__in=question_ids)
+        }
+
+        # 2. 시험지-문제 매핑 정보 bulk 조회
+        paper_questions_dict = {
+            pq.test_question_id: pq
+            for pq in TestPaperTestQ.objects.filter(
+                test_paper=test_score.test_paper,
+                test_question_id__in=question_ids
+            )
+        }
+
+        # 3. 정답 옵션 정보 bulk 조회
+        correct_options_dict = {
+            opt.test_question_id: opt
+            for opt in OptionInfo.objects.filter(
+                test_question_id__in=question_ids,
+                is_right=True
+            )
+        }
+
+        # 답안 채점
         for answer_item in answers:
             question_id = answer_item['question_id']
             user_answer = answer_item.get('answer', '')
+            selected_options = answer_item.get('selected_options', [])
 
-            try:
-                question = TestQuestionInfo.objects.get(id=question_id)
-                paper_question = TestPaperTestQ.objects.get(
-                    test_paper=test_score.test_paper, test_question=question
-                )
-                question_score = paper_question.score
+            # Dict에서 조회
+            question = questions_dict.get(question_id)
+            paper_question = paper_questions_dict.get(question_id)
 
-                # 채점
-                is_correct = False
-                if question.tq_type in ['xz', 'pd']:  # 객관식, OX
-                    try:
-                        correct_option = OptionInfo.objects.get(test_question=question, is_right=True)
-                        is_correct = str(user_answer) == str(correct_option.id)
-                    except OptionInfo.DoesNotExist:
-                        is_correct = False
-
-                earned_score = question_score if is_correct else 0
-                total_score += earned_score
-
-                detailed_records[str(question_id)] = {
-                    'answer': user_answer,
-                    'is_correct': is_correct,
-                    'score': earned_score,
-                    'max_score': question_score,
-                }
-
-            except (TestQuestionInfo.DoesNotExist, TestPaperTestQ.DoesNotExist):
+            if not question or not paper_question:
                 continue
+
+            question_score = paper_question.score
+
+            # 채점
+            is_correct = False
+            if question.tq_type in ['xz', 'pd']:  # 객관식, OX
+                correct_option = correct_options_dict.get(question_id)
+                if correct_option:
+                    # Frontend에서 selected_options 배열로 보내는 경우 확인
+                    if selected_options:
+                        is_correct = correct_option.id in selected_options
+                    else:
+                        # 기존 방식 (answer 필드에 직접 ID가 있는 경우)
+                        is_correct = str(user_answer) == str(correct_option.id)
+
+            earned_score = question_score if is_correct else 0
+            total_score += earned_score
+
+            detailed_records[str(question_id)] = {
+                'answer': user_answer,
+                'is_correct': is_correct,
+                'score': earned_score,
+                'max_score': question_score,
+            }
 
         # 소요 시간 계산
         time_used = int((now - test_score.start_time).total_seconds() / 60)

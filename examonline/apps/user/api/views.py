@@ -2,6 +2,7 @@
 User API views.
 """
 
+from django.conf import settings
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
@@ -34,8 +35,29 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     JWT Token 발급 endpoint.
 
     username과 password로 access token과 refresh token을 발급받습니다.
+
+    보안 강화:
+    - Refresh token은 HttpOnly Cookie로 전송 (XSS 방지)
+    - Access token은 응답 body에 포함 (기존 방식 유지)
     """
     serializer_class = CustomTokenObtainPairSerializer
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        """
+        Refresh token을 HttpOnly Cookie로 설정
+        """
+        if response.status_code == 200 and 'refresh' in response.data:
+            # Refresh token을 HttpOnly Cookie로 설정
+            refresh_token = response.data.pop('refresh')
+            response.set_cookie(
+                key='refresh_token',
+                value=refresh_token,
+                httponly=True,  # JavaScript 접근 차단 (XSS 방지)
+                secure=not settings.DEBUG,  # Production: True, Development: False
+                samesite='Lax', # CSRF 방어
+                max_age=60 * 60 * 24 * 7,  # 7일
+            )
+        return super().finalize_response(request, response, *args, **kwargs)
 
 
 @extend_schema(tags=['auth'])
@@ -43,9 +65,36 @@ class CustomTokenRefreshView(TokenRefreshView):
     """
     JWT Token 갱신 endpoint.
 
-    refresh token으로 새로운 access token을 발급받습니다.
+    HttpOnly Cookie에서 refresh token을 읽어 새로운 access token을 발급합니다.
+    하위 호환성: request body에 refresh token이 있으면 우선 사용
     """
-    pass
+
+    def post(self, request, *args, **kwargs):
+        """
+        Cookie 또는 request body에서 refresh token 읽기
+        """
+        # Cookie에서 refresh token 읽기 (우선순위: body > cookie)
+        if 'refresh' not in request.data and 'refresh_token' in request.COOKIES:
+            # MutableQueryDict 생성하여 Cookie의 refresh token 추가
+            data = request.data.copy()
+            data['refresh'] = request.COOKIES['refresh_token']
+            request._full_data = data
+
+        response = super().post(request, *args, **kwargs)
+
+        # 새로운 refresh token이 있으면 Cookie 업데이트
+        if response.status_code == 200 and 'refresh' in response.data:
+            refresh_token = response.data.pop('refresh')
+            response.set_cookie(
+                key='refresh_token',
+                value=refresh_token,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite='Lax',
+                max_age=60 * 60 * 24 * 7,
+            )
+
+        return response
 
 
 @extend_schema(tags=['auth'])

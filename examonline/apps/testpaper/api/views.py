@@ -105,8 +105,13 @@ class TestPaperViewSet(viewsets.ModelViewSet):
     def preview(self, request, pk=None):
         """
         시험지 미리보기 (모든 문제 + 옵션 포함).
+        N+1 쿼리 방지: 옵션 정보까지 prefetch
         """
-        paper = self.get_object()
+        # 옵션 정보까지 포함하여 조회 (N+1 쿼리 방지)
+        paper = TestPaperInfo.objects.prefetch_related(
+            'testpapertestq_set__test_question__optioninfo_set'
+        ).get(pk=pk)
+
         serializer = TestPaperDetailSerializer(paper)
 
         # 문제별 옵션 정보 추가

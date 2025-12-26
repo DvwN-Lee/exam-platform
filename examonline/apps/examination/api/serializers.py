@@ -444,6 +444,12 @@ class AnswerItemSerializer(serializers.Serializer):
 
     question_id = serializers.IntegerField(help_text='문제 ID')
     answer = serializers.CharField(allow_blank=True, required=False, help_text='답안 (객관식: 옵션 ID, 주관식: 텍스트)')
+    selected_options = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        allow_empty=True,
+        help_text='선택한 옵션 ID 목록 (객관식)'
+    )
 
 
 class AnswerSubmissionSerializer(serializers.Serializer):

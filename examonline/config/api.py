@@ -74,11 +74,13 @@ SPECTACULAR_SETTINGS = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True  # HttpOnly Cookie 사용을 위해 필수
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -100,3 +102,8 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# Session Cookie 설정 (HttpOnly Cookie 보안 강화)
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Development: False, Production: True
+SESSION_COOKIE_SAMESITE = 'Lax'
