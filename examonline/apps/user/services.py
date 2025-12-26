@@ -29,18 +29,28 @@ class StudentDashboardService:
         """
         대시보드 전체 데이터 조회.
 
+        Query 최적화: 공통 데이터를 한 번만 조회하여 재사용
+
         Returns:
             dict: 통계, 성적 추이, 예정 시험, 진행률, 최근 제출 내역
         """
-        # 제출된 시험 기록 조회 (성적 계산에 사용)
+        # 1. 공통 데이터 조회 (Query Reuse)
         submissions = self._get_submissions()
 
-        # 각 섹션 데이터 조회
-        statistics = self._get_statistics(submissions)
-        score_trend = self._get_score_trend(submissions)
-        upcoming_exams = self._get_upcoming_exams()
+        # 2. enrolled_exam_ids 한 번만 조회 (여러 메서드에서 재사용)
+        enrolled_exam_ids = list(ExamStudentsInfo.objects.filter(
+            student=self.student_info
+        ).values_list('exam_id', flat=True))
+
+        # 3. recent_submissions_list 한 번만 조회 (score_trend, recent_submissions에서 재사용)
+        recent_submissions_list = list(submissions.order_by('-submit_time')[:5])
+
+        # 4. 조회된 데이터를 각 메서드에 전달하여 재사용
+        statistics = self._get_statistics(submissions, enrolled_exam_ids)
+        score_trend = self._get_score_trend(recent_submissions_list)
+        upcoming_exams = self._get_upcoming_exams(enrolled_exam_ids)
         progress = self._get_progress(submissions)
-        recent_submissions = self._get_recent_submissions(submissions)
+        recent_submissions = self._get_recent_submissions(recent_submissions_list)
 
         return {
             'statistics': statistics,
@@ -68,8 +78,14 @@ class StudentDashboardService:
             )
         )
 
-    def _get_statistics(self, submissions) -> dict:
-        """통계 데이터 계산"""
+    def _get_statistics(self, submissions, enrolled_exam_ids: list) -> dict:
+        """
+        통계 데이터 계산
+
+        Args:
+            submissions: 제출 내역 QuerySet
+            enrolled_exam_ids: 등록된 시험 ID 목록 (재사용)
+        """
         total_exams_taken = submissions.count()
 
         if total_exams_taken > 0:
@@ -101,11 +117,7 @@ class StudentDashboardService:
             total_correct = 0
             total_questions = 0
 
-        # 예정된 시험 수 (별도 조회)
-        enrolled_exam_ids = ExamStudentsInfo.objects.filter(
-            student=self.student_info
-        ).values_list('exam_id', flat=True)
-
+        # 예정된 시험 수 (전달받은 enrolled_exam_ids 재사용)
         upcoming_count = ExaminationInfo.objects.filter(
             id__in=enrolled_exam_ids,
             start_time__gte=self.now
@@ -120,12 +132,16 @@ class StudentDashboardService:
             'upcoming_exams_count': upcoming_count,
         }
 
-    def _get_score_trend(self, submissions) -> list:
-        """성적 추이 (최근 5개 시험)"""
-        score_trend = []
-        recent_scores = submissions.order_by('-submit_time')[:5]
+    def _get_score_trend(self, recent_submissions_list: list) -> list:
+        """
+        성적 추이 (최근 5개 시험)
 
-        for sub in recent_scores:
+        Args:
+            recent_submissions_list: 최근 제출 내역 목록 (재사용)
+        """
+        score_trend = []
+
+        for sub in recent_submissions_list:
             if sub.exam and sub.test_paper:
                 percentage = round(
                     (sub.test_score / sub.test_paper.total_score) * 100
@@ -140,13 +156,13 @@ class StudentDashboardService:
 
         return score_trend
 
-    def _get_upcoming_exams(self) -> list:
-        """예정된 시험 목록 (최대 10개)"""
-        # 학생에게 할당된 시험 ID
-        enrolled_exam_ids = ExamStudentsInfo.objects.filter(
-            student=self.student_info
-        ).values_list('exam_id', flat=True)
+    def _get_upcoming_exams(self, enrolled_exam_ids: list) -> list:
+        """
+        예정된 시험 목록 (최대 10개)
 
+        Args:
+            enrolled_exam_ids: 등록된 시험 ID 목록 (재사용)
+        """
         # Upcoming exams 조회 (N+1 쿼리 방지)
         upcoming_exams_qs = ExaminationInfo.objects.filter(
             id__in=enrolled_exam_ids,
@@ -227,12 +243,16 @@ class StudentDashboardService:
 
         return progress
 
-    def _get_recent_submissions(self, submissions) -> list:
-        """최근 제출 내역 (최근 5개)"""
-        recent_submissions = []
-        recent_scores = submissions.order_by('-submit_time')[:5]
+    def _get_recent_submissions(self, recent_submissions_list: list) -> list:
+        """
+        최근 제출 내역 (최근 5개)
 
-        for sub in recent_scores:
+        Args:
+            recent_submissions_list: 최근 제출 내역 목록 (재사용)
+        """
+        recent_submissions = []
+
+        for sub in recent_submissions_list:
             if sub.exam:
                 exam = sub.exam
                 # prefetch된 시험지 조회

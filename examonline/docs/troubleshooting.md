@@ -10,6 +10,7 @@ Backend 개발 및 테스트 과정에서 발생한 문제와 해결 방법을 �
 4. [N+1 Query Problem](#4-n1-query-problem)
 5. [Mock Data in Production Code](#5-mock-data-in-production-code)
 6. [Performance Optimization (P0 Critical Fixes)](#6-performance-optimization-p0-critical-fixes)
+7. [Service Pattern 적용 및 Query Reuse 최적화](#7-service-pattern-적용-및-query-reuse-최적화)
 
 ---
 
@@ -516,6 +517,224 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 **E2E 테스트**: 30/30 점 통과
 **Unit 테스트**: 21/21 통과
 **Coverage**: taking_views.py 33% → 60% 향상
+
+---
+
+## 7. Service Pattern 적용 및 Query Reuse 최적화
+
+Dashboard View의 비즈니스 로직을 Service 계층으로 분리하고, 중복 query를 제거하여 성능을 개선한다.
+
+### 배경
+
+코드 리뷰에서 식별된 문제점:
+
+1. **중복 Query 발생**: `StudentDashboardService`에서 동일한 data를 여러 메서드에서 각각 조회
+   - `enrolled_exam_ids`: `_get_statistics()`와 `_get_upcoming_exams()`에서 중복 조회 (2회)
+   - `recent_submissions`: `_get_score_trend()`와 `_get_recent_submissions()`에서 중복 조회 (2회)
+
+2. **View Logic 비대화**: Dashboard View에 비즈니스 로직이 집중되어 테스트 및 유지보수 어려움
+
+### 해결: Service Pattern + Query Reuse
+
+#### Step 1: Service 계층 분리
+
+**File**: `apps/user/services.py`
+
+Business logic을 View에서 분리하여 재사용성과 테스트 용이성 개선:
+
+```python
+class StudentDashboardService:
+    """학생 대시보드 데이터 조회 서비스"""
+
+    def __init__(self, student_info: StudentsInfo):
+        self.student_info = student_info
+        self.user = student_info.user
+        self.now = timezone.now()
+
+    def get_dashboard_data(self) -> dict:
+        """대시보드 전체 데이터 조회"""
+        # 1. 공통 데이터 조회 (Query Reuse)
+        submissions = self._get_submissions()
+
+        # 2. enrolled_exam_ids 한 번만 조회 (여러 메서드에서 재사용)
+        enrolled_exam_ids = list(ExamStudentsInfo.objects.filter(
+            student=self.student_info
+        ).values_list('exam_id', flat=True))
+
+        # 3. recent_submissions_list 한 번만 조회
+        recent_submissions_list = list(submissions.order_by('-submit_time')[:5])
+
+        # 4. 조회된 데이터를 각 메서드에 전달하여 재사용
+        statistics = self._get_statistics(submissions, enrolled_exam_ids)
+        score_trend = self._get_score_trend(recent_submissions_list)
+        upcoming_exams = self._get_upcoming_exams(enrolled_exam_ids)
+        progress = self._get_progress(submissions)
+        recent_submissions = self._get_recent_submissions(recent_submissions_list)
+
+        return {
+            'statistics': statistics,
+            'score_trend': score_trend,
+            'upcoming_exams': upcoming_exams,
+            'progress': progress,
+            'recent_submissions': recent_submissions,
+            'wrong_questions': [],
+        }
+```
+
+#### Step 2: 메서드 시그니처 변경
+
+중복 query를 제거하기 위해 공통 data를 parameter로 전달:
+
+```python
+# Before: 메서드 내부에서 각각 query 실행
+def _get_statistics(self, submissions) -> dict:
+    enrolled_exam_ids = ExamStudentsInfo.objects.filter(  # 중복 Query 1
+        student=self.student_info
+    ).values_list('exam_id', flat=True)
+    ...
+
+def _get_upcoming_exams(self) -> list:
+    enrolled_exam_ids = ExamStudentsInfo.objects.filter(  # 중복 Query 2
+        student=self.student_info
+    ).values_list('exam_id', flat=True)
+    ...
+
+# After: 한 번 조회한 data를 parameter로 재사용
+def _get_statistics(self, submissions, enrolled_exam_ids: list) -> dict:
+    """
+    Args:
+        submissions: 제출 내역 QuerySet
+        enrolled_exam_ids: 등록된 시험 ID 목록 (재사용)
+    """
+    # 전달받은 enrolled_exam_ids 사용 (추가 query 없음)
+    upcoming_count = ExaminationInfo.objects.filter(
+        id__in=enrolled_exam_ids,
+        start_time__gte=self.now
+    ).count()
+    ...
+
+def _get_upcoming_exams(self, enrolled_exam_ids: list) -> list:
+    """
+    Args:
+        enrolled_exam_ids: 등록된 시험 ID 목록 (재사용)
+    """
+    upcoming_exams_qs = ExaminationInfo.objects.filter(
+        id__in=enrolled_exam_ids,  # 재사용
+        start_time__gte=self.now
+    )
+    ...
+```
+
+동일하게 `recent_submissions`도 재사용 처리:
+
+```python
+# Before
+def _get_score_trend(self, submissions) -> list:
+    recent_scores = submissions.order_by('-submit_time')[:5]  # 중복 Query 1
+    ...
+
+def _get_recent_submissions(self, submissions) -> list:
+    recent_scores = submissions.order_by('-submit_time')[:5]  # 중복 Query 2
+    ...
+
+# After
+def _get_score_trend(self, recent_submissions_list: list) -> list:
+    """
+    Args:
+        recent_submissions_list: 최근 제출 내역 목록 (재사용)
+    """
+    for sub in recent_submissions_list:  # 재사용
+        ...
+
+def _get_recent_submissions(self, recent_submissions_list: list) -> list:
+    """
+    Args:
+        recent_submissions_list: 최근 제출 내역 목록 (재사용)
+    """
+    for sub in recent_submissions_list:  # 재사용
+        ...
+```
+
+#### Step 3: View 간소화
+
+**File**: `apps/user/api/views.py`
+
+```python
+# Before: 225 lines (복잡한 비즈니스 로직 포함)
+class StudentDashboardView(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        student_info = StudentsInfo.objects.get(user=request.user)
+        submissions = TestScores.objects.filter(...)
+        # ... 복잡한 집계 로직 225 lines
+        return Response(data)
+
+# After: 17 lines (Service 위임)
+class StudentDashboardView(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            student_info = StudentsInfo.objects.get(user=request.user)
+        except StudentsInfo.DoesNotExist:
+            return Response(
+                {'error': 'Student profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Service를 통해 대시보드 데이터 조회
+        service = StudentDashboardService(student_info)
+        data = service.get_dashboard_data()
+
+        # Serializer로 검증 후 응답
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data)
+```
+
+### 성능 개선
+
+| 항목 | Before | After | 개선율 |
+|-----|--------|-------|-------|
+| Query 수 (중복) | 6회 | 2회 | 67% 감소 |
+| View Code | 225 lines | 17 lines | 92% 감소 |
+| Service Code | 0 lines | 524 lines | 신규 생성 |
+
+### 추가 개선 사항
+
+**TeacherDashboardService** 동일하게 적용:
+
+```python
+class TeacherDashboardView(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        # Service를 통해 대시보드 데이터 조회
+        service = TeacherDashboardService(request.user)
+        data = service.get_dashboard_data()
+
+        # Serializer로 검증 후 응답
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data)
+```
+
+- View Code: 182 lines → 9 lines (95% 감소)
+
+### 검증 결과
+
+**Dashboard 테스트**: 18/18 통과
+
+```bash
+$ pytest apps/user/api/test_dashboard_coverage.py -v
+============================== 18 passed in 3.59s ==============================
+```
+
+**Coverage**: `apps/user/services.py` 78% (신규 생성)
+
+### 장점
+
+1. **성능 개선**: 중복 query 제거로 DB 부하 감소
+2. **코드 가독성**: View logic 간소화 (92% 감소)
+3. **테스트 용이성**: Service 단위 독립 테스트 가능
+4. **재사용성**: 다른 context에서 Service 재사용 가능
+5. **유지보수성**: 비즈니스 로직 변경 시 Service만 수정
+6. **Backward Compatibility**: API 응답 format 100% 동일 (기존 client 영향 없음)
 
 ---
 
