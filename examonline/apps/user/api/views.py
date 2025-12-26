@@ -26,7 +26,7 @@ from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestPaperInfo, TestScores
 from testquestion.models import TestQuestionInfo, OptionInfo
 from django.utils import timezone
-from django.db.models import Count, Q, Avg
+from django.db.models import Count, Q, Avg, Prefetch
 
 
 @extend_schema(tags=['auth'])
@@ -220,18 +220,26 @@ class StudentDashboardView(generics.RetrieveAPIView):
         ).values_list('exam_id', flat=True)
 
         # Upcoming exams 조회 (학생에게 할당된 시험 중 미래에 시작하는 것)
+        # N+1 쿼리 방지: ExamPaperInfo prefetch
         upcoming_exams_qs = ExaminationInfo.objects.filter(
             id__in=enrolled_exam_ids,
             start_time__gte=now
-        ).select_related('create_user', 'subject').order_by('start_time')
+        ).select_related('create_user', 'subject').prefetch_related(
+            Prefetch(
+                'exampaperinfo_set',
+                queryset=ExamPaperInfo.objects.select_related(
+                    'paper__subject', 'paper__create_user'
+                ),
+                to_attr='prefetched_exam_papers'
+            )
+        ).order_by('start_time')
 
         # Upcoming exams 데이터 직렬화
         upcoming_exams = []
         for exam in upcoming_exams_qs[:10]:  # 최대 10개
-            # 첫 번째 연결된 시험지 조회
-            exam_paper = ExamPaperInfo.objects.filter(exam=exam).select_related(
-                'paper', 'paper__subject', 'paper__create_user'
-            ).first()
+            # prefetch된 시험지 조회 (추가 DB 쿼리 없음)
+            exam_papers = getattr(exam, 'prefetched_exam_papers', [])
+            exam_paper = exam_papers[0] if exam_papers else None
 
             if exam_paper and exam_paper.paper:
                 paper = exam_paper.paper
@@ -267,10 +275,19 @@ class StudentDashboardView(generics.RetrieveAPIView):
 
         # 실제 통계 데이터 계산
         # 제출된 시험 기록 조회
+        # N+1 쿼리 방지: exam의 ExamPaperInfo prefetch
         submissions = TestScores.objects.filter(
             user=student_info,
             is_submitted=True
-        ).select_related('exam', 'exam__subject', 'test_paper')
+        ).select_related('exam', 'exam__subject', 'exam__create_user', 'test_paper').prefetch_related(
+            Prefetch(
+                'exam__exampaperinfo_set',
+                queryset=ExamPaperInfo.objects.select_related(
+                    'paper__subject', 'paper__create_user'
+                ),
+                to_attr='prefetched_exam_papers'
+            )
+        )
 
         total_exams_taken = submissions.count()
 
@@ -320,9 +337,9 @@ class StudentDashboardView(generics.RetrieveAPIView):
         for sub in recent_scores[:5]:
             if sub.exam:
                 exam = sub.exam
-                exam_paper = ExamPaperInfo.objects.filter(exam=exam).select_related(
-                    'paper', 'paper__subject', 'paper__create_user'
-                ).first()
+                # prefetch된 시험지 조회 (추가 DB 쿼리 없음)
+                exam_papers = getattr(exam, 'prefetched_exam_papers', [])
+                exam_paper = exam_papers[0] if exam_papers else None
 
                 testpaper_data = None
                 if exam_paper and exam_paper.paper:
@@ -489,16 +506,25 @@ class TeacherDashboardView(generics.RetrieveAPIView):
             })
 
         # 3. 진행 중/예정된 시험 조회 (최근 5개)
+        # N+1 쿼리 방지: ExamPaperInfo prefetch
         ongoing_exams_qs = ExaminationInfo.objects.filter(
             create_user=user,
             end_time__gte=now  # 종료되지 않은 시험
-        ).select_related('subject', 'create_user').order_by('start_time')[:5]
+        ).select_related('subject', 'create_user').prefetch_related(
+            Prefetch(
+                'exampaperinfo_set',
+                queryset=ExamPaperInfo.objects.select_related(
+                    'paper__subject', 'paper__create_user'
+                ),
+                to_attr='prefetched_exam_papers'
+            )
+        ).order_by('start_time')[:5]
 
         ongoing_exams = []
         for exam in ongoing_exams_qs:
-            exam_paper = ExamPaperInfo.objects.filter(exam=exam).select_related(
-                'paper', 'paper__subject', 'paper__create_user'
-            ).first()
+            # prefetch된 시험지 조회 (추가 DB 쿼리 없음)
+            exam_papers = getattr(exam, 'prefetched_exam_papers', [])
+            exam_paper = exam_papers[0] if exam_papers else None
 
             testpaper_data = None
             if exam_paper and exam_paper.paper:

@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestScores, TestPaperTestQ
 from testquestion.models import TestQuestionInfo, OptionInfo
+from user.models import StudentsInfo
 
 from .serializers import (
     ExamInfoSerializer,
@@ -42,7 +43,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
         """사용자의 학생 정보 조회"""
         try:
             return user.studentsinfo
-        except Exception:
+        except StudentsInfo.DoesNotExist:
             return None
 
     @action(detail=False, methods=['get'], url_path='available')

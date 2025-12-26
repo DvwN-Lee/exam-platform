@@ -69,7 +69,7 @@ class ExaminationViewSet(viewsets.ModelViewSet):
             try:
                 student_info = user.studentsinfo
                 return base_qs.filter(examstudentsinfo__student=student_info)
-            except Exception:  # pragma: no cover - Defensive: studentsinfo should exist for student user_type
+            except StudentsInfo.DoesNotExist:  # pragma: no cover - Defensive: studentsinfo should exist for student user_type
                 return base_qs.none()  # pragma: no cover
 
         # 교사: 모든 시험
@@ -134,11 +134,18 @@ class ExaminationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 학생 등록
+        # 학생 등록 (bulk_create로 성능 개선)
         with transaction.atomic():
             students = StudentsInfo.objects.filter(id__in=student_ids)
-            for student in students:
-                ExamStudentsInfo.objects.create(exam=exam, student=student)
+
+            # ExamStudentsInfo 객체 리스트 생성
+            enrollments = [
+                ExamStudentsInfo(exam=exam, student=student)
+                for student in students
+            ]
+
+            # 한 번의 쿼리로 모두 생성
+            ExamStudentsInfo.objects.bulk_create(enrollments)
 
             # student_num 업데이트
             exam.student_num = ExamStudentsInfo.objects.filter(exam=exam).count()
