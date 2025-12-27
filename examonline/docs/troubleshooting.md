@@ -840,6 +840,106 @@ $ pytest apps/user/api/test_dashboard_coverage.py -v
 6. **확장성**: Python 기반 계산으로 DB 부하 없이 복잡한 집계 가능
 7. **Backward Compatibility**: API 응답 format 100% 동일 (기존 client 영향 없음)
 
+### Code Refactoring: 중복 코드 제거
+
+2차 최적화 후 Gemini Code Review에서 추가로 식별된 code duplication 제거:
+
+#### 문제점: Testpaper 직렬화 코드 중복
+
+**Before**: `_get_upcoming_exams()`와 `_get_recent_submissions()`에서 동일한 직렬화 로직 중복
+
+```python
+# _get_upcoming_exams() - 15 lines
+'testpaper': {
+    'id': paper.id,
+    'name': paper.name,
+    'subject': {
+        'id': paper.subject.id,
+        'subject_name': paper.subject.subject_name,
+    } if paper.subject else None,
+    'question_count': paper.question_count,
+    'creat_user': {...},
+    'questions': [],
+    'created_at': paper.create_time.isoformat() if paper.create_time else None,
+    'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
+}
+
+# _get_recent_submissions() - 15 lines (동일한 코드 반복)
+testpaper_data = {
+    'id': paper.id,
+    'name': paper.name,
+    ...  # 위와 동일
+}
+```
+
+#### 해결: Helper Method 추출
+
+**DRY (Don't Repeat Yourself) 원칙 적용**:
+
+```python
+def _serialize_testpaper(self, paper) -> dict:
+    """
+    TestPaperInfo 객체를 dictionary로 직렬화
+
+    Args:
+        paper: TestPaperInfo 객체
+
+    Returns:
+        dict: 직렬화된 testpaper data
+    """
+    if not paper:
+        return None
+
+    return {
+        'id': paper.id,
+        'name': paper.name,
+        'subject': {
+            'id': paper.subject.id,
+            'subject_name': paper.subject.subject_name,
+        } if paper.subject else None,
+        'question_count': paper.question_count,
+        'creat_user': {
+            'id': paper.create_user.id,
+            'nick_name': paper.create_user.nick_name,
+        } if paper.create_user else None,
+        'questions': [],
+        'created_at': paper.create_time.isoformat() if paper.create_time else None,
+        'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
+    }
+```
+
+**After**: Helper method 사용
+
+```python
+# _get_upcoming_exams()
+'testpaper': self._serialize_testpaper(exam_paper.paper),
+
+# _get_recent_submissions()
+testpaper_data = self._serialize_testpaper(exam_paper.paper)
+```
+
+#### 개선 효과
+
+| 항목 | Before | After | 개선 |
+|-----|--------|-------|------|
+| 중복 코드 | 30 lines | 0 lines | **100% 제거** |
+| Helper method | 0개 | 1개 | 신규 생성 |
+| 유지보수 포인트 | 2곳 | 1곳 | 50% 감소 |
+
+#### 장점
+
+1. **DRY 원칙 준수**: 중복 코드 완전 제거
+2. **유지보수성**: testpaper 직렬화 로직 변경 시 한 곳만 수정
+3. **일관성**: 동일한 로직 사용으로 버그 발생 가능성 감소
+4. **테스트 용이성**: helper method 단위 테스트 가능
+5. **가독성**: 코드 의도가 명확하게 표현됨
+
+#### 검증
+
+**Dashboard 테스트**: 18/18 통과 ✅
+**API 응답**: 100% 동일 (Backward Compatibility 유지) ✅
+**Gemini 검증**: 모든 항목 통과 ✅
+
 ---
 
 ## 참고 문서
