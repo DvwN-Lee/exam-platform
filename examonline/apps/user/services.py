@@ -88,6 +88,36 @@ class StudentDashboardService:
             )
         )
 
+    def _serialize_testpaper(self, paper) -> dict:
+        """
+        TestPaperInfo 객체를 dictionary로 직렬화
+
+        Args:
+            paper: TestPaperInfo 객체
+
+        Returns:
+            dict: 직렬화된 testpaper data
+        """
+        if not paper:
+            return None
+
+        return {
+            'id': paper.id,
+            'name': paper.name,
+            'subject': {
+                'id': paper.subject.id,
+                'subject_name': paper.subject.subject_name,
+            } if paper.subject else None,
+            'question_count': paper.question_count,
+            'creat_user': {
+                'id': paper.create_user.id,
+                'nick_name': paper.create_user.nick_name,
+            } if paper.create_user else None,
+            'questions': [],
+            'created_at': paper.create_time.isoformat() if paper.create_time else None,
+            'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
+        }
+
     def _get_statistics(self, submissions_list: list, enrolled_exam_ids: list) -> dict:
         """
         통계 데이터 계산
@@ -194,26 +224,10 @@ class StudentDashboardService:
             exam_paper = exam_papers[0] if exam_papers else None
 
             if exam_paper and exam_paper.paper:
-                paper = exam_paper.paper
                 upcoming_exams.append({
                     'id': exam.id,
                     'exam_name': exam.name,
-                    'testpaper': {
-                        'id': paper.id,
-                        'name': paper.name,
-                        'subject': {
-                            'id': paper.subject.id,
-                            'subject_name': paper.subject.subject_name,
-                        } if paper.subject else None,
-                        'question_count': paper.question_count,
-                        'creat_user': {
-                            'id': paper.create_user.id,
-                            'nick_name': paper.create_user.nick_name,
-                        } if paper.create_user else None,
-                        'questions': [],
-                        'created_at': paper.create_time.isoformat() if paper.create_time else None,
-                        'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
-                    },
+                    'testpaper': self._serialize_testpaper(exam_paper.paper),
                     'start_time': exam.start_time.isoformat(),
                     'end_time': exam.end_time.isoformat() if exam.end_time else None,
                     'is_public': True,
@@ -275,25 +289,10 @@ class StudentDashboardService:
                 exam_papers = getattr(exam, 'prefetched_exam_papers', [])
                 exam_paper = exam_papers[0] if exam_papers else None
 
+                # Helper method 사용하여 testpaper 직렬화
                 testpaper_data = None
                 if exam_paper and exam_paper.paper:
-                    paper = exam_paper.paper
-                    testpaper_data = {
-                        'id': paper.id,
-                        'name': paper.name,
-                        'subject': {
-                            'id': paper.subject.id,
-                            'subject_name': paper.subject.subject_name,
-                        } if paper.subject else None,
-                        'question_count': paper.question_count,
-                        'creat_user': {
-                            'id': paper.create_user.id,
-                            'nick_name': paper.create_user.nick_name,
-                        } if paper.create_user else None,
-                        'questions': [],
-                        'created_at': paper.create_time.isoformat() if paper.create_time else None,
-                        'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
-                    }
+                    testpaper_data = self._serialize_testpaper(exam_paper.paper)
 
                 recent_submissions.append({
                     'id': sub.id,
