@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { examinationApi, testPaperApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,11 +63,11 @@ export function ExaminationForm({
   const createMutation = useMutation({
     mutationFn: examinationApi.createExamination,
     onSuccess: () => {
-      alert('시험이 생성되었습니다.')
+      toast.success('시험이 생성되었습니다.')
       navigate({ to: '/examinations' })
     },
     onError: () => {
-      alert('시험 생성에 실패했습니다.')
+      toast.error('시험 생성에 실패했습니다.')
       setIsSubmitting(false)
     },
   })
@@ -75,11 +76,11 @@ export function ExaminationForm({
     mutationFn: (data: ExaminationFormData) =>
       examinationApi.updateExamination(examinationId!, data),
     onSuccess: () => {
-      alert('시험이 수정되었습니다.')
+      toast.success('시험이 수정되었습니다.')
       navigate({ to: '/examinations' })
     },
     onError: () => {
-      alert('시험 수정에 실패했습니다.')
+      toast.error('시험 수정에 실패했습니다.')
       setIsSubmitting(false)
     },
   })
@@ -93,7 +94,7 @@ export function ExaminationForm({
     )
 
     if (!selectedTestPaper) {
-      alert('선택한 시험지를 찾을 수 없습니다.')
+      toast.error('선택한 시험지를 찾을 수 없습니다.')
       setIsSubmitting(false)
       return
     }
@@ -133,7 +134,7 @@ export function ExaminationForm({
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="space-y-6">
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">

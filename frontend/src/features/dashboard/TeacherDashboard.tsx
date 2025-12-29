@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
 import { dashboardApi } from '@/api/dashboard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { LoadingPage } from '@/components/ui/loading'
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from 'recharts'
 import {
   FileText,
@@ -35,8 +37,12 @@ import {
   UserPlus,
   Clock,
 } from 'lucide-react'
+import { StaggerContainer, StaggerItem } from '@/components/animation'
+import { cardHoverVariants } from '@/lib/animations'
+import { CHART_COLORS, CHART_STYLES } from '@/constants/theme'
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
+// Tooltip 공통 스타일 (리렌더링 방지를 위해 컴포넌트 외부 선언)
+const tooltipStyle = CHART_STYLES.tooltip
 
 // Mock data for new sections (이 부분은 실제 API 연동 시 제거)
 const mockExamResults = [
@@ -139,22 +145,18 @@ export function TeacherDashboard() {
   })
 
   if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex h-full items-center justify-center">
-          <div>로딩 중...</div>
-        </div>
-      </DashboardLayout>
-    )
+    return <LoadingPage message="대시보드를 불러오는 중..." fullScreen={false} />
   }
 
   if (!dashboard) {
     return (
-      <DashboardLayout>
-        <div className="flex h-full items-center justify-center">
-          <div>대시보드 데이터를 불러올 수 없습니다.</div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-muted-foreground">
+            대시보드 데이터를 불러올 수 없습니다.
+          </p>
         </div>
-      </DashboardLayout>
+      </div>
     )
   }
 
@@ -182,8 +184,7 @@ export function TeacherDashboard() {
   ]
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">환영합니다, 박교수님</h1>
@@ -205,73 +206,101 @@ export function TeacherDashboard() {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
-            <div className="absolute right-4 top-4 text-primary/10">
-              <FileText className="h-16 w-16" />
-            </div>
-            <div className="relative">
-              <div className="text-sm font-medium text-muted-foreground">
-                생성한 문제
+        <StaggerContainer className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StaggerItem>
+            <motion.div
+              className="relative overflow-hidden rounded-lg border bg-card p-6"
+              initial="rest"
+              whileHover="hover"
+              variants={cardHoverVariants}
+            >
+              <div className="absolute right-4 top-4 text-primary/10">
+                <FileText className="h-16 w-16" />
               </div>
-              <div className="mt-2 text-3xl font-bold">
-                {dashboard.question_statistics.total_questions}
+              <div className="relative">
+                <div className="text-sm font-medium text-muted-foreground">
+                  생성한 문제
+                </div>
+                <div className="mt-2 text-3xl font-bold">
+                  {dashboard.question_statistics.total_questions}
+                </div>
+                <div className="mt-1 text-sm text-green-600 font-medium">
+                  ↑ 12개 증가
+                </div>
               </div>
-              <div className="mt-1 text-sm text-green-600 font-medium">
-                ↑ 12개 증가
-              </div>
-            </div>
-          </div>
+            </motion.div>
+          </StaggerItem>
 
-          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
-            <div className="absolute right-4 top-4 text-primary/10">
-              <Files className="h-16 w-16" />
-            </div>
-            <div className="relative">
-              <div className="text-sm font-medium text-muted-foreground">
-                시험지 수
+          <StaggerItem>
+            <motion.div
+              className="relative overflow-hidden rounded-lg border bg-card p-6"
+              initial="rest"
+              whileHover="hover"
+              variants={cardHoverVariants}
+            >
+              <div className="absolute right-4 top-4 text-primary/10">
+                <Files className="h-16 w-16" />
               </div>
-              <div className="mt-2 text-3xl font-bold text-primary">18</div>
-              <div className="mt-1 text-sm text-green-600 font-medium">
-                ↑ 3개 추가
+              <div className="relative">
+                <div className="text-sm font-medium text-muted-foreground">
+                  시험지 수
+                </div>
+                <div className="mt-2 text-3xl font-bold text-primary">18</div>
+                <div className="mt-1 text-sm text-green-600 font-medium">
+                  ↑ 3개 추가
+                </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </StaggerItem>
 
-          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
-            <div className="absolute right-4 top-4 text-primary/10">
-              <Users className="h-16 w-16" />
-            </div>
-            <div className="relative">
-              <div className="text-sm font-medium text-muted-foreground">
-                총 응시자
+          <StaggerItem>
+            <motion.div
+              className="relative overflow-hidden rounded-lg border bg-card p-6"
+              initial="rest"
+              whileHover="hover"
+              variants={cardHoverVariants}
+            >
+              <div className="absolute right-4 top-4 text-primary/10">
+                <Users className="h-16 w-16" />
               </div>
-              <div className="mt-2 text-3xl font-bold">
-                {dashboard.student_statistics.total_students}
+              <div className="relative">
+                <div className="text-sm font-medium text-muted-foreground">
+                  총 응시자
+                </div>
+                <div className="mt-2 text-3xl font-bold">
+                  {dashboard.student_statistics.total_students}
+                </div>
+                <div className="mt-1 text-sm text-green-600 font-medium">
+                  ↑ 156명 증가
+                </div>
               </div>
-              <div className="mt-1 text-sm text-green-600 font-medium">
-                ↑ 156명 증가
-              </div>
-            </div>
-          </div>
+            </motion.div>
+          </StaggerItem>
 
-          <div className="relative overflow-hidden rounded-lg border bg-card p-6">
-            <div className="absolute right-4 top-4 text-primary/10">
-              <TrendingUp className="h-16 w-16" />
-            </div>
-            <div className="relative">
-              <div className="text-sm font-medium text-muted-foreground">
-                평균 점수
+          <StaggerItem>
+            <motion.div
+              className="relative overflow-hidden rounded-lg border bg-card p-6"
+              initial="rest"
+              whileHover="hover"
+              variants={cardHoverVariants}
+            >
+              <div className="absolute right-4 top-4 text-primary/10">
+                <TrendingUp className="h-16 w-16" />
               </div>
-              <div className="mt-2 text-3xl font-bold text-green-600">
-                {dashboard.student_statistics.average_score.toFixed(1)}
+              <div className="relative">
+                <div className="text-sm font-medium text-muted-foreground">
+                  평균 점수
+                </div>
+                <div className="mt-2 text-3xl font-bold text-green-600">
+                  {dashboard.student_statistics.average_score.toFixed(1)}
+                </div>
+                <div className="mt-1 text-sm text-red-600 font-medium">
+                  ↓ 1.2점 감소
+                </div>
               </div>
-              <div className="mt-1 text-sm text-red-600 font-medium">
-                ↓ 1.2점 감소
-              </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </StaggerItem>
+        </StaggerContainer>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Charts Section */}
@@ -283,22 +312,40 @@ export function TeacherDashboard() {
                 <PieChart>
                   <Pie
                     data={questionTypeData}
-                    cx="50%"
+                    cx="40%"
                     cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
+                    innerRadius={50}
+                    outerRadius={90}
+                    paddingAngle={2}
                     dataKey="value"
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   >
-                    {questionTypeData.map((entry, index) => (
+                    {questionTypeData.map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
+                        fill={CHART_COLORS.pie[index % CHART_COLORS.pie.length]}
+                        stroke="none"
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    isAnimationActive={true}
+                    animationDuration={200}
+                    contentStyle={tooltipStyle}
+                    formatter={(value, name) => [`${value}개`, name]}
+                  />
+                  <Legend
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    formatter={(value: string) => {
+                      const item = questionTypeData.find((d) => d.name === value)
+                      return `${value}: ${item?.value || 0}개`
+                    }}
+                    wrapperStyle={{ paddingLeft: '10px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -308,11 +355,39 @@ export function TeacherDashboard() {
               <h2 className="mb-4 text-xl font-semibold">문제 난이도 분포</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={questionDifficultyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#8884d8" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#6b7280', fontSize: 14 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#6b7280', fontSize: 14 }}
+                  />
+                  <Tooltip
+                    isAnimationActive={true}
+                    animationDuration={200}
+                    cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }}
+                    contentStyle={tooltipStyle}
+                    formatter={(value) => [`${value}개`, '문제 수']}
+                  />
+                  <Bar
+                    dataKey="value"
+                    radius={[4, 4, 0, 0]}
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  >
+                    {questionDifficultyData.map((_, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={CHART_COLORS.difficulty[index % CHART_COLORS.difficulty.length]}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -329,7 +404,7 @@ export function TeacherDashboard() {
                 </Button>
               </div>
 
-              <div className="space-y-3">
+              <StaggerContainer className="space-y-3" delay={0.2}>
                 {mockActivities.map((activity) => {
                   const Icon = activity.icon
                   const bgColor =
@@ -346,38 +421,41 @@ export function TeacherDashboard() {
                         : 'text-primary'
 
                   return (
-                    <div
-                      key={activity.id}
-                      className="flex gap-3 rounded-xl bg-green-50 p-4 transition-all hover:bg-green-100"
-                    >
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-lg ${bgColor}`}
+                    <StaggerItem key={activity.id}>
+                      <motion.div
+                        className="flex gap-3 rounded-xl bg-green-50 p-4 transition-colors hover:bg-green-100"
+                        whileHover={{ x: 4 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <Icon className={`h-5 w-5 ${iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-gray-900">
-                          {activity.title}
+                        <div
+                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${bgColor}`}
+                        >
+                          <Icon className={`h-5 w-5 ${iconColor}`} />
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {activity.description}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900">
+                            {activity.title}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {activity.description}
+                          </div>
+                          <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                            <Clock className="h-3 w-3" />
+                            {activity.time}
+                          </div>
                         </div>
-                        <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                          <Clock className="h-3 w-3" />
-                          {activity.time}
-                        </div>
-                      </div>
-                    </div>
+                      </motion.div>
+                    </StaggerItem>
                   )
                 })}
-              </div>
+              </StaggerContainer>
             </div>
 
             {/* Score Distribution */}
             <div className="rounded-lg border bg-card p-6">
               <h2 className="mb-4 text-xl font-semibold">점수 분포</h2>
 
-              <div className="space-y-4">
+              <StaggerContainer className="space-y-4" delay={0.3}>
                 {scoreDistributionData.map((item, index) => {
                   const gradientClass =
                     item.color === 'excellent'
@@ -389,7 +467,7 @@ export function TeacherDashboard() {
                           : 'bg-gradient-to-r from-red-600 to-red-500'
 
                   return (
-                    <div key={index}>
+                    <StaggerItem key={index}>
                       <div className="mb-2 flex items-center justify-between text-sm">
                         <span className="font-medium text-gray-700">
                           {item.range}
@@ -399,17 +477,23 @@ export function TeacherDashboard() {
                         </span>
                       </div>
                       <div className="h-8 w-full overflow-hidden rounded-full bg-gray-100">
-                        <div
+                        <motion.div
                           className={`flex h-full items-center justify-center text-xs font-semibold text-white ${gradientClass}`}
-                          style={{ width: `${item.percentage}%` }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${item.percentage}%` }}
+                          transition={{
+                            duration: 0.8,
+                            delay: 0.4 + index * 0.1,
+                            ease: [0, 0, 0.2, 1],
+                          }}
                         >
                           {item.percentage}%
-                        </div>
+                        </motion.div>
                       </div>
-                    </div>
+                    </StaggerItem>
                   )
                 })}
-              </div>
+              </StaggerContainer>
             </div>
           </div>
         </div>
@@ -495,31 +579,35 @@ export function TeacherDashboard() {
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {dashboard.recent_questions.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  생성한 문제가 없습니다.
-                </p>
-              ) : (
-                dashboard.recent_questions.slice(0, 5).map((question) => (
-                  <div
-                    key={question.id}
-                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent cursor-pointer"
-                    onClick={() => navigate({ to: `/questions/${question.id}` })}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium">{question.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {question.subject.subject_name} • {question.score}점
+            {dashboard.recent_questions.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                생성한 문제가 없습니다.
+              </p>
+            ) : (
+              <StaggerContainer className="space-y-3" delay={0.2}>
+                {dashboard.recent_questions.slice(0, 5).map((question) => (
+                  <StaggerItem key={question.id}>
+                    <motion.div
+                      className="flex items-center justify-between rounded-lg border p-3 cursor-pointer"
+                      onClick={() => navigate({ to: `/questions/${question.id}` })}
+                      initial="rest"
+                      whileHover="hover"
+                      variants={cardHoverVariants}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{question.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {question.subject.subject_name} • {question.score}점
+                        </div>
                       </div>
-                    </div>
-                    {question.is_share && (
-                      <Badge variant="success">공유됨</Badge>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+                      {question.is_share && (
+                        <Badge variant="success">공유됨</Badge>
+                      )}
+                    </motion.div>
+                  </StaggerItem>
+                ))}
+              </StaggerContainer>
+            )}
           </div>
 
           {/* Ongoing Exams */}
@@ -535,32 +623,36 @@ export function TeacherDashboard() {
               </Button>
             </div>
 
-            <div className="space-y-3">
-              {dashboard.ongoing_exams.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  진행 중인 시험이 없습니다.
-                </p>
-              ) : (
-                dashboard.ongoing_exams.slice(0, 5).map((exam) => (
-                  <div
-                    key={exam.id}
-                    className="flex items-center justify-between rounded-lg border p-3 hover:bg-accent cursor-pointer"
-                    onClick={() => navigate({ to: `/examinations/${exam.id}` })}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium">{exam.exam_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {exam.testpaper.name} • {exam.testpaper.question_count}문제
+            {dashboard.ongoing_exams.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                진행 중인 시험이 없습니다.
+              </p>
+            ) : (
+              <StaggerContainer className="space-y-3" delay={0.2}>
+                {dashboard.ongoing_exams.slice(0, 5).map((exam) => (
+                  <StaggerItem key={exam.id}>
+                    <motion.div
+                      className="flex items-center justify-between rounded-lg border p-3 cursor-pointer"
+                      onClick={() => navigate({ to: `/examinations/${exam.id}` })}
+                      initial="rest"
+                      whileHover="hover"
+                      variants={cardHoverVariants}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{exam.exam_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {exam.testpaper.name} • {exam.testpaper.question_count}문제
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          종료: {new Date(exam.end_time).toLocaleString('ko-KR')}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        종료: {new Date(exam.end_time).toLocaleString('ko-KR')}
-                      </div>
-                    </div>
-                    <Badge variant="primary">진행중</Badge>
-                  </div>
-                ))
-              )}
-            </div>
+                      <Badge variant="primary">진행중</Badge>
+                    </motion.div>
+                  </StaggerItem>
+                ))}
+              </StaggerContainer>
+            )}
           </div>
         </div>
 
@@ -573,36 +665,39 @@ export function TeacherDashboard() {
               제출된 시험이 없습니다.
             </p>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            <StaggerContainer className="grid gap-3 md:grid-cols-2 lg:grid-cols-3" delay={0.2}>
               {dashboard.student_statistics.recent_submissions
                 .slice(0, 6)
                 .map((submission) => (
-                  <div
-                    key={submission.id}
-                    className="rounded-lg border p-3 hover:bg-accent cursor-pointer"
-                  >
-                    <div className="font-medium">
-                      {submission.student.nick_name}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {submission.examination.exam_name}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
+                  <StaggerItem key={submission.id}>
+                    <motion.div
+                      className="rounded-lg border p-3 cursor-pointer"
+                      initial="rest"
+                      whileHover="hover"
+                      variants={cardHoverVariants}
+                    >
+                      <div className="font-medium">
+                        {submission.student.nick_name}
+                      </div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(submission.submitted_at).toLocaleDateString(
-                          'ko-KR'
-                        )}
+                        {submission.examination.exam_name}
                       </div>
-                      <div className="text-lg font-bold">
-                        {submission.score}/{submission.total_score}
+                      <div className="mt-2 flex items-center justify-between">
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(submission.submitted_at).toLocaleDateString(
+                            'ko-KR'
+                          )}
+                        </div>
+                        <div className="text-lg font-bold">
+                          {submission.score}/{submission.total_score}
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </motion.div>
+                  </StaggerItem>
                 ))}
-            </div>
+            </StaggerContainer>
           )}
         </div>
       </div>
-    </DashboardLayout>
   )
 }

@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { testPaperApi } from '@/api/testpaper'
 import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
@@ -109,11 +110,11 @@ export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propI
   const createMutation = useMutation({
     mutationFn: testPaperApi.createTestPaper,
     onSuccess: () => {
-      alert('시험지가 생성되었습니다.')
+      toast.success('시험지가 생성되었습니다.')
       navigate({ to: '/testpapers' })
     },
     onError: () => {
-      alert('시험지 생성에 실패했습니다.')
+      toast.error('시험지 생성에 실패했습니다.')
       setIsSubmitting(false)
     },
   })
@@ -122,11 +123,11 @@ export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propI
     mutationFn: (data: TestPaperFormData) =>
       testPaperApi.updateTestPaper(testPaperId!, data),
     onSuccess: () => {
-      alert('시험지가 수정되었습니다.')
+      toast.success('시험지가 수정되었습니다.')
       navigate({ to: '/testpapers' })
     },
     onError: () => {
-      alert('시험지 수정에 실패했습니다.')
+      toast.error('시험지 수정에 실패했습니다.')
       setIsSubmitting(false)
     },
   })
@@ -157,7 +158,7 @@ export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propI
   const handleAddQuestion = (questionId: number) => {
     const exists = fields.some((field) => field.question_id === questionId)
     if (exists) {
-      alert('이미 추가된 문제입니다.')
+      toast.warning('이미 추가된 문제입니다.')
       return
     }
 
@@ -170,14 +171,14 @@ export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propI
 
   if (isLoadingTestPaper) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div>로딩 중...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="space-y-6">
       <div className="mx-auto max-w-5xl space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">

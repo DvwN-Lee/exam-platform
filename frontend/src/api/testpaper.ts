@@ -136,8 +136,32 @@ export const examinationApi = {
   // 시험 게시
   publishExamination: async (id: number): Promise<Examination> => {
     const response = await apiClient.post<Examination>(
-      `/examinations/${id}/publish`
+      `/examinations/${id}/publish/`
     )
     return response.data
+  },
+
+  // 학생 일괄 등록
+  enrollStudents: async (
+    id: number,
+    studentIds: number[]
+  ): Promise<{ detail: string; student_num: number }> => {
+    const response = await apiClient.post<{
+      detail: string
+      student_num: number
+    }>(`/examinations/${id}/enroll_students/`, {
+      student_ids: studentIds,
+    })
+    return response.data
+  },
+
+  // 등록된 학생 목록 조회
+  getEnrolledStudents: async (id: number): Promise<any[]> => {
+    const response = await apiClient.get<{
+      exam_id: number
+      exam_name: string
+      students: any[]
+    }>(`/examinations/${id}/enrolled_students/`)
+    return response.data.students
   },
 }

@@ -4,10 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FadeIn } from '@/components/animation'
+import { DURATION, EASING } from '@/lib/animations'
 import type { Question } from '@/types/question'
 
 const questionSchema = z
@@ -110,11 +114,11 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
   const createMutation = useMutation({
     mutationFn: questionApi.createQuestion,
     onSuccess: () => {
-      alert('문제가 생성되었습니다.')
+      toast.success('문제가 생성되었습니다.')
       navigate({ to: '/questions' })
     },
     onError: () => {
-      alert('문제 생성에 실패했습니다.')
+      toast.error('문제 생성에 실패했습니다.')
       setIsSubmitting(false)
     },
   })
@@ -123,11 +127,11 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
     mutationFn: (data: QuestionFormData) =>
       questionApi.updateQuestion(questionId!, data),
     onSuccess: () => {
-      alert('문제가 수정되었습니다.')
+      toast.success('문제가 수정되었습니다.')
       navigate({ to: '/questions' })
     },
     onError: () => {
-      alert('문제 수정에 실패했습니다.')
+      toast.error('문제 수정에 실패했습니다.')
       setIsSubmitting(false)
     },
   })
@@ -152,18 +156,21 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="space-y-6">
       <div className="mx-auto max-w-3xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {questionId ? '문제 수정' : '문제 생성'}
-          </h1>
-          <p className="text-muted-foreground">
-            새로운 문제를 생성하거나 기존 문제를 수정합니다
-          </p>
-        </div>
+        <FadeIn>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {questionId ? '문제 수정' : '문제 생성'}
+            </h1>
+            <p className="text-muted-foreground">
+              새로운 문제를 생성하거나 기존 문제를 수정합니다
+            </p>
+          </div>
+        </FadeIn>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <FadeIn delay={0.1}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name">문제 제목</Label>
             <Input
@@ -251,32 +258,42 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
                 </Button>
               </div>
 
-              {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-2">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      {...register(`options.${index}.is_right`)}
-                      className="h-4 w-4"
+              <AnimatePresence mode="popLayout">
+                {fields.map((field, index) => (
+                  <motion.div
+                    key={field.id}
+                    className="flex gap-2"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: DURATION.fast, ease: EASING.easeOut }}
+                    layout
+                  >
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        {...register(`options.${index}.is_right`)}
+                        className="h-4 w-4"
+                      />
+                    </div>
+                    <Input
+                      placeholder={`선택지 ${index + 1}`}
+                      {...register(`options.${index}.option`)}
+                      className="flex-1"
                     />
-                  </div>
-                  <Input
-                    placeholder={`선택지 ${index + 1}`}
-                    {...register(`options.${index}.option`)}
-                    className="flex-1"
-                  />
-                  {fields.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => remove(index)}
-                    >
-                      삭제
-                    </Button>
-                  )}
-                </div>
-              ))}
+                    {fields.length > 2 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => remove(index)}
+                      >
+                        삭제
+                      </Button>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
               {errors.options && (
                 <p className="text-sm text-destructive">
                   {typeof errors.options === 'object' && 'message' in errors.options
@@ -306,7 +323,8 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
                 : '문제 생성'}
             </Button>
           </div>
-        </form>
+          </form>
+        </FadeIn>
       </div>
     </div>
   )

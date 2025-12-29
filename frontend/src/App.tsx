@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet, redirect } from '@tanstack/react-router'
+import { Toaster } from 'sonner'
 import { LoginPage } from './features/auth/LoginPage'
 import { RegisterPage } from './features/auth/RegisterPage'
 import { ProfilePage } from './features/profile/ProfilePage'
@@ -13,16 +14,33 @@ import { TestPaperDetailPage } from './features/testpapers/TestPaperDetailPage'
 import { ExaminationListPage } from './features/examinations/ExaminationListPage'
 import { ExaminationForm} from './features/examinations/ExaminationForm'
 import { ExaminationDetailPage } from './features/examinations/ExaminationDetailPage'
+import { StudentListPage } from './features/students/StudentListPage'
+import { AnalyticsPage } from './features/analytics/AnalyticsPage'
+import { SettingsPage } from './features/settings/SettingsPage'
 import { ExamListPage } from './features/exams/ExamListPage'
 import { ExamTakePage } from './features/exams/ExamTakePage'
 import { ExamResultPage } from './features/exams/ExamResultPage'
 import { ExamResultsListPage } from './features/exams/ExamResultsListPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
+import { DashboardLayout } from './components/layout/DashboardLayout'
 import { useAuthStore } from './stores/authStore'
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
+})
+
+// Layout Route for authenticated pages (with DashboardLayout)
+const authenticatedLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'authenticated',
+  component: () => (
+    <ProtectedRoute>
+      <DashboardLayout>
+        <Outlet />
+      </DashboardLayout>
+    </ProtectedRoute>
+  ),
 })
 
 const indexRoute = createRoute({
@@ -46,165 +64,198 @@ const registerRoute = createRoute({
 })
 
 const dashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/dashboard',
-  component: () => (
-    <ProtectedRoute>
-      <DashboardPage />
-    </ProtectedRoute>
-  ),
+  component: DashboardPage,
 })
 
 const profileRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/profile',
-  component: () => (
-    <ProtectedRoute>
-      <ProfilePage />
-    </ProtectedRoute>
-  ),
+  component: ProfilePage,
 })
 
 const changePasswordRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/profile/change-password',
-  component: () => (
-    <ProtectedRoute>
-      <ChangePasswordPage />
-    </ProtectedRoute>
-  ),
+  component: ChangePasswordPage,
 })
 
 const questionsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/questions',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <QuestionListPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: QuestionListPage,
 })
 
 const questionNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/questions/new',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <QuestionForm />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: QuestionForm,
 })
 
 const questionDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/questions/$id',
-  component: () => (
-    <ProtectedRoute>
-      <QuestionDetailPage />
-    </ProtectedRoute>
-  ),
+  component: QuestionDetailPage,
 })
 
 const questionEditRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/questions/$id/edit',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <QuestionForm />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: QuestionForm,
 })
 
 const testpapersRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/testpapers',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <TestPaperListPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: TestPaperListPage,
 })
 
 const testpaperNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/testpapers/new',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <TestPaperForm />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: TestPaperForm,
 })
 
 const testpaperDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/testpapers/$id',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <TestPaperDetailPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: TestPaperDetailPage,
 })
 
 const testpaperEditRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/testpapers/$id/edit',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <TestPaperForm />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: TestPaperForm,
 })
 
 const examinationsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/examinations',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <ExaminationListPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: ExaminationListPage,
 })
 
 const examinationNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/examinations/new',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <ExaminationForm />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: ExaminationForm,
 })
 
 const examinationDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/examinations/$id',
-  component: () => (
-    <ProtectedRoute>
-      <ExaminationDetailPage />
-    </ProtectedRoute>
-  ),
+  component: ExaminationDetailPage,
 })
 
 const examinationEditRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/examinations/$id/edit',
-  component: () => (
-    <ProtectedRoute requireRole="teacher">
-      <ExaminationForm />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: ExaminationForm,
+})
+
+const studentsRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/students',
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: StudentListPage,
+})
+
+const analyticsRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/analytics',
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: AnalyticsPage,
+})
+
+const settingsRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/settings',
+  component: SettingsPage,
 })
 
 const examsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/exams',
-  component: () => (
-    <ProtectedRoute requireRole="student">
-      <ExamListPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'student') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: ExamListPage,
 })
 
+// examTakeRoute - 전체화면 필요 (DashboardLayout 미적용)
 const examTakeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/exams/$id/take',
@@ -216,48 +267,59 @@ const examTakeRoute = createRoute({
 })
 
 const examResultRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/exams/$id/result',
-  component: () => (
-    <ProtectedRoute requireRole="student">
-      <ExamResultPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'student') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: ExamResultPage,
 })
 
 const examResultsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authenticatedLayoutRoute,
   path: '/exams/results',
-  component: () => (
-    <ProtectedRoute requireRole="student">
-      <ExamResultsListPage />
-    </ProtectedRoute>
-  ),
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'student') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: ExamResultsListPage,
 })
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,
-  dashboardRoute,
-  profileRoute,
-  changePasswordRoute,
-  questionsRoute,
-  questionNewRoute,
-  questionDetailRoute,
-  questionEditRoute,
-  testpapersRoute,
-  testpaperNewRoute,
-  testpaperDetailRoute,
-  testpaperEditRoute,
-  examinationsRoute,
-  examinationNewRoute,
-  examinationDetailRoute,
-  examinationEditRoute,
-  examsRoute,
-  examTakeRoute,
-  examResultRoute,
-  examResultsRoute,
+  examTakeRoute, // 전체화면 (DashboardLayout 없음)
+  authenticatedLayoutRoute.addChildren([
+    dashboardRoute,
+    profileRoute,
+    changePasswordRoute,
+    settingsRoute,
+    // Teacher routes
+    questionsRoute,
+    questionNewRoute,
+    questionDetailRoute,
+    questionEditRoute,
+    testpapersRoute,
+    testpaperNewRoute,
+    testpaperDetailRoute,
+    testpaperEditRoute,
+    examinationsRoute,
+    examinationNewRoute,
+    examinationDetailRoute,
+    examinationEditRoute,
+    studentsRoute,
+    analyticsRoute,
+    // Student routes
+    examsRoute,
+    examResultRoute,
+    examResultsRoute,
+  ]),
 ])
 
 const router = createRouter({ routeTree })
@@ -275,7 +337,19 @@ function App() {
     initializeAuth()
   }, [initializeAuth])
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{
+          duration: 3000,
+        }}
+      />
+    </>
+  )
 }
 
 export default App

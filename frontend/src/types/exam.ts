@@ -1,6 +1,11 @@
 import type { Question } from './question'
 import type { Examination } from './testpaper'
 
+// 시험용 문제 (배점이 포함된 형태)
+export interface ExamQuestion extends Question {
+  assigned_score: number
+}
+
 export interface ExamInfo {
   exam_id: number
   exam_name: string
@@ -11,7 +16,7 @@ export interface ExamInfo {
   total_score: number
   passing_score: number
   question_count: number
-  questions: Question[]
+  questions: ExamQuestion[]
   is_started: boolean
   is_submitted: boolean
 }

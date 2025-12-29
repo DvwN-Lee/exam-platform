@@ -2,6 +2,39 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, AuthState } from '@/types/auth'
 
+/**
+ * LocalStorage 안전하게 읽기
+ */
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * LocalStorage 안전하게 쓰기
+ */
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // Storage 용량 초과 또는 접근 불가 시 무시
+  }
+}
+
+/**
+ * LocalStorage 안전하게 삭제
+ */
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // 무시
+  }
+}
+
 interface AuthStore extends AuthState {
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
   setUser: (user: User) => void
@@ -20,8 +53,8 @@ export const useAuthStore = create<AuthStore>()(
       isLoading: true,
 
       setAuth: (user, accessToken, refreshToken) => {
-        localStorage.setItem('access_token', accessToken)
-        localStorage.setItem('refresh_token', refreshToken)
+        safeSetItem('access_token', accessToken)
+        safeSetItem('refresh_token', refreshToken)
         set({
           user,
           accessToken,
@@ -36,14 +69,14 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setTokens: (accessToken, refreshToken) => {
-        localStorage.setItem('access_token', accessToken)
-        localStorage.setItem('refresh_token', refreshToken)
+        safeSetItem('access_token', accessToken)
+        safeSetItem('refresh_token', refreshToken)
         set({ accessToken, refreshToken })
       },
 
       logout: () => {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
+        safeRemoveItem('access_token')
+        safeRemoveItem('refresh_token')
         set({
           user: null,
           accessToken: null,
@@ -54,8 +87,8 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       initializeAuth: () => {
-        const accessToken = localStorage.getItem('access_token')
-        const refreshToken = localStorage.getItem('refresh_token')
+        const accessToken = safeGetItem('access_token')
+        const refreshToken = safeGetItem('refresh_token')
 
         if (accessToken && refreshToken) {
           set({

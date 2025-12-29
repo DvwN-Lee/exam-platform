@@ -1220,6 +1220,619 @@ Authorization: Bearer {access_token}
 
 ---
 
+## 8. Student Page Bug Fixes (Frontend/Backend)
+
+학생 페이지 구현 및 테스트 과정에서 발견된 Frontend 및 Backend 버그 수정 내역.
+
+### 8-1: 시험 결과 페이지 404 Error
+
+**증상**
+
+학생 Dashboard에서 시험 결과 카드 클릭 시 404 Not Found 발생.
+
+```
+GET /exams/66/result -> 404 Not Found
+```
+
+Database 확인 결과:
+- `TestScores.id = 66` (시험 제출 Record)
+- `ExaminationInfo.id = 151` (실제 시험 ID)
+
+**원인**
+
+Frontend에서 시험 결과 페이지 navigation 시 `submission.id` (TestScores의 primary key) 사용. 실제로는 `submission.examination.id` (ExaminationInfo의 primary key)를 사용해야 함.
+
+**수정 파일**
+
+1. `frontend/src/features/dashboard/StudentDashboard.tsx:202`
+2. `frontend/src/features/exams/ExamResultsListPage.tsx:60`
+
+**해결**
+
+```typescript
+// Before (StudentDashboard.tsx:202)
+onClick={() => navigate({ to: `/exams/${submission.id}/result` })}
+
+// After
+onClick={() => navigate({ to: `/exams/${submission.examination.id}/result` })}
+```
+
+```typescript
+// Before (ExamResultsListPage.tsx:60)
+onClick={() => navigate({ to: `/exams/${submission.id}/result` })}
+
+// After
+onClick={() => navigate({ to: `/exams/${submission.examination.id}/result` })}
+```
+
+**검증**
+
+Browser 테스트에서 Dashboard 결과 카드 클릭 시 정상적으로 결과 페이지 표시 확인.
+
+---
+
+### 8-2: Null Reference Error
+
+**증상**
+
+시험 결과 목록 페이지에서 `TypeError` 발생.
+
+```
+Cannot read properties of null (reading 'name')
+```
+
+**원인**
+
+Backend API 응답에서 `testpaper` 및 `testpaper.subject` 필드가 `null`일 수 있으나, Frontend에서 null-safe 처리 누락.
+
+```typescript
+// 문제가 되는 code
+{submission.examination.testpaper.name}
+{submission.examination.testpaper.subject.subject_name}
+```
+
+**수정 파일**
+
+1. `frontend/src/features/exams/ExamResultsListPage.tsx:70, 74`
+2. `frontend/src/features/exams/ExamResultPage.tsx:110, 116, 159`
+
+**해결**
+
+Optional chaining (`?.`)과 nullish coalescing (`??`) operator 사용:
+
+```typescript
+// Before (ExamResultsListPage.tsx)
+시험지: {submission.examination.testpaper.name}
+과목: {submission.examination.testpaper.subject.subject_name}
+
+// After
+시험지: {submission.examination.testpaper?.name ?? '-'}
+과목: {submission.examination.testpaper?.subject?.subject_name ?? '-'}
+```
+
+```typescript
+// Before (ExamResultPage.tsx)
+{submission.examination.testpaper.name}
+{submission.examination.testpaper.subject.subject_name}
+{answer.question.subject.subject_name}
+
+// After
+{submission.examination.testpaper?.name ?? '-'}
+{submission.examination.testpaper?.subject?.subject_name ?? '-'}
+{answer.question.subject?.subject_name ?? '-'}
+```
+
+**검증**
+
+Browser 테스트에서 `testpaper`가 없는 시험 결과에 대해 '-' 표시 확인.
+
+---
+
+### 8-3: Backend test_paper Field 누락
+
+**증상**
+
+Frontend에서 시험 결과 목록 및 상세 페이지에서 testpaper 정보 표시 불가. 8-2 오류의 근본 원인.
+
+**원인**
+
+`my_submissions` API endpoint (`/api/v1/exams/my/`) 응답에 `test_paper` field 미포함.
+
+```python
+# 문제가 되는 code (taking_views.py:550-560)
+submission_data = {
+    'id': submission.id,
+    'exam': submission.exam,
+    # test_paper 누락
+    'student': student_info,
+    'answers': answers,
+    ...
+}
+```
+
+**수정 파일**
+
+`examonline/apps/examination/api/taking_views.py:553`
+
+**해결**
+
+`submission_data` dictionary에 `test_paper` field 추가:
+
+```python
+# After (taking_views.py:550-561)
+submission_data = {
+    'id': submission.id,
+    'exam': submission.exam,
+    'test_paper': submission.test_paper,  # 추가
+    'student': student_info,
+    'answers': answers,
+    'score': submission.test_score,
+    'total_score': submission.test_paper.total_score if submission.test_paper else 0,
+    'submitted_at': submission.submit_time,
+    'created_at': submission.create_time,
+}
+```
+
+**검증**
+
+API 응답 확인:
+
+```bash
+curl -X GET http://localhost:8000/api/v1/exams/my/ \
+  -H "Authorization: Bearer {token}"
+```
+
+응답에 `test_paper` 객체 포함 확인:
+```json
+{
+  "results": [
+    {
+      "id": 66,
+      "examination": {...},
+      "test_paper": {
+        "id": 1,
+        "name": "Physics 실습 시험지",
+        "subject": {
+          "id": 1,
+          "subject_name": "Physics"
+        }
+      },
+      "score": 10,
+      ...
+    }
+  ]
+}
+```
+
+---
+
+### 8-4: Sidebar 미구현 Route 제거
+
+**증상**
+
+학생 Sidebar 메뉴에서 "과목" 항목 클릭 시 페이지 이동 불가.
+
+**원인**
+
+Sidebar에 "과목" 메뉴 항목이 `/subjects` route를 참조하나, `App.tsx`에 해당 route 미정의.
+
+**수정 파일**
+
+`frontend/src/components/layout/Sidebar.tsx:25`
+
+**해결**
+
+`studentNavItems` 배열에서 "과목" 항목 삭제:
+
+```typescript
+// Before
+const studentNavItems: NavItem[] = [
+  { label: '대시보드', path: '/dashboard', icon: LayoutDashboard },
+  { label: '내 시험', path: '/exams', icon: FileCheck },
+  { label: '성적 조회', path: '/exams/results', icon: TrendingUp },
+  { label: '과목', path: '/subjects', icon: BookOpen },  // 제거
+  { label: '설정', path: '/settings', icon: Settings },
+]
+
+// After
+const studentNavItems: NavItem[] = [
+  { label: '대시보드', path: '/dashboard', icon: LayoutDashboard },
+  { label: '내 시험', path: '/exams', icon: FileCheck },
+  { label: '성적 조회', path: '/exams/results', icon: TrendingUp },
+  { label: '설정', path: '/settings', icon: Settings },
+]
+```
+
+**검증**
+
+Browser 테스트에서 Sidebar에 "과목" 메뉴 항목 미표시 확인.
+
+---
+
+### 8-5: 시험 응시 Button onClick 누락
+
+**증상**
+
+시험 상세 페이지(`ExaminationDetailPage`)에서 "시험 응시하기" button 클릭 시 동작 없음.
+
+**원인**
+
+Button component에 `onClick` handler 미정의.
+
+**수정 파일**
+
+`frontend/src/features/examinations/ExaminationDetailPage.tsx:236-238`
+
+**해결**
+
+`navigate` handler 추가:
+
+```typescript
+// Before (Line 236)
+<Button size="lg">시험 응시하기</Button>
+
+// After (Lines 236-238)
+<Button size="lg" onClick={() => navigate({ to: `/exams/${id}/take` })}>
+  시험 응시하기
+</Button>
+```
+
+**검증**
+
+Browser 테스트에서 button 클릭 시 시험 응시 페이지(`/exams/${id}/take`)로 정상 이동 확인.
+
+---
+
+### 8-6: CORS 설정 확장
+
+**증상**
+
+Vite dev server가 port 5177에서 실행 중일 때 Backend API 호출 시 CORS policy 차단.
+
+```
+Access to XMLHttpRequest at 'http://localhost:8000/api/v1/auth/token/'
+from origin 'http://localhost:5177' has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.
+```
+
+**원인**
+
+Django CORS 설정(`CORS_ALLOWED_ORIGINS`)에 port 5177이 포함되지 않음. Vite dev server는 port 충돌 시 자동으로 port를 증가시켜 5173 → 5174 → 5175 → 5176 → 5177로 변경.
+
+**수정 파일**
+
+`examonline/config/api.py:74-87`
+
+**해결**
+
+`CORS_ALLOWED_ORIGINS`에 port 5175-5177 추가:
+
+```python
+# Before
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+]
+
+# After
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "http://localhost:5177",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
+    "http://127.0.0.1:5176",
+    "http://127.0.0.1:5177",
+]
+```
+
+**검증**
+
+CORS preflight request 테스트:
+
+```bash
+curl -I -X OPTIONS http://localhost:8000/api/v1/auth/token/ \
+  -H "Origin: http://localhost:5177"
+```
+
+응답 header 확인:
+```
+access-control-allow-origin: http://localhost:5177
+access-control-allow-credentials: true
+access-control-allow-headers: accept, authorization, content-type, ...
+access-control-allow-methods: DELETE, GET, OPTIONS, PATCH, POST, PUT
+```
+
+Browser 테스트에서 port 5177에서 정상적으로 login 및 API 호출 확인.
+
+---
+
+### 검증 결과
+
+**브라우저 E2E 테스트**
+
+테스트 계정: `student1766900322` / `SecurePass123!`
+
+검증 완료 페이지:
+1. Login Page - 정상 로그인
+2. Dashboard (`/dashboard`) - 통계, 차트, Sidebar 메뉴 정상 표시
+3. Exams List (`/exams`) - 빈 상태 메시지 정상 표시
+4. Results List (`/exams/results`) - 빈 상태 메시지 정상 표시
+5. Settings (`/settings`) - Profile 정보 정상 표시
+
+**수정된 파일 목록**
+
+Frontend:
+- `frontend/src/components/layout/Sidebar.tsx`
+- `frontend/src/features/dashboard/StudentDashboard.tsx`
+- `frontend/src/features/exams/ExamResultsListPage.tsx`
+- `frontend/src/features/exams/ExamResultPage.tsx`
+- `frontend/src/features/examinations/ExaminationDetailPage.tsx`
+
+Backend:
+- `examonline/apps/examination/api/taking_views.py`
+- `examonline/config/api.py`
+
+---
+
+## 9. Phase 1-4 Code Refactoring
+
+Frontend 및 Backend 전반에 걸친 코드 품질 개선 및 성능 최적화 작업.
+
+### Phase 1: 상수 추출 및 하드코딩 제거
+
+**생성된 상수 파일** (`frontend/src/constants/`):
+
+| 파일 | 내용 |
+|------|------|
+| `examination.ts` | 시험 상태, 라벨 상수 |
+| `question.ts` | 문제 유형, 난이도 상수 |
+| `time.ts` | 시간 형식 상수 |
+| `theme.ts` | 차트 색상, 스타일 상수 |
+
+**적용 예시**:
+
+```typescript
+// Before
+const typeLabels = { xz: '객관식', pd: '주관식', tk: '빈칸채우기' }
+
+// After
+import { questionTypeLabels } from '@/constants/question'
+```
+
+### Phase 2: 코드 품질 개선
+
+#### Toast 시스템 도입 (sonner)
+
+기존 `alert()` 호출을 `sonner` 라이브러리의 `toast()`로 교체.
+
+**설정** (`App.tsx`):
+
+```typescript
+import { Toaster } from 'sonner'
+
+function App() {
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{ duration: 3000 }}
+      />
+    </>
+  )
+}
+```
+
+**사용 예시**:
+
+```typescript
+// Before
+alert('저장되었습니다.')
+alert('오류가 발생했습니다.')
+
+// After
+import { toast } from 'sonner'
+toast.success('저장되었습니다.')
+toast.error('오류가 발생했습니다.')
+toast.warning('입력값을 확인해주세요.')
+```
+
+**수정된 파일 (19개)**:
+- `LoginPage.tsx`, `RegisterPage.tsx`
+- `ExaminationListPage.tsx`, `ExaminationDetailPage.tsx`, `ExaminationForm.tsx`
+- `QuestionForm.tsx`, `QuestionDetailPage.tsx`, `QuestionListPage.tsx`
+- `TestPaperListPage.tsx`, `TestPaperForm.tsx`
+- `ExamTakePage.tsx`, `ProfilePage.tsx`, `ChangePasswordPage.tsx`
+- `StudentSelectModal.tsx`, `EnrolledStudentsSection.tsx`
+- `ProtectedRoute.tsx`, `SubjectSettings.tsx`, `PasswordSettings.tsx`, `ProfileSettings.tsx`
+
+#### TypeScript any 타입 제거
+
+명시적 타입 정의로 교체:
+
+```typescript
+// Before
+const handleSubmit = (data: any) => { ... }
+
+// After
+interface SubmitData {
+  name: string
+  score: number
+}
+const handleSubmit = (data: SubmitData) => { ... }
+```
+
+### Phase 3: Frontend 성능 최적화
+
+#### CSS Transition 최적화
+
+**Before**:
+```css
+button, a {
+  transition: all 0.15s ease-in-out;
+}
+```
+
+**After**:
+```css
+button, a {
+  transition: transform 0.15s ease-in-out,
+              opacity 0.15s ease-in-out,
+              background-color 0.15s ease-in-out,
+              color 0.15s ease-in-out,
+              border-color 0.15s ease-in-out;
+}
+```
+
+**개선 효과**: `transition: all`은 모든 CSS 속성 변경을 감시하여 불필요한 GPU 연산 발생. 특정 속성만 지정하여 성능 개선.
+
+#### LocalStorage Error Handling
+
+Private Browsing 모드 및 storage quota 초과 시 에러 처리:
+
+```typescript
+// frontend/src/api/client.ts
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // 무시
+  }
+}
+```
+
+### Phase 4: Backend 성능 최적화
+
+#### N+1 Query 추가 최적화
+
+**File**: `apps/examination/api/taking_views.py`
+
+**Before**:
+```python
+available_exams = ExaminationInfo.objects.filter(
+    id__in=student_exams,
+    start_time__lte=now,
+    end_time__gte=now
+)
+for exam in available_exams:
+    # N+1 발생
+    if TestScores.objects.filter(exam=exam, user=student_info, is_submitted=True).exists():
+        ...
+```
+
+**After**:
+```python
+# 제출된 시험 ID Set 조회 (N+1 방지)
+submitted_exam_ids = set(
+    TestScores.objects.filter(
+        exam_id__in=student_exams,
+        user=student_info,
+        is_submitted=True
+    ).values_list('exam_id', flat=True)
+)
+
+available_exams = ExaminationInfo.objects.filter(
+    id__in=student_exams,
+    start_time__lte=now,
+    end_time__gte=now
+).select_related('subject', 'create_user').prefetch_related(
+    'exampaperinfo_set__paper'
+)
+
+for exam in available_exams:
+    if exam.id in submitted_exam_ids:  # O(1) Set lookup
+        ...
+```
+
+#### Database Index 추가
+
+**File**: `apps/examination/models.py`
+
+```python
+class ExaminationInfo(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['exam_state'], name='exam_state_idx'),
+            models.Index(fields=['start_time', 'end_time'], name='exam_time_range_idx'),
+            models.Index(fields=['create_user'], name='exam_create_user_idx'),
+        ]
+
+class ExamPaperInfo(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['exam', 'paper'], name='exam_paper_idx'),
+        ]
+
+class ExamStudentsInfo(models.Model):
+    class Meta:
+        indexes = [
+            models.Index(fields=['exam', 'student'], name='exam_student_idx'),
+            models.Index(fields=['student'], name='student_exam_lookup_idx'),
+        ]
+```
+
+**Migration 실행**:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### 테스트 결과
+
+**Backend**:
+```
+268 passed in 36.94s
+Coverage: 95%
+```
+
+**Frontend**:
+```
+TypeScript: No errors
+Build: Success (1,148 KB)
+```
+
+### Coverage 분석
+
+현재 95% Coverage에서 미커버 5%는 주로:
+
+| 영역 | 미커버 라인 | 내용 |
+|------|------------|------|
+| Error Handling | 133-153, 286-297 | 이메일 발송 실패, 외부 API 오류 |
+| Edge Cases | 162-164 | 시험지에 문제가 없는 경우 등 |
+| 권한 예외 | 160-161, 188-189 | 다른 사용자 문제 수정 시도 시 403 |
+| 외부 의존성 | - | 이메일 전송, 파일 업로드 등 |
+
+---
+
 ## 참고 문서
 
 - [Coverage Improvement Report](./coverage-improvement-report.md)

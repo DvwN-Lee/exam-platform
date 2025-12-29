@@ -79,7 +79,7 @@ class ExaminationViewSet(viewsets.ModelViewSet):
         """Action별 권한 설정"""
         if self.action == 'create':
             return [IsAuthenticated(), IsTeacher()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'enroll_students']:
+        elif self.action in ['update', 'partial_update', 'destroy', 'enroll_students', 'publish']:
             return [IsAuthenticated(), IsExamCreator()]
         return [IsAuthenticated()]
 

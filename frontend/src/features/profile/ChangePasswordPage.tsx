@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { authApi } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,7 +37,7 @@ export function ChangePasswordPage() {
   const changePasswordMutation = useMutation({
     mutationFn: authApi.changePassword,
     onSuccess: () => {
-      alert('비밀번호가 변경되었습니다.')
+      toast.success('비밀번호가 변경되었습니다.')
       reset()
       navigate({ to: '/profile' })
     },
@@ -45,7 +46,7 @@ export function ChangePasswordPage() {
         error.response?.data?.old_password?.[0] ||
         error.response?.data?.detail ||
         '비밀번호 변경에 실패했습니다.'
-      alert(errorMessage)
+      toast.error(errorMessage)
     },
   })
 
@@ -54,7 +55,7 @@ export function ChangePasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-12">
+    <div className="space-y-6">
       <div className="mx-auto max-w-md space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">비밀번호 변경</h1>

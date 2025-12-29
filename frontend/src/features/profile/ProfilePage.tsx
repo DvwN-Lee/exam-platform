@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { authApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
@@ -43,10 +44,10 @@ export function ProfilePage() {
     onSuccess: (data) => {
       setUser(data)
       refetch()
-      alert('프로필이 업데이트되었습니다.')
+      toast.success('프로필이 업데이트되었습니다.')
     },
     onError: () => {
-      alert('프로필 업데이트에 실패했습니다.')
+      toast.error('프로필 업데이트에 실패했습니다.')
     },
   })
 
@@ -61,14 +62,14 @@ export function ProfilePage() {
 
   if (!profileData) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div>로딩 중...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-12">
+    <div className="space-y-6">
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">프로필</h1>

@@ -10,6 +10,7 @@ from user.api.views import (
     CustomTokenRefreshView,
     PasswordChangeView,
     StudentDashboardView,
+    StudentListViewSet,
     SubjectViewSet,
     TeacherDashboardView,
     UserProfileView,
@@ -18,6 +19,7 @@ from user.api.views import (
 
 router = DefaultRouter()
 router.register(r'subjects', SubjectViewSet, basename='subject')
+router.register(r'students', StudentListViewSet, basename='student')
 
 urlpatterns = [
     # Authentication endpoints

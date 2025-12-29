@@ -15,7 +15,7 @@ export function ExamResultPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div>결과를 불러오는 중...</div>
       </div>
     )
@@ -23,7 +23,7 @@ export function ExamResultPage() {
 
   if (!result) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div>결과를 찾을 수 없습니다.</div>
       </div>
     )
@@ -33,7 +33,7 @@ export function ExamResultPage() {
   const scorePercentage = (submission.score / submission.total_score) * 100
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="space-y-6">
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">시험 결과</h1>
@@ -107,13 +107,13 @@ export function ExamResultPage() {
             <div>
               <div className="text-sm text-muted-foreground">시험지</div>
               <div className="font-medium">
-                {submission.examination.testpaper.name}
+                {submission.examination.testpaper?.name ?? '-'}
               </div>
             </div>
             <div>
               <div className="text-sm text-muted-foreground">과목</div>
               <div className="font-medium">
-                {submission.examination.testpaper.subject.subject_name}
+                {submission.examination.testpaper?.subject?.subject_name ?? '-'}
               </div>
             </div>
             <div>
@@ -156,7 +156,7 @@ export function ExamResultPage() {
                     <div className="flex-1">
                       <div className="font-medium">{answer.question.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {answer.question.subject.subject_name}
+                        {answer.question.subject?.subject_name ?? '-'}
                       </div>
                     </div>
                   </div>

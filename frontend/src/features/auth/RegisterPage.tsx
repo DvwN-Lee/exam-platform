@@ -4,12 +4,15 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { authApi } from '@/api/auth'
 import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, User, BookOpen } from 'lucide-react'
+import { DURATION, EASING, STAGGER } from '@/lib/animations'
 import type { RegisterRequest } from '@/types/auth'
 
 const registerSchema = z
@@ -95,7 +98,7 @@ export function RegisterPage() {
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
     onSuccess: () => {
-      alert('회원가입이 완료되었습니다. 로그인해주세요.')
+      toast.success('회원가입이 완료되었습니다. 로그인해주세요.')
       navigate({ to: '/login' })
     },
     onError: (error: any) => {
@@ -103,7 +106,7 @@ export function RegisterPage() {
         error.response?.data?.message ||
         error.response?.data?.detail ||
         '회원가입에 실패했습니다.'
-      alert(errorMessage)
+      toast.error(errorMessage)
     },
   })
 
@@ -133,32 +136,72 @@ export function RegisterPage() {
     registerMutation.mutate(requestData)
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: STAGGER.fast,
+        delayChildren: 0.2,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: DURATION.normal, ease: EASING.easeOut },
+    },
+  }
+
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background to-[rgba(16,185,129,0.1)] px-4 py-12">
       {/* Decorative circles */}
-      <div className="absolute -right-48 -top-48 size-[500px] rounded-full bg-primary opacity-5" />
-      <div className="absolute -bottom-36 -left-36 size-96 rounded-full bg-primary-light opacity-5" />
+      <motion.div
+        className="absolute -right-48 -top-48 size-[500px] rounded-full bg-primary opacity-5"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.05 }}
+        transition={{ duration: DURATION.slower, ease: EASING.easeOut }}
+      />
+      <motion.div
+        className="absolute -bottom-36 -left-36 size-96 rounded-full bg-primary-light opacity-5"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 0.05 }}
+        transition={{ duration: DURATION.slower, ease: EASING.easeOut, delay: 0.2 }}
+      />
 
-      <div className="relative z-10 w-full max-w-[1000px] overflow-hidden rounded-[32px] bg-card shadow-2xl md:grid md:grid-cols-2">
+      <motion.div
+        className="relative z-10 w-full max-w-[1000px] overflow-hidden rounded-[32px] bg-card shadow-2xl md:grid md:grid-cols-2"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: DURATION.slow, ease: EASING.easeOut }}
+      >
         {/* Register Form - Left Side */}
-        <div className="flex flex-col justify-center p-8 md:p-12">
+        <motion.div
+          className="flex flex-col justify-center p-8 md:p-12"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Logo */}
-          <div className="mb-6 flex items-center gap-3">
+          <motion.div className="mb-6 flex items-center gap-3" variants={itemVariants}>
             <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light text-2xl font-bold text-white">
               E
             </div>
             <div className="text-[1.75rem] font-bold text-primary">ExamOnline</div>
-          </div>
+          </motion.div>
 
           {/* Header */}
-          <div className="mb-6">
+          <motion.div className="mb-6" variants={itemVariants}>
             <h1 className="mb-2 text-3xl font-bold text-foreground">회원가입</h1>
             <p className="text-muted-foreground">새로운 계정을 만들어 시작하세요</p>
-          </div>
+          </motion.div>
 
           {/* Role Selector */}
-          <div className="mb-6 flex gap-4">
-            <button
+          <motion.div className="mb-6 flex gap-4" variants={itemVariants}>
+            <motion.button
               type="button"
               onClick={() => {
                 setSelectedUserType('student')
@@ -169,11 +212,13 @@ export function RegisterPage() {
                   ? 'border-primary bg-primary/10'
                   : 'border-transparent bg-accent hover:border-primary-light'
               }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <GraduationCap className="size-8 text-primary" />
               <span className="text-[0.9375rem] font-semibold text-foreground">학생</span>
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
               onClick={() => {
                 setSelectedUserType('teacher')
@@ -184,14 +229,16 @@ export function RegisterPage() {
                   ? 'border-primary bg-primary/10'
                   : 'border-transparent bg-accent hover:border-primary-light'
               }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <User className="size-8 text-primary" />
               <span className="text-[0.9375rem] font-semibold text-foreground">교사</span>
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Register Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <motion.form onSubmit={handleSubmit(onSubmit)} className="space-y-4" variants={itemVariants}>
           <div className="space-y-2">
             <Label htmlFor="username" className="text-[0.9375rem] font-semibold">
               아이디
@@ -335,17 +382,19 @@ export function RegisterPage() {
             </>
           )}
 
-          <Button
-            type="submit"
-            disabled={registerMutation.isPending}
-            className="h-[3.375rem] w-full rounded-[12px] bg-primary text-base font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-lg"
-          >
-            {registerMutation.isPending ? '가입 중...' : '회원가입'}
-          </Button>
-        </form>
+          <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+            <Button
+              type="submit"
+              disabled={registerMutation.isPending}
+              className="h-[3.375rem] w-full rounded-[12px] bg-primary text-base font-semibold text-white transition-all hover:bg-primary-dark hover:shadow-lg"
+            >
+              {registerMutation.isPending ? '가입 중...' : '회원가입'}
+            </Button>
+          </motion.div>
+          </motion.form>
 
         {/* Login link */}
-        <div className="mt-6 text-center text-[0.9375rem] text-muted-foreground">
+        <motion.div className="mt-6 text-center text-[0.9375rem] text-muted-foreground" variants={itemVariants}>
           이미 계정이 있으신가요?{' '}
           <button
             onClick={() => navigate({ to: '/login' })}
@@ -353,20 +402,29 @@ export function RegisterPage() {
           >
             로그인
           </button>
-        </div>
-      </div>
+        </motion.div>
+        </motion.div>
 
       {/* Illustration - Right Side */}
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-primary to-primary-dark p-12 text-white md:flex md:flex-col md:items-center md:justify-center">
+      <motion.div
+        className="relative hidden overflow-hidden bg-gradient-to-br from-primary to-primary-dark p-12 text-white md:flex md:flex-col md:items-center md:justify-center"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: DURATION.slow, ease: EASING.easeOut, delay: 0.3 }}
+      >
         {/* Decorative circles */}
         <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white opacity-10" />
         <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white opacity-5" />
 
         {/* Illustration content */}
         <div className="relative z-10 text-center">
-          <div className="mb-6 inline-block animate-float">
+          <motion.div
+            className="mb-6 inline-block"
+            animate={{ y: [0, -20, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          >
             <BookOpen className="size-32 text-white" />
-          </div>
+          </motion.div>
           <h2 className="mb-4 text-[2rem] font-bold">학습의 새로운 시작</h2>
           <p className="mb-8 text-lg opacity-90">
             ExamOnline과 함께 효율적인 학습을 경험하세요
@@ -374,22 +432,38 @@ export function RegisterPage() {
         </div>
 
         {/* Features list */}
-        <ul className="relative z-10 space-y-3">
-          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
-            빠르고 간편한 회원가입
-          </li>
-          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
-            학생과 교사 역할 선택
-          </li>
-          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
-            안전한 데이터 보호
-          </li>
-          <li className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']">
-            언제 어디서나 접속 가능
-          </li>
-        </ul>
-      </div>
-      </div>
+        <motion.ul
+          className="relative z-10 space-y-3"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.1, delayChildren: 0.6 },
+            },
+          }}
+        >
+          {[
+            '빠르고 간편한 회원가입',
+            '학생과 교사 역할 선택',
+            '안전한 데이터 보호',
+            '언제 어디서나 접속 가능',
+          ].map((feature, index) => (
+            <motion.li
+              key={index}
+              className="relative pl-8 text-base opacity-95 before:absolute before:left-0 before:text-xl before:font-bold before:content-['✓']"
+              variants={{
+                hidden: { opacity: 0, x: -20 },
+                visible: { opacity: 0.95, x: 0 },
+              }}
+            >
+              {feature}
+            </motion.li>
+          ))}
+        </motion.ul>
+      </motion.div>
+      </motion.div>
 
       <style>{`
       @keyframes float {

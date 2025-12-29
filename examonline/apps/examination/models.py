@@ -31,6 +31,11 @@ class ExaminationInfo(models.Model):
     class Meta:
         verbose_name = '시험 정보'
         verbose_name_plural = verbose_name
+        indexes = [
+            models.Index(fields=['exam_state'], name='exam_state_idx'),
+            models.Index(fields=['start_time', 'end_time'], name='exam_time_range_idx'),
+            models.Index(fields=['create_user'], name='exam_create_user_idx'),
+        ]
 
     def __str__(self):
         return self.name
@@ -46,6 +51,9 @@ class ExamPaperInfo(models.Model):
     class Meta:
         verbose_name = '시험지 정보'
         verbose_name_plural = verbose_name
+        indexes = [
+            models.Index(fields=['exam', 'paper'], name='exam_paper_idx'),
+        ]
 
     def __str__(self):
         return self.exam.name
@@ -61,6 +69,10 @@ class ExamStudentsInfo(models.Model):
     class Meta:
         verbose_name = '수험생 정보'
         verbose_name_plural = verbose_name
+        indexes = [
+            models.Index(fields=['exam', 'student'], name='exam_student_idx'),
+            models.Index(fields=['student'], name='student_exam_lookup_idx'),
+        ]
 
     def __str__(self):
         return self.exam.name

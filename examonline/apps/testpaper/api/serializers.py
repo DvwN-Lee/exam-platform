@@ -385,10 +385,18 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
         if not obj.detail_records:
             return []
 
-        # 시험지의 문제 목록 가져오기
+        # 시험지의 문제 목록 가져오기 (옵션도 함께 prefetch)
         paper_questions = TestPaperTestQ.objects.filter(test_paper=obj.test_paper).select_related(
             'test_question'
-        ).order_by('order')
+        ).prefetch_related('test_question__optioninfo_set').order_by('order')
+
+        # 정답 옵션 딕셔너리 미리 생성 (N+1 방지)
+        question_ids = [pq.test_question_id for pq in paper_questions]
+        correct_options = OptionInfo.objects.filter(
+            test_question_id__in=question_ids,
+            is_right=True
+        ).values('test_question_id', 'option')
+        correct_answers = {opt['test_question_id']: opt['option'] for opt in correct_options}
 
         results = []
         for pq in paper_questions:
@@ -396,14 +404,10 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
             question_id_str = str(question.id)
             record = obj.detail_records.get(question_id_str, {})
 
-            # 정답 찾기
+            # 정답 찾기 (딕셔너리 조회로 O(1))
             correct_answer = None
             if question.tq_type in ['xz', 'pd']:  # 객관식, OX
-                try:
-                    correct_option = OptionInfo.objects.get(test_question=question, is_right=True)
-                    correct_answer = correct_option.option
-                except OptionInfo.DoesNotExist:
-                    pass
+                correct_answer = correct_answers.get(question.id)
 
             results.append({
                 'question_id': question.id,

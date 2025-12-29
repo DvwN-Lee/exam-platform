@@ -185,13 +185,16 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
         from examination.models import ExamPaperInfo
         exam_paper = ExamPaperInfo.objects.filter(exam=obj).select_related('paper', 'paper__subject').first()
         if exam_paper and exam_paper.paper:
+            subject_data = None
+            if exam_paper.paper.subject:
+                subject_data = {
+                    'id': exam_paper.paper.subject.id,
+                    'subject_name': exam_paper.paper.subject.subject_name,
+                }
             return {
                 'id': exam_paper.paper.id,
                 'name': exam_paper.paper.name,
-                'subject': {
-                    'id': exam_paper.paper.subject.id,
-                    'subject_name': exam_paper.paper.subject.subject_name,
-                } if exam_paper.paper.subject else None,
+                'subject': subject_data,
                 'question_count': exam_paper.paper.question_count,
             }
         return None

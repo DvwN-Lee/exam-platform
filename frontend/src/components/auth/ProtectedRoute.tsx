@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/authStore'
 
 interface ProtectedRouteProps {
@@ -18,7 +19,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
     }
 
     if (!isLoading && requireRole && user?.user_type !== requireRole) {
-      alert('접근 권한이 없습니다.')
+      toast.error('접근 권한이 없습니다.')
       navigate({ to: '/' })
     }
   }, [isAuthenticated, isLoading, user, requireRole, navigate])

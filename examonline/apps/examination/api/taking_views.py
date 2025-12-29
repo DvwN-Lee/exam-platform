@@ -66,48 +66,59 @@ class ExamTakingViewSet(viewsets.ViewSet):
             id__in=student_exams,
             start_time__lte=now,
             end_time__gte=now
-        ).select_related('subject')
+        ).select_related('subject', 'create_user').prefetch_related(
+            'exampaperinfo_set__paper'
+        )
+
+        # 제출된 시험 ID Set 조회 (N+1 방지)
+        submitted_exam_ids = set(
+            TestScores.objects.filter(
+                exam_id__in=student_exams,
+                user=student_info,
+                is_submitted=True
+            ).values_list('exam_id', flat=True)
+        )
 
         # 시험 목록 구성
         exams_data = []
         for exam in available_exams:
-            # 제출 여부 확인
-            test_score = TestScores.objects.filter(exam=exam, user=student_info).first()
-            is_submitted = test_score and test_score.is_submitted
+            # 제출 여부 확인 (Set 조회로 O(1))
+            if exam.id in submitted_exam_ids:
+                continue
 
-            if not is_submitted:
-                # 시험지 정보 조회
-                exam_paper = ExamPaperInfo.objects.filter(exam=exam).select_related('paper').first()
-                if exam_paper:
-                    exam_data = {
-                        'id': exam.id,
-                        'exam_name': exam.name,
-                        'testpaper': {
-                            'id': exam_paper.paper.id,
-                            'name': exam_paper.paper.name,
-                            'subject': {
-                                'id': exam.subject.id,
-                                'subject_name': exam.subject.subject_name
-                            },
-                            'question_count': exam_paper.paper.question_count,
-                            'create_user': {
-                                'id': exam.create_user.id,
-                                'nick_name': exam.create_user.nick_name
-                            },
-                            'questions': [],
-                            'created_at': exam_paper.paper.create_time.isoformat(),
-                            'updated_at': exam_paper.paper.edit_time.isoformat()
+            # 시험지 정보 조회 (prefetch된 데이터 사용)
+            exam_papers = list(exam.exampaperinfo_set.all())
+            if exam_papers:
+                exam_paper = exam_papers[0]
+                exam_data = {
+                    'id': exam.id,
+                    'exam_name': exam.name,
+                    'testpaper': {
+                        'id': exam_paper.paper.id,
+                        'name': exam_paper.paper.name,
+                        'subject': {
+                            'id': exam.subject.id,
+                            'subject_name': exam.subject.subject_name
                         },
-                        'start_time': exam.start_time.isoformat(),
-                        'end_time': exam.end_time.isoformat(),
+                        'question_count': exam_paper.paper.question_count,
                         'create_user': {
                             'id': exam.create_user.id,
                             'nick_name': exam.create_user.nick_name
                         },
-                        'created_at': exam.create_time.isoformat(),
-                        'updated_at': exam.create_time.isoformat()
-                    }
-                    exams_data.append(exam_data)
+                        'questions': [],
+                        'created_at': exam_paper.paper.create_time.isoformat(),
+                        'updated_at': exam_paper.paper.edit_time.isoformat()
+                    },
+                    'start_time': exam.start_time.isoformat(),
+                    'end_time': exam.end_time.isoformat(),
+                    'create_user': {
+                        'id': exam.create_user.id,
+                        'nick_name': exam.create_user.nick_name
+                    },
+                    'created_at': exam.create_time.isoformat(),
+                    'updated_at': exam.create_time.isoformat()
+                }
+                exams_data.append(exam_data)
 
         return Response({
             'count': len(exams_data),
@@ -550,6 +561,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
             submission_data = {
                 'id': submission.id,
                 'exam': submission.exam,
+                'test_paper': submission.test_paper,
                 'student': student_info,
                 'answers': answers,
                 'score': submission.test_score,

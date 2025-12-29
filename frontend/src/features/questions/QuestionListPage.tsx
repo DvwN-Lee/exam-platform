@@ -1,10 +1,14 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { questionApi } from '@/api/question'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
+import { cardHoverVariants } from '@/lib/animations'
 import type { QuestionFilters, QuestionType, QuestionDegree } from '@/types/question'
 
 const questionTypeLabels: Record<QuestionType, string> = {
@@ -44,34 +48,36 @@ export function QuestionListPage() {
     try {
       await questionApi.deleteQuestion(id)
       refetch()
-      alert('문제가 삭제되었습니다.')
+      toast.success('문제가 삭제되었습니다.')
     } catch (error) {
-      alert('문제 삭제에 실패했습니다.')
+      toast.error('문제 삭제에 실패했습니다.')
     }
   }
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div>로딩 중...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8">
+    <div className="space-y-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">문제 관리</h1>
-            <p className="text-muted-foreground">내가 생성한 문제를 관리합니다</p>
+        <FadeIn>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">문제 관리</h1>
+              <p className="text-muted-foreground">내가 생성한 문제를 관리합니다</p>
+            </div>
+            {user?.user_type === 'teacher' && (
+              <Button onClick={() => navigate({ to: '/questions/new' })}>
+                문제 생성
+              </Button>
+            )}
           </div>
-          {user?.user_type === 'teacher' && (
-            <Button onClick={() => navigate({ to: '/questions/new' })}>
-              문제 생성
-            </Button>
-          )}
-        </div>
+        </FadeIn>
 
         <div className="space-y-4 rounded-lg border bg-card p-4">
           <div className="flex gap-4">
@@ -144,85 +150,91 @@ export function QuestionListPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <StaggerContainer className="space-y-4">
           {data?.results.length === 0 ? (
-            <div className="rounded-lg border bg-card p-12 text-center">
-              <p className="text-muted-foreground">문제가 없습니다.</p>
-              {user?.user_type === 'teacher' && (
-                <Button
-                  className="mt-4"
-                  onClick={() => navigate({ to: '/questions/new' })}
-                >
-                  첫 문제 만들기
-                </Button>
-              )}
-            </div>
+            <FadeIn>
+              <div className="rounded-lg border bg-card p-12 text-center">
+                <p className="text-muted-foreground">문제가 없습니다.</p>
+                {user?.user_type === 'teacher' && (
+                  <Button
+                    className="mt-4"
+                    onClick={() => navigate({ to: '/questions/new' })}
+                  >
+                    첫 문제 만들기
+                  </Button>
+                )}
+              </div>
+            </FadeIn>
           ) : (
             data?.results.map((question) => (
-              <div
-                key={question.id}
-                className="rounded-lg border bg-card p-4 hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">{question.name}</h3>
-                      <span className="rounded bg-primary/10 px-2 py-1 text-xs font-medium">
-                        {questionTypeLabels[question.tq_type]}
-                      </span>
-                      <span className="rounded bg-secondary px-2 py-1 text-xs font-medium">
-                        {questionDegreeLabels[question.tq_degree]}
-                      </span>
-                      {question.is_share && (
-                        <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                          공유됨
+              <StaggerItem key={question.id}>
+                <motion.div
+                  className="rounded-lg border bg-card p-4 transition-colors"
+                  initial="rest"
+                  whileHover="hover"
+                  variants={cardHoverVariants}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">{question.name}</h3>
+                        <span className="rounded bg-primary/10 px-2 py-1 text-xs font-medium">
+                          {questionTypeLabels[question.tq_type]}
                         </span>
+                        <span className="rounded bg-secondary px-2 py-1 text-xs font-medium">
+                          {questionDegreeLabels[question.tq_degree]}
+                        </span>
+                        {question.is_share && (
+                          <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                            공유됨
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>과목: {question.subject.subject_name}</span>
+                        <span>배점: {question.score}점</span>
+                        <span>
+                          생성일:{' '}
+                          {new Date(question.created_at).toLocaleDateString('ko-KR')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate({ to: `/questions/${question.id}` })}
+                      >
+                        상세
+                      </Button>
+                      {user?.id === question.creat_user.id && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              navigate({ to: `/questions/${question.id}/edit` })
+                            }
+                          >
+                            수정
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDelete(question.id)}
+                          >
+                            삭제
+                          </Button>
+                        </>
                       )}
                     </div>
-                    <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>과목: {question.subject.subject_name}</span>
-                      <span>배점: {question.score}점</span>
-                      <span>
-                        생성일:{' '}
-                        {new Date(question.created_at).toLocaleDateString('ko-KR')}
-                      </span>
-                    </div>
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate({ to: `/questions/${question.id}` })}
-                    >
-                      상세
-                    </Button>
-                    {user?.id === question.creat_user.id && (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            navigate({ to: `/questions/${question.id}/edit` })
-                          }
-                        >
-                          수정
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(question.id)}
-                        >
-                          삭제
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
+                </motion.div>
+              </StaggerItem>
             ))
           )}
-        </div>
+        </StaggerContainer>
 
         {data && data.count > 0 && (
           <div className="flex items-center justify-between">

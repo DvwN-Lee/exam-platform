@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { examApi } from '@/api/exam'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,7 +31,7 @@ export function ExamTakePage() {
       setTimeRemaining(Math.floor((endTime - now) / 1000))
     },
     onError: () => {
-      alert('시험 시작에 실패했습니다.')
+      toast.error('시험 시작에 실패했습니다.')
       navigate({ to: '/exams' })
     },
   })
@@ -50,11 +51,11 @@ export function ExamTakePage() {
         answers: Array.from(answers.values()),
       }),
     onSuccess: () => {
-      alert('시험이 제출되었습니다.')
+      toast.success('시험이 제출되었습니다.')
       navigate({ to: `/exams/${id}/result` })
     },
     onError: () => {
-      alert('시험 제출에 실패했습니다.')
+      toast.error('시험 제출에 실패했습니다.')
     },
   })
 
@@ -66,7 +67,7 @@ export function ExamTakePage() {
 
   useEffect(() => {
     if (timeRemaining <= 0 && submissionId) {
-      alert('시험 시간이 종료되었습니다. 자동으로 제출됩니다.')
+      toast.warning('시험 시간이 종료되었습니다. 자동으로 제출됩니다.')
       submitExamMutation.mutate()
       return
     }
@@ -148,7 +149,7 @@ export function ExamTakePage() {
 
   if (!examInfo || !submissionId) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div>시험을 준비 중입니다...</div>
       </div>
     )
@@ -158,7 +159,7 @@ export function ExamTakePage() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full bg-background">
       {/* Timer Header */}
       <div className="sticky top-0 z-10 border-b bg-card px-4 py-3">
         <div className="mx-auto flex max-w-6xl items-center justify-between">

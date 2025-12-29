@@ -289,3 +289,25 @@ class TeacherDashboardSerializer(serializers.Serializer):
     ongoing_exams = serializers.ListField(child=serializers.DictField())
     question_statistics = serializers.DictField()
     student_statistics = serializers.DictField()
+
+
+class StudentListSerializer(serializers.ModelSerializer):
+    """
+    Student list serializer for teachers.
+    교사가 학생 목록을 조회할 때 사용하는 serializer.
+    """
+
+    student_name = serializers.CharField(source='studentsinfo.student_name', read_only=True)
+    student_id = serializers.CharField(source='studentsinfo.student_id', read_only=True)
+    student_class = serializers.CharField(source='studentsinfo.student_class', read_only=True)
+    student_school = serializers.CharField(source='studentsinfo.student_school', read_only=True)
+    studentsinfo_id = serializers.IntegerField(source='studentsinfo.id', read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'id', 'username', 'email', 'nick_name',
+            'student_name', 'student_id', 'student_class', 'student_school', 'studentsinfo_id',
+            'date_joined'
+        ]
+        read_only_fields = fields

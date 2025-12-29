@@ -1,14 +1,15 @@
-# ExamOnline
+# ExamOnline Backend
 
-Django 기반 온라인 시험 관리 시스템
+Django 기반 온라인 시험 관리 시스템의 Backend API 서버.
 
 ## 기술 스택
 
-- Backend: Django 5.2 LTS, Python 3.14
-- Primary DB: PostgreSQL 18
-- Secondary DB: MongoDB 8.0
-- Cache: Redis 8.0
-- Frontend: React 19 + TypeScript 6.x + Vite 6.x
+- **Framework**: Django 5.2 LTS, Django REST Framework
+- **Language**: Python 3.14
+- **Primary DB**: PostgreSQL 18
+- **Secondary DB**: MongoDB 8.0
+- **Cache**: Redis 8.0
+- **Auth**: JWT (Simple JWT)
 
 ## 개발 환경 설정
 
@@ -37,6 +38,9 @@ source .venv/bin/activate
 # DB 컨테이너 시작
 docker compose -f docker-compose.dev.yml up -d
 
+# 마이그레이션
+uv run python manage.py migrate
+
 # Django 개발 서버
 uv run python manage.py runserver
 ```
@@ -47,11 +51,25 @@ uv run python manage.py runserver
 examonline/
 ├── apps/                   # Django 앱
 │   ├── examination/        # 시험 관리
+│   │   ├── api/
+│   │   │   ├── views.py          # 시험 CRUD
+│   │   │   ├── taking_views.py   # 시험 응시 API
+│   │   │   └── serializers.py
+│   │   └── models.py
 │   ├── testpaper/          # 시험지 관리
+│   │   ├── api/
+│   │   │   ├── views.py
+│   │   │   └── scores_views.py   # 성적 관리
+│   │   └── models.py
 │   ├── testquestion/       # 문제 관리
 │   ├── user/               # 사용자 관리
+│   │   ├── api/
+│   │   └── services.py     # Dashboard Service
 │   └── operation/          # 운영 기능
 ├── config/                 # 환경별 설정
+├── core/                   # 공통 모듈
+│   └── api/
+│       └── pagination.py   # 페이지네이션
 ├── docker/                 # Docker 설정
 ├── docs/                   # 문서
 └── manage.py
@@ -62,43 +80,42 @@ examonline/
 ### Backend API 개발 상세 단계
 
 **Phase 1-2: Foundation** (완료)
-- 1.1 Django 5.2 + DRF 설정
-- 1.2 PostgreSQL, MongoDB, Redis 연동
-- 2.1 JWT 인증 구현
-- 2.2 역할 기반 권한 (IsTeacher, IsStudent)
-- 2.3 사용자 관리 API (회원가입, 로그인, 프로필)
+- Django 5.2 + DRF 설정
+- PostgreSQL, MongoDB, Redis 연동
+- JWT 인증 (HttpOnly Cookie 기반 Refresh Token)
+- 역할 기반 권한 (IsTeacher, IsStudent)
 
-**Phase 3: Question Management API** (완료 - Issues #1-4)
-- 3.1 Question CRUD
-- 3.2 필터링 및 검색
-- 3.3 문제 공유 기능
-- 3.4 문제 은행 관리
-- Coverage: 98%
+**Phase 3: Question Management API** (완료)
+- Question CRUD, 필터링, 검색
+- 문제 공유 기능, 문제 은행 관리
 
-**Phase 4: Examination System API** (완료 - Issues #5-8)
-- 4.1 TestPaper Management
-- 4.2 Examination Scheduling
-- 4.3 Exam Taking
-- 4.4 Scores & Grading
-- Coverage: 92-97%
+**Phase 4: Examination System API** (완료)
+- TestPaper Management
+- Examination Scheduling
+- Exam Taking (시작, 답안 저장, 제출)
+- Scores & Grading
 
-**향후 Backend 고도화 계획**
-- Statistics & Analytics API
-- Real-time notifications
-- Advanced reporting
+**Phase 5: Performance Optimization** (완료)
+- N+1 Query 최적화 (`select_related`, `prefetch_related`)
+- Database Index 추가
+- Service Pattern 적용 (Dashboard)
+- Query Reuse 최적화
 
 ### Test Coverage
 
-- **전체 Coverage**: 97.44%
-- **총 테스트 수**: 141개
-- **모든 테스트 통과**: 100%
+```
+268 passed in 36.94s
+Coverage: 95%
+```
 
-상세 내역:
-- examination API: 86-94%
-- testpaper API: 93-97%
-- testquestion API: 91-98%
-- user API: 99-100%
-- models: 95-100%
+| 영역 | Coverage |
+|------|----------|
+| examination API | 77-100% |
+| testpaper API | 94-97% |
+| testquestion API | 91-98% |
+| user API | 82-99% |
+| models | 92-100% |
+| services | 78% |
 
 ## 테스트 실행
 
@@ -161,9 +178,72 @@ open htmlcov/index.html
 - `GET /api/v1/scores/exam/{exam_id}/` - 시험별 성적 목록 (교사)
 - `POST /api/v1/scores/{score_id}/grade/` - 성적 채점 (교사)
 
+## 성능 최적화
+
+### Database Index
+
+```python
+# ExaminationInfo
+- exam_state_idx (exam_state)
+- exam_time_range_idx (start_time, end_time)
+- exam_create_user_idx (create_user)
+
+# ExamPaperInfo
+- exam_paper_idx (exam, paper)
+
+# ExamStudentsInfo
+- exam_student_idx (exam, student)
+- student_exam_lookup_idx (student)
+```
+
+### N+1 Query 해결
+
+- `select_related`: 1:1, ForeignKey 관계
+- `prefetch_related`: M:N, Reverse ForeignKey 관계
+- Dictionary Caching: Loop 내 조회 최적화
+
+### Service Pattern
+
+Dashboard 비즈니스 로직을 Service 계층으로 분리:
+
+```python
+# apps/user/services.py
+class StudentDashboardService:
+    def get_dashboard_data(self) -> dict:
+        # Query Reuse로 중복 쿼리 제거
+        ...
+
+class TeacherDashboardService:
+    def get_dashboard_data(self) -> dict:
+        ...
+```
+
+## 보안
+
+### JWT HttpOnly Cookie
+
+Refresh Token을 HttpOnly Cookie에 저장하여 XSS 공격 방어:
+
+```python
+# apps/user/api/views.py
+response.set_cookie(
+    key='refresh_token',
+    value=refresh_token,
+    httponly=True,
+    secure=not settings.DEBUG,
+    samesite='Lax',
+    max_age=60 * 60 * 24 * 7,
+)
+```
+
 ## 문서
 
+- [Troubleshooting Guide](./docs/troubleshooting.md)
 - [Database Normalization](./docs/database-normalization.md)
 - [Phase 3 Testing Plan](./docs/phase3-testing-plan.md)
 - [Phase 4 API Test Results](./docs/phase4-api-test-results.md)
 - [Coverage Improvement Report](./docs/coverage-improvement-report.md)
+
+## 관련 프로젝트
+
+- [Frontend README](../frontend/README.md)

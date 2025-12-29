@@ -1,6 +1,42 @@
 import axios, { AxiosError } from 'axios'
 
 /**
+ * LocalStorage 안전하게 읽기
+ * Private Browsing 모드 또는 Storage 접근 불가 시 null 반환
+ */
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * LocalStorage 안전하게 쓰기
+ * Storage 용량 초과 또는 접근 불가 시 false 반환
+ */
+function safeSetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * LocalStorage 안전하게 삭제
+ */
+function safeRemoveItem(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // 무시
+  }
+}
+
+/**
  * Backend 에러 응답 형식
  * { error: { code, message, details } }
  */
@@ -47,7 +83,7 @@ const apiClient = axios.create({
 // Request interceptor - JWT 토큰 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token')
+    const token = safeGetItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -69,7 +105,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token')
+        const refreshToken = safeGetItem('refresh_token')
         if (!refreshToken) {
           throw new Error('No refresh token')
         }
@@ -81,15 +117,15 @@ apiClient.interceptors.response.use(
         )
 
         const { access } = response.data
-        localStorage.setItem('access_token', access)
+        safeSetItem('access_token', access)
 
         // 원래 요청에 새 토큰 적용
         originalRequest.headers.Authorization = `Bearer ${access}`
         return apiClient(originalRequest)
       } catch (refreshError) {
         // 토큰 갱신 실패 시 로그아웃 처리
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
+        safeRemoveItem('access_token')
+        safeRemoveItem('refresh_token')
         window.location.href = '/login'
         return Promise.reject(refreshError)
       }

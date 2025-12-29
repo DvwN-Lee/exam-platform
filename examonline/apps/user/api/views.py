@@ -15,6 +15,7 @@ from user.api.serializers import (
     CustomTokenObtainPairSerializer,
     PasswordChangeSerializer,
     StudentDashboardSerializer,
+    StudentListSerializer,
     SubjectSerializer,
     TeacherDashboardSerializer,
     UserProfileSerializer,
@@ -246,3 +247,47 @@ class TeacherDashboardView(generics.RetrieveAPIView):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data)
+
+
+@extend_schema_view(
+    list=extend_schema(tags=['students'], summary='학생 목록 조회'),
+    retrieve=extend_schema(tags=['students'], summary='학생 상세 조회'),
+)
+class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    학생 목록 조회 API (교사 전용).
+
+    교사가 학생 목록을 조회하고 검색/필터링할 수 있습니다.
+    """
+    serializer_class = StudentListSerializer
+    permission_classes = [IsAuthenticated, IsTeacher]
+
+    def get_queryset(self):
+        """
+        학생 목록 조회 (검색/필터 지원).
+        """
+        queryset = UserProfile.objects.filter(
+            user_type='student'
+        ).select_related('studentsinfo').order_by('-date_joined')
+
+        # 검색 (이름, 학번, 이메일)
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(studentsinfo__student_name__icontains=search) |
+                Q(studentsinfo__student_id__icontains=search) |
+                Q(email__icontains=search) |
+                Q(username__icontains=search)
+            )
+
+        # 학교 필터
+        school = self.request.query_params.get('school', None)
+        if school:
+            queryset = queryset.filter(studentsinfo__student_school__icontains=school)
+
+        # 반 필터
+        class_name = self.request.query_params.get('class', None)
+        if class_name:
+            queryset = queryset.filter(studentsinfo__student_class__icontains=class_name)
+
+        return queryset
