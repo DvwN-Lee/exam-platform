@@ -18,6 +18,7 @@ import { DURATION, EASING, STAGGER } from '@/lib/animations'
 const loginSchema = z.object({
   username: z.string().min(1, '아이디를 입력해주세요'),
   password: z.string().min(1, 'Password를 입력해주세요'),
+  remember: z.boolean(),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
@@ -31,16 +32,25 @@ export function LoginPage() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+    defaultValues: {
+      username: '',
+      password: '',
+      remember: false,
+    },
   })
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
       setAuth(data.user, data.access, data.refresh)
-      navigate({ to: '/' })
+      navigate({ to: '/dashboard' })
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || '로그인에 실패했습니다.')
@@ -115,9 +125,11 @@ export function LoginPage() {
           </motion.div>
 
           {/* Role Selector */}
-          <motion.div className="mb-8 flex gap-4" variants={itemVariants}>
+          <motion.div className="mb-8 flex gap-4" role="radiogroup" aria-label="사용자 유형 선택" variants={itemVariants}>
             <motion.button
               type="button"
+              role="radio"
+              aria-checked={selectedRole === 'student'}
               onClick={() => setSelectedRole('student')}
               className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
                 selectedRole === 'student'
@@ -132,6 +144,8 @@ export function LoginPage() {
             </motion.button>
             <motion.button
               type="button"
+              role="radio"
+              aria-checked={selectedRole === 'teacher'}
               onClick={() => setSelectedRole('teacher')}
               className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
                 selectedRole === 'teacher'
@@ -182,7 +196,11 @@ export function LoginPage() {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Checkbox id="remember" />
+                <Checkbox
+                  id="remember"
+                  checked={watch('remember')}
+                  onCheckedChange={(checked) => setValue('remember', checked === true)}
+                />
                 <label
                   htmlFor="remember"
                   className="cursor-pointer text-sm text-muted-foreground"
@@ -190,12 +208,13 @@ export function LoginPage() {
                   로그인 유지
                 </label>
               </div>
-              <a
-                href="#"
+              <button
+                type="button"
+                onClick={() => toast.info('비밀번호 찾기 기능은 준비 중입니다.')}
                 className="text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
               >
                 비밀번호 찾기
-              </a>
+              </button>
             </div>
 
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
@@ -219,6 +238,8 @@ export function LoginPage() {
           {/* Social Login */}
           <motion.div className="mb-6 flex gap-4" variants={itemVariants}>
             <motion.button
+              type="button"
+              onClick={() => toast.info('Google 로그인 기능은 준비 중입니다.')}
               className="flex flex-1 items-center justify-center gap-2 rounded-[12px] border-2 border-border bg-card p-4 font-semibold transition-all hover:border-primary"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
@@ -227,6 +248,8 @@ export function LoginPage() {
               Google
             </motion.button>
             <motion.button
+              type="button"
+              onClick={() => toast.info('Kakao 로그인 기능은 준비 중입니다.')}
               className="flex flex-1 items-center justify-center gap-2 rounded-[12px] border-2 border-border bg-card p-4 font-semibold transition-all hover:border-primary"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}

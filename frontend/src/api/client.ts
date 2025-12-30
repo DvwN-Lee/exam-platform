@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios'
+import { translateErrorMessage } from '@/utils/errorMessages'
 
 /**
  * LocalStorage 안전하게 읽기
@@ -60,16 +61,27 @@ export interface NormalizedErrorResponse {
 
 /**
  * Backend 에러 응답을 Frontend 형식으로 변환
+ * 영문 에러 메시지를 한글로 자동 변환
  */
 function normalizeErrorResponse(data: BackendErrorResponse): NormalizedErrorResponse {
   if (data?.error) {
     const { code, message, details } = data.error
     return {
-      detail: message,
-      code,
       ...details,
+      code,
+      detail: translateErrorMessage(message),
     }
   }
+
+  // 직접 detail이 있는 경우도 변환 (DRF 기본 응답 형식)
+  if (typeof data === 'object' && data !== null && 'detail' in data) {
+    const originalData = data as unknown as { detail: string }
+    return {
+      ...originalData,
+      detail: translateErrorMessage(originalData.detail),
+    } as NormalizedErrorResponse
+  }
+
   return data as unknown as NormalizedErrorResponse
 }
 
@@ -100,8 +112,12 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<BackendErrorResponse>) => {
     const originalRequest = error.config as typeof error.config & { _retry?: boolean }
 
-    // 401 에러이고 재시도하지 않은 요청인 경우
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    // 로그인/회원가입 API는 토큰 갱신 로직에서 제외
+    const isAuthEndpoint = originalRequest?.url?.includes('/auth/token') ||
+                           originalRequest?.url?.includes('/auth/register')
+
+    // 401 에러이고 재시도하지 않은 요청인 경우 (인증 API 제외)
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true
 
       try {
