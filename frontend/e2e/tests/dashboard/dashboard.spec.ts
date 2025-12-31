@@ -67,17 +67,11 @@ test.describe('Dashboard', () => {
       })
 
       await test.step('섹션 확인', async () => {
-        // 과목별 최근 성적 섹션
-        await expect(page.locator('h2:has-text("과목별 최근 성적")')).toBeVisible()
-
         // 최근 시험 성적 섹션
         await expect(page.locator('h2:has-text("최근 시험 성적")')).toBeVisible()
 
         // 응시 예정 시험 섹션
         await expect(page.locator('h2:has-text("응시 예정 시험")')).toBeVisible()
-
-        // 학습 진행률 섹션
-        await expect(page.locator('h2:has-text("학습 진행률")')).toBeVisible()
 
         console.log('✓ Dashboard sections displayed')
       })
@@ -170,15 +164,6 @@ test.describe('Dashboard', () => {
       })
 
       await test.step('활동 및 데이터 섹션 확인', async () => {
-        // 최근 활동 섹션
-        await expect(page.locator('h2:has-text("최근 활동")')).toBeVisible()
-
-        // 점수 분포 섹션
-        await expect(page.locator('h2:has-text("점수 분포")')).toBeVisible()
-
-        // 최근 시험 결과 섹션
-        await expect(page.locator('h2:has-text("최근 시험 결과")')).toBeVisible()
-
         // 최근 생성한 문제 섹션
         await expect(page.locator('h2:has-text("최근 생성한 문제")')).toBeVisible()
 

@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FadeIn } from '@/components/animation'
 
 const profileSchema = z.object({
   email: z.string().email('올바른 이메일 주소를 입력해주세요'),
@@ -76,61 +77,65 @@ export function ProfilePage() {
           <p className="text-muted-foreground">내 정보를 관리하세요</p>
         </div>
 
-        <div className="rounded-lg border bg-card p-6 space-y-4">
-          <div>
-            <Label className="text-muted-foreground">아이디</Label>
-            <div className="mt-1 text-lg font-medium">{profileData.username}</div>
-          </div>
+        <FadeIn type="slideUp" delay={0.1}>
+          <div className="rounded-lg border bg-card p-6 space-y-4">
+            <div>
+              <Label className="text-muted-foreground">아이디</Label>
+              <div className="mt-1 text-lg font-medium">{profileData.username}</div>
+            </div>
 
-          <div>
-            <Label className="text-muted-foreground">사용자 유형</Label>
-            <div className="mt-1 text-lg font-medium">
-              {profileData.user_type === 'student' ? '학생' : '교사'}
+            <div>
+              <Label className="text-muted-foreground">사용자 유형</Label>
+              <div className="mt-1 text-lg font-medium">
+                {profileData.user_type === 'student' ? '학생' : '교사'}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-muted-foreground">가입일</Label>
+              <div className="mt-1 text-lg">
+                {new Date(profileData.created_at).toLocaleDateString('ko-KR')}
+              </div>
             </div>
           </div>
+        </FadeIn>
 
-          <div>
-            <Label className="text-muted-foreground">가입일</Label>
-            <div className="mt-1 text-lg">
-              {new Date(profileData.created_at).toLocaleDateString('ko-KR')}
+        <FadeIn type="slideUp" delay={0.2}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" {...register('email')} />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register('email')} />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="nick_name">닉네임</Label>
+              <Input id="nick_name" type="text" {...register('nick_name')} />
+              {errors.nick_name && (
+                <p className="text-sm text-destructive">{errors.nick_name.message}</p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="nick_name">닉네임</Label>
-            <Input id="nick_name" type="text" {...register('nick_name')} />
-            {errors.nick_name && (
-              <p className="text-sm text-destructive">{errors.nick_name.message}</p>
-            )}
-          </div>
-
-          <div className="flex gap-4">
-            <Button
-              type="submit"
-              disabled={updateMutation.isPending}
-              className="flex-1"
-            >
-              {updateMutation.isPending ? '저장 중...' : '프로필 업데이트'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate({ to: '/profile/change-password' })}
-            >
-              비밀번호 변경
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-4">
+              <Button
+                type="submit"
+                disabled={updateMutation.isPending}
+                className="flex-1"
+              >
+                {updateMutation.isPending ? '저장 중...' : '프로필 업데이트'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate({ to: '/profile/change-password' })}
+              >
+                비밀번호 변경
+              </Button>
+            </div>
+          </form>
+        </FadeIn>
 
         <div className="pt-6 border-t">
           <Button variant="destructive" onClick={handleLogout} className="w-full">

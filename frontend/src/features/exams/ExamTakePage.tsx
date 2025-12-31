@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { examApi } from '@/api/exam'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { FadeIn } from '@/components/animation'
 import type { ExamAnswer } from '@/types/exam'
 
 export function ExamTakePage() {
@@ -188,8 +189,9 @@ export function ExamTakePage() {
         <div className="grid gap-6 lg:grid-cols-4">
           {/* Question Navigation */}
           <div className="lg:col-span-1">
-            <div className="sticky top-20 rounded-lg border bg-card p-4">
-              <h3 className="mb-4 font-semibold">문제 목록</h3>
+            <FadeIn type="slideUp" delay={0.1} once>
+              <div className="sticky top-20 rounded-lg border bg-card p-4">
+                <h3 className="mb-4 font-semibold">문제 목록</h3>
               <div className="grid grid-cols-5 gap-2 lg:grid-cols-4">
                 {questions.map((q, index) => (
                   <button
@@ -221,7 +223,8 @@ export function ExamTakePage() {
                   <span>미답변</span>
                 </div>
               </div>
-            </div>
+              </div>
+            </FadeIn>
           </div>
 
           {/* Question Content */}

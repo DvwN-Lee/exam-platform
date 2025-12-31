@@ -4,6 +4,8 @@ User Dashboard Services.
 비즈니스 로직을 View에서 분리하여 재사용성과 테스트 용이성을 개선.
 """
 
+from datetime import timedelta
+
 from django.db.models import Count, Avg, Prefetch
 from django.utils import timezone
 
@@ -163,6 +165,36 @@ class StudentDashboardService:
             start_time__gte=self.now
         ).count()
 
+        # 전월 대비 Trend 계산
+        this_month_start = self.now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        last_month_end = this_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+
+        this_month_exams = [
+            sub for sub in submissions_list
+            if sub.submit_time and sub.submit_time >= this_month_start
+        ]
+        last_month_exams = [
+            sub for sub in submissions_list
+            if sub.submit_time and last_month_start <= sub.submit_time < this_month_start
+        ]
+
+        exams_trend = len(this_month_exams) - len(last_month_exams)
+
+        # 평균 점수 Trend 계산
+        this_month_avg = None
+        last_month_avg = None
+        if this_month_exams:
+            this_month_avg = sum(sub.test_score for sub in this_month_exams) / len(this_month_exams)
+        if last_month_exams:
+            last_month_avg = sum(sub.test_score for sub in last_month_exams) / len(last_month_exams)
+
+        avg_score_trend = 0.0
+        if this_month_avg is not None and last_month_avg is not None:
+            avg_score_trend = round(this_month_avg - last_month_avg, 1)
+
         return {
             'total_exams_taken': total_exams_taken,
             'average_score': average_score,
@@ -170,6 +202,8 @@ class StudentDashboardService:
             'correct_answers': total_correct,
             'total_questions_answered': total_questions,
             'upcoming_exams_count': upcoming_count,
+            'exams_trend': exams_trend,
+            'avg_score_trend': avg_score_trend,
         }
 
     def _get_score_trend(self, recent_submissions_list: list) -> list:
@@ -204,9 +238,10 @@ class StudentDashboardService:
             enrolled_exam_ids: 등록된 시험 ID 목록 (재사용)
         """
         # Upcoming exams 조회 (N+1 쿼리 방지)
+        # end_time__gt=self.now로 변경하여 진행 중인 시험도 포함
         upcoming_exams_qs = ExaminationInfo.objects.filter(
             id__in=enrolled_exam_ids,
-            start_time__gte=self.now
+            end_time__gt=self.now
         ).select_related('create_user', 'subject').prefetch_related(
             Prefetch(
                 'exampaperinfo_set',
@@ -347,6 +382,7 @@ class TeacherDashboardService:
         ongoing_exams = self._get_ongoing_exams()
         question_statistics = self._get_question_statistics()
         student_statistics = self._get_student_statistics()
+        testpaper_statistics = self._get_testpaper_statistics()
 
         return {
             'recent_questions': recent_questions,
@@ -354,6 +390,7 @@ class TeacherDashboardService:
             'ongoing_exams': ongoing_exams,
             'question_statistics': question_statistics,
             'student_statistics': student_statistics,
+            'testpaper_statistics': testpaper_statistics,
         }
 
     def _get_recent_questions(self) -> list:
@@ -494,11 +531,28 @@ class TeacherDashboardService:
         degree_counts = user_questions.values('tq_degree').annotate(count=Count('id'))
         questions_by_difficulty = {item['tq_degree']: item['count'] for item in degree_counts}
 
+        # 전월 대비 Trend 계산
+        this_month_start = self.now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        last_month_end = this_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+
+        this_month_count = user_questions.filter(
+            create_time__gte=this_month_start
+        ).count()
+        last_month_count = user_questions.filter(
+            create_time__gte=last_month_start,
+            create_time__lt=this_month_start
+        ).count()
+
         return {
             'total_questions': total_questions,
             'shared_questions': shared_questions,
             'questions_by_type': questions_by_type,
             'questions_by_difficulty': questions_by_difficulty,
+            'trend': this_month_count - last_month_count,
+            'this_month_created': this_month_count,
         }
 
     def _get_student_statistics(self) -> dict:
@@ -533,10 +587,66 @@ class TeacherDashboardService:
         else:
             pass_rate = 0.0
 
+        # 전월 대비 Trend 계산 (응시자)
+        this_month_start = self.now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        last_month_end = this_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+
+        this_month_submissions = submissions.filter(
+            submit_time__gte=this_month_start
+        ).count()
+        last_month_submissions = submissions.filter(
+            submit_time__gte=last_month_start,
+            submit_time__lt=this_month_start
+        ).count()
+
+        # 평균 점수 Trend 계산
+        this_month_avg = submissions.filter(
+            submit_time__gte=this_month_start
+        ).aggregate(avg=Avg('test_score'))['avg']
+        last_month_avg = submissions.filter(
+            submit_time__gte=last_month_start,
+            submit_time__lt=this_month_start
+        ).aggregate(avg=Avg('test_score'))['avg']
+
+        score_trend = 0.0
+        if this_month_avg is not None and last_month_avg is not None:
+            score_trend = round(this_month_avg - last_month_avg, 1)
+
         return {
             'total_students': total_students,
             'total_submissions': total_submissions,
             'average_score': average_score,
             'pass_rate': pass_rate,
             'recent_submissions': [],
+            'submissions_trend': this_month_submissions - last_month_submissions,
+            'score_trend': score_trend,
+        }
+
+    def _get_testpaper_statistics(self) -> dict:
+        """시험지 통계"""
+        user_testpapers = TestPaperInfo.objects.filter(create_user=self.user)
+        total_testpapers = user_testpapers.count()
+
+        # 전월 대비 Trend 계산
+        this_month_start = self.now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        last_month_end = this_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+
+        this_month_count = user_testpapers.filter(
+            create_time__gte=this_month_start
+        ).count()
+        last_month_count = user_testpapers.filter(
+            create_time__gte=last_month_start,
+            create_time__lt=this_month_start
+        ).count()
+
+        return {
+            'total_testpapers': total_testpapers,
+            'trend': this_month_count - last_month_count,
+            'this_month_created': this_month_count,
         }

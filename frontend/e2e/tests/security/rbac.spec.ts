@@ -16,7 +16,7 @@ test.describe('RBAC Tests', () => {
     await page.fill('input[id="username"]', studentUsername)
     await page.fill('input[id="password"]', studentPassword)
     await page.click('button[type="submit"]')
-    await page.waitForURL('/')
+    await page.waitForURL('/dashboard')
 
     // Question 관리 페이지 접근 시도
     await page.goto('/questions')
@@ -40,7 +40,7 @@ test.describe('RBAC Tests', () => {
     await page.fill('input[id="username"]', teacherUsername)
     await page.fill('input[id="password"]', teacherPassword)
     await page.click('button[type="submit"]')
-    await page.waitForURL('/')
+    await page.waitForURL('/dashboard')
 
     // Dashboard 접근
     await page.goto('/dashboard')

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import apiClient from '@/api/client'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation'
 
 interface Subject {
   id: number
@@ -112,71 +113,72 @@ export function SubjectSettings() {
       <div className="space-y-3">
         {/* 과목 목록 */}
         {subjects && subjects.length > 0 ? (
-          <div className="space-y-2">
+          <StaggerContainer className="space-y-2">
             {subjects.map((subject) => (
-              <div
-                key={subject.id}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
-                {editingId === subject.id ? (
-                  <div className="flex flex-1 items-center gap-2">
-                    <input
-                      type="text"
-                      value={editingName}
-                      onChange={(e) => setEditingName(e.target.value)}
-                      className="flex-1 rounded-md border px-3 py-1"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleUpdate(subject.id)}
-                      className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingId(null)
-                        setEditingName('')
-                      }}
-                      className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
-                    >
-                      취소
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <div className="font-medium">{subject.subject_name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        생성일: {new Date(subject.create_time).toLocaleDateString('ko-KR')}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
+              <StaggerItem key={subject.id}>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  {editingId === subject.id ? (
+                    <div className="flex flex-1 items-center gap-2">
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        className="flex-1 rounded-md border px-3 py-1"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleUpdate(subject.id)}
+                        className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90"
+                      >
+                        저장
+                      </button>
                       <button
                         onClick={() => {
-                          setEditingId(subject.id)
-                          setEditingName(subject.subject_name)
+                          setEditingId(null)
+                          setEditingName('')
                         }}
                         className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
                       >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDelete(subject.id, subject.subject_name)}
-                        className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        삭제
+                        취소
                       </button>
                     </div>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <div>
+                        <div className="font-medium">{subject.subject_name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          생성일: {new Date(subject.create_time).toLocaleDateString('ko-KR')}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingId(subject.id)
+                            setEditingName(subject.subject_name)
+                          }}
+                          className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDelete(subject.id, subject.subject_name)}
+                          className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerContainer>
         ) : (
-          <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-            등록된 과목이 없습니다. 과목을 추가해주세요.
-          </div>
+          <FadeIn type="slideUp" delay={0.1}>
+            <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+              등록된 과목이 없습니다. 과목을 추가해주세요.
+            </div>
+          </FadeIn>
         )}
 
         {/* 과목 추가 폼 */}

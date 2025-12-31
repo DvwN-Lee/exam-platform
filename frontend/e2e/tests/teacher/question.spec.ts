@@ -32,7 +32,7 @@ test.describe('Teacher Question Management', () => {
     await page.fill('input[id="username"]', teacherUsername)
     await page.fill('input[id="password"]', teacherPassword)
     await page.click('button[type="submit"]')
-    await page.waitForURL('/')
+    await page.waitForURL('/dashboard')
 
     // Question 관리 페이지로 이동
     await page.goto('/questions')
@@ -54,7 +54,7 @@ test.describe('Teacher Question Management', () => {
     await page.fill('input[id="username"]', teacherUsername)
     await page.fill('input[id="password"]', teacherPassword)
     await page.click('button[type="submit"]')
-    await page.waitForURL('/')
+    await page.waitForURL('/dashboard')
 
     // Question 생성 페이지로 이동
     await page.goto('/questions/new')
@@ -79,7 +79,7 @@ test.describe('Teacher Question Management', () => {
     await page.fill('input[id="username"]', teacherUsername)
     await page.fill('input[id="password"]', teacherPassword)
     await page.click('button[type="submit"]')
-    await page.waitForURL('/')
+    await page.waitForURL('/dashboard')
 
     // Question 목록 페이지로 이동
     await page.goto('/questions')

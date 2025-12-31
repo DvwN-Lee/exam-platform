@@ -15,7 +15,7 @@ test.describe('Teacher Examination Management', () => {
     await page.fill('input[id="username"]', teacherUsername)
     await page.fill('input[id="password"]', teacherPassword)
     await page.click('button[type="submit"]')
-    await page.waitForURL('/')
+    await page.waitForURL('/dashboard')
   })
 
   test('Examination 목록 페이지가 렌더링되어야 함', async ({ page }) => {

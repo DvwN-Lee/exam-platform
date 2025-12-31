@@ -65,3 +65,35 @@ button,
 a {
   transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out, background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
+
+/* Dark Mode Support */
+.dark {
+  --color-background: rgb(17 24 39);  /* gray-900 */
+  --color-foreground: rgb(243 244 246);  /* gray-100 */
+  --color-card: rgb(31 41 55);  /* gray-800 */
+  --color-card-foreground: rgb(243 244 246);  /* gray-100 */
+  --color-popover: rgb(31 41 55);
+  --color-popover-foreground: rgb(243 244 246);
+  --color-secondary: rgb(55 65 81);  /* gray-700 */
+  --color-secondary-foreground: rgb(243 244 246);
+  --color-muted: rgb(55 65 81);  /* gray-700 */
+  --color-muted-foreground: rgb(156 163 175);  /* gray-400 */
+  --color-accent: rgb(31 41 55);
+  --color-accent-foreground: rgb(243 244 246);
+  --color-border: rgb(75 85 99);  /* gray-600 */
+  --color-input: rgb(75 85 99);
+
+  /* Chart specific colors for dark mode */
+  --color-chart-tooltip-bg: rgb(31 41 55);
+  --color-chart-tooltip-border: rgb(75 85 99);
+  --color-chart-grid: rgb(55 65 81);
+  --color-chart-axis: rgb(156 163 175);
+}
+
+/* Light mode chart colors (default) */
+:root {
+  --color-chart-tooltip-bg: rgb(255 255 255);
+  --color-chart-tooltip-border: rgb(229 231 235);
+  --color-chart-grid: rgb(243 244 246);
+  --color-chart-axis: rgb(107 114 128);
+}

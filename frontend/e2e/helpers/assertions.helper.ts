@@ -119,7 +119,7 @@ export async function expectElementCount(page: Page, selector: string, count: nu
  * Dashboard 페이지 확인
  */
 export async function expectToBeOnDashboard(page: Page) {
-  await expectToBeOnPage(page, '/')
+  await expectToBeOnPage(page, '/dashboard')
   await expectToBeLoggedIn(page)
 }
 

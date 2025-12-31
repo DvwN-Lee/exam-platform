@@ -66,17 +66,11 @@ test.describe('Dashboard Integration', () => {
     })
 
     await test.step('섹션 확인', async () => {
-      // 과목별 최근 성적 차트
-      await expect(page.locator('h2:has-text("과목별 최근 성적")')).toBeVisible()
-
       // 최근 시험 성적 섹션
       await expect(page.locator('h2:has-text("최근 시험 성적")')).toBeVisible()
 
       // 응시 예정 시험 섹션
       await expect(page.locator('h2:has-text("응시 예정 시험")')).toBeVisible()
-
-      // 학습 진행률 섹션
-      await expect(page.locator('h2:has-text("학습 진행률")')).toBeVisible()
 
       console.log('All sections displayed')
     })
@@ -148,19 +142,6 @@ test.describe('Dashboard Integration', () => {
     })
 
     await test.step('활동 및 결과 섹션 확인', async () => {
-      // 최근 활동 섹션
-      await expect(page.locator('h2:has-text("최근 활동")')).toBeVisible()
-
-      // 점수 분포 섹션
-      await expect(page.locator('h2:has-text("점수 분포")')).toBeVisible()
-
-      // 최근 시험 결과 테이블
-      await expect(page.locator('h2:has-text("최근 시험 결과")')).toBeVisible()
-
-      console.log('Activity and results sections displayed')
-    })
-
-    await test.step('하단 섹션 확인', async () => {
       // 최근 생성한 문제 섹션
       await expect(
         page.locator('h2:has-text("최근 생성한 문제")')
@@ -172,7 +153,7 @@ test.describe('Dashboard Integration', () => {
       // 최근 제출된 시험 섹션
       await expect(page.locator('h2:has-text("최근 제출된 시험")')).toBeVisible()
 
-      console.log('Bottom sections displayed')
+      console.log('Activity and results sections displayed')
     })
 
     await test.step('네비게이션 버튼 확인', async () => {
@@ -182,11 +163,11 @@ test.describe('Dashboard Integration', () => {
       // 시험 생성 버튼
       await expect(page.locator('button:has-text("시험 생성")')).toBeVisible()
 
-      // 전체 보기 버튼들
+      // 전체 보기 버튼들 (최근 생성한 문제, 진행 중인 시험)
       const viewAllButtons = page.locator(
         'button:has-text("전체 보기"), button:has-text("전체 보기 →")'
       )
-      expect(await viewAllButtons.count()).toBeGreaterThanOrEqual(3)
+      expect(await viewAllButtons.count()).toBeGreaterThanOrEqual(2)
 
       console.log('Navigation buttons displayed')
     })

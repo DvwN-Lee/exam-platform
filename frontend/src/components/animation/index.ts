@@ -1,6 +1,8 @@
 export { MotionWrapper } from './MotionWrapper'
 export { StaggerContainer } from './StaggerContainer'
 export { StaggerItem } from './StaggerItem'
+export { StaggerTableBody } from './StaggerTableBody'
+export { StaggerTableRow } from './StaggerTableRow'
 export { AnimatedCard } from './AnimatedCard'
 export { FadeIn } from './FadeIn'
 export { AnimatedProgress } from './AnimatedProgress'

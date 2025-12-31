@@ -15,7 +15,7 @@ export async function login(page: Page, credentials: TestCredentials) {
   await page.click('button[type="submit"]')
 
   // Dashboard로 리다이렉트될 때까지 대기
-  await page.waitForURL('/')
+  await page.waitForURL('/dashboard')
 }
 
 /**

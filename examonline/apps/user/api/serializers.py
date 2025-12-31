@@ -289,6 +289,7 @@ class TeacherDashboardSerializer(serializers.Serializer):
     ongoing_exams = serializers.ListField(child=serializers.DictField())
     question_statistics = serializers.DictField()
     student_statistics = serializers.DictField()
+    testpaper_statistics = serializers.DictField(required=False, allow_null=True)
 
 
 class StudentListSerializer(serializers.ModelSerializer):

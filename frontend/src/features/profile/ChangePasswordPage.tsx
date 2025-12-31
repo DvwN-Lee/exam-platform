@@ -8,6 +8,7 @@ import { authApi } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FadeIn } from '@/components/animation'
 
 const changePasswordSchema = z
   .object({
@@ -62,72 +63,74 @@ export function ChangePasswordPage() {
           <p className="text-muted-foreground">새 비밀번호를 설정해주세요</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="old_password">현재 Password</Label>
-            <Input
-              id="old_password"
-              type="password"
-              placeholder="현재 Password"
-              {...register('old_password')}
-            />
-            {errors.old_password && (
-              <p className="text-sm text-destructive">
-                {errors.old_password.message}
-              </p>
-            )}
-          </div>
+        <FadeIn type="slideUp" delay={0.1}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="old_password">현재 Password</Label>
+              <Input
+                id="old_password"
+                type="password"
+                placeholder="현재 Password"
+                {...register('old_password')}
+              />
+              {errors.old_password && (
+                <p className="text-sm text-destructive">
+                  {errors.old_password.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="new_password">새 Password</Label>
-            <Input
-              id="new_password"
-              type="password"
-              placeholder="8자 이상"
-              {...register('new_password')}
-            />
-            {errors.new_password && (
-              <p className="text-sm text-destructive">
-                {errors.new_password.message}
-              </p>
-            )}
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_password">새 Password</Label>
+              <Input
+                id="new_password"
+                type="password"
+                placeholder="8자 이상"
+                {...register('new_password')}
+              />
+              {errors.new_password && (
+                <p className="text-sm text-destructive">
+                  {errors.new_password.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="new_password2">새 Password 확인</Label>
-            <Input
-              id="new_password2"
-              type="password"
-              placeholder="새 Password 재입력"
-              {...register('new_password2')}
-            />
-            {errors.new_password2 && (
-              <p className="text-sm text-destructive">
-                {errors.new_password2.message}
-              </p>
-            )}
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="new_password2">새 Password 확인</Label>
+              <Input
+                id="new_password2"
+                type="password"
+                placeholder="새 Password 재입력"
+                {...register('new_password2')}
+              />
+              {errors.new_password2 && (
+                <p className="text-sm text-destructive">
+                  {errors.new_password2.message}
+                </p>
+              )}
+            </div>
 
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => navigate({ to: '/profile' })}
-            >
-              취소
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={changePasswordMutation.isPending}
-            >
-              {changePasswordMutation.isPending
-                ? '변경 중...'
-                : '비밀번호 변경'}
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => navigate({ to: '/profile' })}
+              >
+                취소
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={changePasswordMutation.isPending}
+              >
+                {changePasswordMutation.isPending
+                  ? '변경 중...'
+                  : '비밀번호 변경'}
+              </Button>
+            </div>
+          </form>
+        </FadeIn>
       </div>
     </div>
   )

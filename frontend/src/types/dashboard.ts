@@ -16,6 +16,13 @@ export interface TeacherDashboard {
   ongoing_exams: Examination[]
   question_statistics: QuestionStatistics
   student_statistics: StudentExamStatistics
+  testpaper_statistics?: TestpaperStatistics
+}
+
+export interface TestpaperStatistics {
+  total_testpapers: number
+  trend: number
+  this_month_created: number
 }
 
 export interface ScoreTrend {
@@ -32,6 +39,8 @@ export interface StudentStatistics {
   pass_rate: number
   total_questions_answered: number
   correct_answers: number
+  exams_trend: number
+  avg_score_trend: number
 }
 
 export interface QuestionStatistics {
@@ -47,6 +56,8 @@ export interface QuestionStatistics {
     zd: number
     kn: number
   }
+  trend: number
+  this_month_created: number
 }
 
 export interface StudentExamStatistics {
@@ -55,4 +66,6 @@ export interface StudentExamStatistics {
   average_score: number
   pass_rate: number
   recent_submissions: ExamSubmission[]
+  submissions_trend: number
+  score_trend: number
 }

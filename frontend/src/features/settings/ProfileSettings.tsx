@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import apiClient from '@/api/client'
 import { useAuthStore } from '@/stores/authStore'
+import { FadeIn } from '@/components/animation'
 
 interface ProfileData {
   nick_name: string
@@ -78,19 +79,14 @@ export function ProfileSettings() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium">아이디</label>
-          <input
-            type="text"
-            value={user?.username || ''}
-            disabled
-            className="mt-1 w-full rounded-md border bg-muted px-3 py-2 text-muted-foreground"
-          />
-          <p className="mt-1 text-xs text-muted-foreground">
-            아이디는 변경할 수 없습니다
-          </p>
-        </div>
+      <FadeIn type="slideUp" delay={0.1}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <span className="text-sm font-medium text-muted-foreground">
+              아이디
+            </span>
+            <p className="text-base font-medium">{user?.username}</p>
+          </div>
 
         <div>
           <label className="block text-sm font-medium">닉네임</label>
@@ -186,7 +182,8 @@ export function ProfileSettings() {
             </>
           )}
         </div>
-      </form>
+        </form>
+      </FadeIn>
     </div>
   )
 }
