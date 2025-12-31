@@ -105,8 +105,13 @@ class TestPaperViewSet(viewsets.ModelViewSet):
     def preview(self, request, pk=None):
         """
         시험지 미리보기 (모든 문제 + 옵션 포함).
+        N+1 쿼리 방지: 옵션 정보까지 prefetch
         """
-        paper = self.get_object()
+        # 옵션 정보까지 포함하여 조회 (N+1 쿼리 방지)
+        paper = TestPaperInfo.objects.prefetch_related(
+            'testpapertestq_set__test_question__optioninfo_set'
+        ).get(pk=pk)
+
         serializer = TestPaperDetailSerializer(paper)
 
         # 문제별 옵션 정보 추가
@@ -154,19 +159,29 @@ class TestPaperViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 문제 추가
+        # 문제 추가 (bulk_create로 성능 개선)
         with transaction.atomic():
-            for question_data in questions_data:
+            # 현재 시험지의 문제 수
+            current_count = paper.testpapertestq_set.count()
+
+            # TestPaperTestQ 객체 리스트 생성
+            paper_questions = []
+            for idx, question_data in enumerate(questions_data, start=1):
                 test_question = question_data['test_question']
                 score = question_data.get('score', 5)
-                order = question_data.get('order', paper.testpapertestq_set.count() + 1)
+                order = question_data.get('order', current_count + idx)
 
-                TestPaperTestQ.objects.create(
-                    test_paper=paper,
-                    test_question=test_question,
-                    score=score,
-                    order=order,
+                paper_questions.append(
+                    TestPaperTestQ(
+                        test_paper=paper,
+                        test_question=test_question,
+                        score=score,
+                        order=order,
+                    )
                 )
+
+            # 한 번의 쿼리로 모두 생성
+            TestPaperTestQ.objects.bulk_create(paper_questions)
 
             # total_score, question_count 재계산
             self._update_paper_stats(paper)

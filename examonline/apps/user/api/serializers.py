@@ -29,10 +29,15 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        # Add extra responses
-        data['user_type'] = self.user.user_type
-        data['nick_name'] = self.user.nick_name
-        data['email'] = self.user.email
+        # Add complete user object to response
+        data['user'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'email': self.user.email,
+            'nick_name': self.user.nick_name,
+            'user_type': self.user.user_type,
+            'created_at': self.user.date_joined.isoformat() if self.user.date_joined else None,
+        }
 
         return data
 
@@ -55,7 +60,8 @@ class StudentInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentsInfo
-        fields = ['student_name', 'student_id', 'student_class', 'student_school']
+        fields = ['id', 'student_name', 'student_id', 'student_class', 'student_school']
+        read_only_fields = ['id']
 
 
 class TeacherInfoSerializer(serializers.ModelSerializer):
@@ -82,15 +88,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     student_info = StudentInfoSerializer(source='studentsinfo', read_only=True)
     teacher_info = TeacherInfoSerializer(source='teacherinfo', read_only=True)
+    created_at = serializers.DateTimeField(source='date_joined', read_only=True)
 
     class Meta:
         model = UserProfile
         fields = [
             'id', 'username', 'email', 'nick_name', 'gender', 'mobile',
-            'user_type', 'age', 'image', 'date_joined',
+            'user_type', 'age', 'image', 'created_at',
             'student_info', 'teacher_info'
         ]
-        read_only_fields = ['id', 'username', 'user_type', 'date_joined']
+        read_only_fields = ['id', 'username', 'user_type', 'created_at']
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -257,3 +264,51 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             teacher_info.save()
 
         return instance
+
+
+class StudentDashboardSerializer(serializers.Serializer):
+    """
+    Student dashboard data serializer.
+    """
+
+    statistics = serializers.DictField()
+    score_trend = serializers.ListField(child=serializers.DictField())
+    upcoming_exams = serializers.ListField(child=serializers.DictField())
+    progress = serializers.ListField(child=serializers.DictField())
+    recent_submissions = serializers.ListField(child=serializers.DictField())
+    wrong_questions = serializers.ListField(child=serializers.DictField())
+
+
+class TeacherDashboardSerializer(serializers.Serializer):
+    """
+    Teacher dashboard data serializer.
+    """
+
+    recent_questions = serializers.ListField(child=serializers.DictField())
+    recent_testpapers = serializers.ListField(child=serializers.DictField())
+    ongoing_exams = serializers.ListField(child=serializers.DictField())
+    question_statistics = serializers.DictField()
+    student_statistics = serializers.DictField()
+    testpaper_statistics = serializers.DictField(required=False, allow_null=True)
+
+
+class StudentListSerializer(serializers.ModelSerializer):
+    """
+    Student list serializer for teachers.
+    교사가 학생 목록을 조회할 때 사용하는 serializer.
+    """
+
+    student_name = serializers.CharField(source='studentsinfo.student_name', read_only=True)
+    student_id = serializers.CharField(source='studentsinfo.student_id', read_only=True)
+    student_class = serializers.CharField(source='studentsinfo.student_class', read_only=True)
+    student_school = serializers.CharField(source='studentsinfo.student_school', read_only=True)
+    studentsinfo_id = serializers.IntegerField(source='studentsinfo.id', read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'id', 'username', 'email', 'nick_name',
+            'student_name', 'student_id', 'student_class', 'student_school', 'studentsinfo_id',
+            'date_joined'
+        ]
+        read_only_fields = fields
