@@ -41,9 +41,12 @@ class QuestionListSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
     tq_type_display = serializers.CharField(source='get_tq_type_display', read_only=True)
     tq_degree_display = serializers.CharField(source='get_tq_degree_display', read_only=True)
+    options = serializers.SerializerMethodField()
 
     class Meta:
         model = TestQuestionInfo
@@ -57,11 +60,26 @@ class QuestionListSerializer(serializers.ModelSerializer):
             'tq_degree',
             'tq_degree_display',
             'is_share',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'is_del',
+            'created_at',
+            'updated_at',
+            'creat_user',
+            'options',
         ]
-        read_only_fields = ['id', 'create_time', 'edit_time', 'create_user_name']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'creat_user', 'is_del', 'options']
+
+    def get_creat_user(self, obj):
+        """Return create_user as object with id and nick_name"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
+
+    def get_options(self, obj):
+        """Return empty array for list view (options only in detail view)"""
+        return []
 
 
 class QuestionDetailSerializer(serializers.ModelSerializer):
@@ -71,7 +89,10 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
+    tq_img = serializers.ImageField(source='image', read_only=True)
     options = OptionReadSerializer(source='optioninfo_set', many=True, read_only=True)
     tq_type_display = serializers.CharField(source='get_tq_type_display', read_only=True)
     tq_degree_display = serializers.CharField(source='get_tq_degree_display', read_only=True)
@@ -87,14 +108,24 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
             'tq_type_display',
             'tq_degree',
             'tq_degree_display',
-            'image',
+            'tq_img',
             'is_share',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'is_del',
+            'created_at',
+            'updated_at',
+            'creat_user',
             'options',
         ]
-        read_only_fields = ['id', 'create_time', 'edit_time', 'create_user_name', 'options']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'creat_user', 'options', 'is_del']
+
+    def get_creat_user(self, obj):
+        """Return create_user as object with id and nick_name"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
 
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
@@ -110,7 +141,8 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TestQuestionInfo
-        fields = ['name', 'subject_id', 'score', 'tq_type', 'tq_degree', 'image', 'is_share', 'options']
+        fields = ['id', 'name', 'subject_id', 'score', 'tq_type', 'tq_degree', 'image', 'is_share', 'options']
+        read_only_fields = ['id']
 
     def validate(self, attrs):
         """

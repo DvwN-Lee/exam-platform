@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Noto Sans KR', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Emerald Theme Colors - Using RGB values for Tailwind v4 */
+  --color-background: rgb(248 250 252);  /* #F8FAFC slate-50 */
+  --color-foreground: rgb(31 41 55);  /* #1F2937 */
+  --color-card: rgb(255 255 255);  /* #FFFFFF */
+  --color-card-foreground: rgb(31 41 55);  /* #1F2937 */
+  --color-popover: rgb(255 255 255);
+  --color-popover-foreground: rgb(31 41 55);
+  --color-primary: rgb(16 185 129);  /* #10B981 Emerald */
+  --color-primary-foreground: rgb(255 255 255);
+  --color-primary-dark: rgb(5 150 105);  /* #059669 */
+  --color-primary-light: rgb(52 211 153);  /* #34D399 */
+  --color-secondary: rgb(229 231 235);  /* #E5E7EB */
+  --color-secondary-foreground: rgb(31 41 55);
+  --color-muted: rgb(241 245 249);  /* slate-100 */
+  --color-muted-foreground: rgb(100 116 139);  /* slate-500 */
+  --color-accent: rgb(240 253 244);  /* Light green background */
+  --color-accent-foreground: rgb(31 41 55);
+  --color-destructive: rgb(239 68 68);  /* #EF4444 */
+  --color-destructive-foreground: rgb(255 255 255);
+  --color-success: rgb(34 197 94);  /* #22C55E */
+  --color-warning: rgb(245 158 11);  /* #F59E0B */
+  --color-border: rgb(226 232 240);  /* slate-200 */
+  --color-input: rgb(226 232 240);  /* slate-200 */
+  --color-ring: rgb(16 185 129);  /* Emerald */
+  --radius-sm: 0.75rem;  /* 12px */
+  --radius-md: 1rem;  /* 16px */
+  --radius-lg: 1.5rem;  /* 24px */
+  --radius-xl: 2rem;  /* 32px */
+}
+
+:root {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Interactive elements - hover and transition effects */
+.card-interactive {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+button,
+a {
+  transition: transform 0.15s ease-in-out, opacity 0.15s ease-in-out, background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+/* Dark Mode Support */
+.dark {
+  --color-background: rgb(17 24 39);  /* gray-900 */
+  --color-foreground: rgb(243 244 246);  /* gray-100 */
+  --color-card: rgb(31 41 55);  /* gray-800 */
+  --color-card-foreground: rgb(243 244 246);  /* gray-100 */
+  --color-popover: rgb(31 41 55);
+  --color-popover-foreground: rgb(243 244 246);
+  --color-secondary: rgb(55 65 81);  /* gray-700 */
+  --color-secondary-foreground: rgb(243 244 246);
+  --color-muted: rgb(55 65 81);  /* gray-700 */
+  --color-muted-foreground: rgb(156 163 175);  /* gray-400 */
+  --color-accent: rgb(31 41 55);
+  --color-accent-foreground: rgb(243 244 246);
+  --color-border: rgb(75 85 99);  /* gray-600 */
+  --color-input: rgb(75 85 99);
+
+  /* Chart specific colors for dark mode */
+  --color-chart-tooltip-bg: rgb(31 41 55);
+  --color-chart-tooltip-border: rgb(75 85 99);
+  --color-chart-grid: rgb(55 65 81);
+  --color-chart-axis: rgb(156 163 175);
+}
+
+/* Light mode chart colors (default) */
+:root {
+  --color-chart-tooltip-bg: rgb(255 255 255);
+  --color-chart-tooltip-border: rgb(229 231 235);
+  --color-chart-grid: rgb(243 244 246);
+  --color-chart-axis: rgb(107 114 128);
+}

@@ -43,7 +43,7 @@ Body: {"username": "teacher_test", "password": "test123!"}
 ✓ Response includes: access, refresh, user_type, nick_name, email
 ```
 
-**결과**: ✅ PASS
+**결과**: PASS
 
 ---
 
@@ -73,7 +73,7 @@ Body: {
 ✓ Response includes all required fields
 ```
 
-**결과**: ✅ PASS
+**결과**: PASS
 
 ---
 
@@ -95,7 +95,7 @@ Authorization: Bearer {token}
   - create_user_name
 ```
 
-**결과**: ✅ PASS
+**결과**: PASS
 
 ---
 
@@ -111,7 +111,7 @@ Authorization: Bearer {token}
 ✓ Only 객관식 questions returned
 ```
 
-**결과**: ✅ PASS
+**결과**: PASS
 
 ---
 
@@ -127,7 +127,7 @@ Authorization: Bearer {token}
 ✓ Only creator's questions returned
 ```
 
-**결과**: ✅ PASS
+**결과**: PASS
 
 ---
 
@@ -141,29 +141,29 @@ GET /api/v1/questions/
 ✓ Error message: "자격 증명 데이터가 제공되지 않았습니다."
 ```
 
-**결과**: ✅ PASS (예상된 동작)
+**결과**: PASS (예상된 동작)
 
 ---
 
 ## 테스트 커버리지 Summary
 
 ### 성공한 테스트 (6/6)
-- ✅ JWT 인증
-- ✅ 문제 생성 (nested options)
-- ✅ 문제 목록 조회
-- ✅ 필터링 (문제 유형)
-- ✅ 내 문제 목록
-- ✅ 권한 검증
+- JWT 인증
+-문제 생성 (nested options)
+-문제 목록 조회
+-필터링 (문제 유형)
+-내 문제 목록
+-권한 검증
 
 ### 구현 확인된 기능
 1. **CRUD Operations**
-   - ✅ Create (POST)
-   - ✅ Read (GET list, GET detail)
+   -Create (POST)
+   -Read (GET list, GET detail)
    - ⏳ Update (PATCH/PUT) - 미테스트
    - ⏳ Delete (DELETE) - 미테스트
 
 2. **필터링 & 검색**
-   - ✅ 문제 유형 필터 (tq_type)
+   -문제 유형 필터 (tq_type)
    - ⏳ 과목 필터 (subject)
    - ⏳ 난이도 필터 (tq_degree)
    - ⏳ 점수 범위 (score_min/max)
@@ -174,7 +174,7 @@ GET /api/v1/questions/
    - ⏳ 학생의 공유 문제 조회
 
 4. **문제 은행**
-   - ✅ 내 문제 목록 (my action)
+   -내 문제 목록 (my action)
    - ⏳ 공유 문제 목록 (shared action)
 
 ---
@@ -229,17 +229,17 @@ GET /api/v1/questions/
 - **해결**:
   - examonline: PostgreSQL 5433, MongoDB 27017, Redis 6379
   - lvup: PostgreSQL 5432, Port 8000
-- **상태**: ✅ 해결됨
+- **상태**: 해결됨
 
 ### Issue 2: Django 서버 포트
 - **문제**: Port 8000 이미 사용 중 (lvup_backend)
 - **해결**: Django 서버를 Port 8001로 실행
-- **상태**: ✅ 해결됨
+- **상태**: 해결됨
 
 ### Issue 3: Model 필드명 오타
 - **문제**: `creat_user` → `create_user`
 - **해결**: Migration 생성 및 적용 완료
-- **상태**: ✅ 해결됨
+- **상태**: 해결됨
 
 ---
 

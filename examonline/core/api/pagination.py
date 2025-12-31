@@ -17,16 +17,11 @@ class StandardResultsSetPagination(PageNumberPagination):
 
     def get_paginated_response(self, data):
         """
-        Return paginated response with metadata.
+        Return paginated response in standard DRF format (Frontend 호환).
         """
         return Response({
-            'data': data,
-            'meta': {
-                'count': self.page.paginator.count,
-                'page': self.page.number,
-                'page_size': self.page.paginator.per_page,
-                'total_pages': self.page.paginator.num_pages,
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link(),
-            }
+            'results': data,
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
         })

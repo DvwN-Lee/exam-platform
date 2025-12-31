@@ -117,7 +117,7 @@ class TestPaperCRUD:
     def test_create_paper_as_teacher(self, api_client, teacher_user, subject):
         """교사는 시험지를 생성할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'New Test Paper',
             'subject_id': subject.id,
@@ -133,7 +133,7 @@ class TestPaperCRUD:
     def test_create_paper_as_student_forbidden(self, api_client, student_user, subject):
         """학생은 시험지를 생성할 수 없다"""
         api_client.force_authenticate(user=student_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'New Test Paper',
             'subject_id': subject.id,
@@ -146,15 +146,16 @@ class TestPaperCRUD:
     def test_list_papers(self, api_client, teacher_user, test_paper):
         """시험지 목록을 조회할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         response = api_client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['data']) >= 1
+        # StandardResultsSetPagination 사용 시 'results' 키 사용
+        assert len(response.data['results']) >= 1
 
     def test_retrieve_paper_detail(self, api_client, teacher_user, test_paper):
         """시험지 상세 조회 시 문제 목록이 포함된다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-detail', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-detail', kwargs={'pk': test_paper.id})
         response = api_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert 'questions' in response.data
@@ -163,7 +164,7 @@ class TestPaperCRUD:
     def test_update_paper(self, api_client, teacher_user, test_paper):
         """시험지 작성자는 시험지를 수정할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-detail', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-detail', kwargs={'pk': test_paper.id})
         data = {'name': 'Updated Paper Name'}
         response = api_client.patch(url, data, format='json')
         assert response.status_code == status.HTTP_200_OK
@@ -173,7 +174,7 @@ class TestPaperCRUD:
     def test_delete_paper(self, api_client, teacher_user, test_paper):
         """시험지 작성자는 시험지를 삭제할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-detail', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-detail', kwargs={'pk': test_paper.id})
         response = api_client.delete(url)
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not TestPaperInfo.objects.filter(id=test_paper.id).exists()
@@ -186,7 +187,7 @@ class TestPaperQuestionManagement:
     def test_create_paper_with_questions(self, api_client, teacher_user, subject, question1, question2):
         """시험지 생성 시 문제를 함께 추가할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'Paper with Questions',
             'subject_id': subject.id,
@@ -205,7 +206,7 @@ class TestPaperQuestionManagement:
     def test_add_questions_to_paper(self, api_client, teacher_user, test_paper, question3):
         """기존 시험지에 문제를 추가할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-add-questions', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-add-questions', kwargs={'pk': test_paper.id})
         data = {
             'questions': [
                 {'question_id': question3.id, 'score': 20, 'order': 3},
@@ -220,7 +221,7 @@ class TestPaperQuestionManagement:
     def test_remove_question_from_paper(self, api_client, teacher_user, test_paper, question1):
         """시험지에서 문제를 제거할 수 있다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-remove-question', kwargs={'pk': test_paper.id, 'question_id': question1.id})
+        url = reverse('testpaper-remove-question', kwargs={'pk': test_paper.id, 'question_id': question1.id})
         response = api_client.delete(url)
         assert response.status_code == status.HTTP_204_NO_CONTENT
         test_paper.refresh_from_db()
@@ -230,7 +231,7 @@ class TestPaperQuestionManagement:
     def test_duplicate_question_rejected(self, api_client, teacher_user, subject, question1):
         """중복 문제 추가는 거부된다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'Duplicate Paper',
             'subject_id': subject.id,
@@ -252,7 +253,7 @@ class TestBusinessLogic:
     def test_total_score_auto_calculation(self, api_client, teacher_user, subject, question1, question2):
         """total_score는 문제 배점 합계로 자동 계산된다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'Auto Score Paper',
             'subject_id': subject.id,
@@ -271,7 +272,7 @@ class TestBusinessLogic:
     def test_passing_score_validation(self, api_client, teacher_user, subject, question1):
         """passing_score는 total_score보다 클 수 없다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'Invalid Passing Score',
             'subject_id': subject.id,
@@ -287,7 +288,7 @@ class TestBusinessLogic:
     def test_question_order(self, api_client, teacher_user, test_paper):
         """문제는 order 필드에 따라 정렬된다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-detail', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-detail', kwargs={'pk': test_paper.id})
         response = api_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         questions = response.data['questions']
@@ -302,7 +303,7 @@ class TestPermissions:
     def test_only_creator_can_update(self, api_client, another_teacher, test_paper):
         """다른 교사는 시험지를 수정할 수 없다"""
         api_client.force_authenticate(user=another_teacher)
-        url = reverse('paper-detail', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-detail', kwargs={'pk': test_paper.id})
         data = {'name': 'Hacked Name'}
         response = api_client.patch(url, data, format='json')
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -310,7 +311,7 @@ class TestPermissions:
     def test_preview_action(self, api_client, teacher_user, test_paper):
         """preview action은 문제와 옵션 전체를 반환한다"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-preview', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-preview', kwargs={'pk': test_paper.id})
         response = api_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert 'questions_with_options' in response.data
@@ -334,7 +335,7 @@ class TestValidationErrors:
         )
 
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-detail', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-detail', kwargs={'pk': test_paper.id})
         data = {
             'questions': [
                 {'question_id': question.id, 'score': 5, 'order': 1},
@@ -350,7 +351,7 @@ class TestValidationErrors:
     def test_add_duplicate_questions_fails(self, api_client, teacher_user, test_paper, question1):
         """중복 문제 추가 실패"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-add-questions', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-add-questions', kwargs={'pk': test_paper.id})
         data = {
             'questions': [
                 {'question_id': question1.id, 'score': 5, 'order': 3},
@@ -366,7 +367,7 @@ class TestValidationErrors:
     def test_add_empty_questions_fails(self, api_client, teacher_user, test_paper):
         """빈 문제 목록 추가 실패"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-add-questions', kwargs={'pk': test_paper.id})
+        url = reverse('testpaper-add-questions', kwargs={'pk': test_paper.id})
         data = {'questions': []}
 
         response = api_client.post(url, data, format='json')
@@ -377,7 +378,7 @@ class TestValidationErrors:
     def test_passing_score_exceeds_total_fails(self, api_client, teacher_user, subject):
         """합격점이 총점 초과 시 실패"""
         api_client.force_authenticate(user=teacher_user)
-        url = reverse('paper-list')
+        url = reverse('testpaper-list')
         data = {
             'name': 'Invalid Paper',
             'subject_id': subject.id,
@@ -400,7 +401,7 @@ class TestValidationErrors:
         )
 
         paper_id = response.data['id']
-        update_url = reverse('paper-detail', kwargs={'pk': paper_id})
+        update_url = reverse('testpaper-detail', kwargs={'pk': paper_id})
         update_data = {
             'passing_score': 50,
             'questions': [{'question_id': question.id, 'score': 10, 'order': 1}],

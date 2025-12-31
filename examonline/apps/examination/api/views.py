@@ -2,6 +2,7 @@
 Examination API Views.
 """
 from django.db import transaction
+from django.db.models import Prefetch
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -46,16 +47,29 @@ class ExaminationViewSet(viewsets.ModelViewSet):
     ordering = ['-create_time']
 
     def get_queryset(self):
-        """QuerySet 최적화"""
+        """QuerySet 최적화 (N+1 query 방지)
+
+        Prefetch + to_attr 사용으로 Django 내부 API 의존성 제거
+        """
         user = self.request.user
-        base_qs = ExaminationInfo.objects.all().select_related('subject', 'create_user')
+        base_qs = ExaminationInfo.objects.all().select_related(
+            'subject', 'create_user'
+        ).prefetch_related(
+            Prefetch(
+                'exampaperinfo_set',
+                queryset=ExamPaperInfo.objects.select_related(
+                    'paper__subject', 'paper__create_user'
+                ),
+                to_attr='prefetched_exam_papers'
+            ),
+        )
 
         # 학생: 자신이 등록된 시험만
         if user.user_type == 'student':
             try:
                 student_info = user.studentsinfo
                 return base_qs.filter(examstudentsinfo__student=student_info)
-            except Exception:  # pragma: no cover - Defensive: studentsinfo should exist for student user_type
+            except StudentsInfo.DoesNotExist:  # pragma: no cover - Defensive: studentsinfo should exist for student user_type
                 return base_qs.none()  # pragma: no cover
 
         # 교사: 모든 시험
@@ -65,7 +79,7 @@ class ExaminationViewSet(viewsets.ModelViewSet):
         """Action별 권한 설정"""
         if self.action == 'create':
             return [IsAuthenticated(), IsTeacher()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'enroll_students']:
+        elif self.action in ['update', 'partial_update', 'destroy', 'enroll_students', 'publish']:
             return [IsAuthenticated(), IsExamCreator()]
         return [IsAuthenticated()]
 
@@ -120,11 +134,18 @@ class ExaminationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # 학생 등록
+        # 학생 등록 (bulk_create로 성능 개선)
         with transaction.atomic():
             students = StudentsInfo.objects.filter(id__in=student_ids)
-            for student in students:
-                ExamStudentsInfo.objects.create(exam=exam, student=student)
+
+            # ExamStudentsInfo 객체 리스트 생성
+            enrollments = [
+                ExamStudentsInfo(exam=exam, student=student)
+                for student in students
+            ]
+
+            # 한 번의 쿼리로 모두 생성
+            ExamStudentsInfo.objects.bulk_create(enrollments)
 
             # student_num 업데이트
             exam.student_num = ExamStudentsInfo.objects.filter(exam=exam).count()
@@ -179,6 +200,41 @@ class ExaminationViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=True, methods=['post'])
+    def publish(self, request, pk=None):
+        """
+        시험 게시 (시험 중 상태로 변경).
+
+        시험을 시작하여 학생들이 응시할 수 있도록 합니다.
+        """
+        exam = self.get_object()
+
+        # 이미 시작된 경우
+        if exam.exam_state != '0':
+            return Response(
+                {'detail': '이미 시작되었거나 종료된 시험입니다.'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 시험지가 없는 경우 시작 불가
+        if not ExamPaperInfo.objects.filter(exam=exam).exists():
+            return Response(
+                {'detail': '시험지가 없어 시작할 수 없습니다.'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 등록된 학생이 없는 경우 시작 불가
+        if exam.student_num == 0:
+            return Response(
+                {'detail': '등록된 학생이 없어 시작할 수 없습니다.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 시험 시작 (시험 중 상태로 변경)
+        exam.exam_state = '1'
+        exam.save()
+
+        serializer = ExaminationDetailSerializer(exam)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         """시험 삭제"""

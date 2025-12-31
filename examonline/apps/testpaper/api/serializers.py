@@ -19,11 +19,11 @@ class PaperQuestionReadSerializer(serializers.ModelSerializer):
     문제 정보와 배점, 순서 포함.
     """
 
-    test_question = QuestionListSerializer(read_only=True)
+    question = QuestionListSerializer(source='test_question', read_only=True)
 
     class Meta:
         model = TestPaperTestQ
-        fields = ['id', 'test_question', 'score', 'order']
+        fields = ['id', 'question', 'score', 'order']
         read_only_fields = ['id']
 
 
@@ -47,7 +47,9 @@ class TestPaperListSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
     tp_degree_display = serializers.CharField(source='get_tp_degree_display', read_only=True)
 
     class Meta:
@@ -61,11 +63,20 @@ class TestPaperListSerializer(serializers.ModelSerializer):
             'total_score',
             'passing_score',
             'question_count',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'created_at',
+            'updated_at',
+            'creat_user',
         ]
-        read_only_fields = ['id', 'total_score', 'question_count', 'create_time', 'edit_time', 'create_user_name']
+        read_only_fields = ['id', 'total_score', 'question_count', 'created_at', 'updated_at', 'creat_user']
+
+    def get_creat_user(self, obj):
+        """Frontend 호환성을 위한 create_user 정보"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
 
 
 class TestPaperDetailSerializer(serializers.ModelSerializer):
@@ -75,7 +86,9 @@ class TestPaperDetailSerializer(serializers.ModelSerializer):
     """
 
     subject = SubjectSerializer(read_only=True)
-    create_user_name = serializers.CharField(source='create_user.nick_name', read_only=True)
+    creat_user = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(source='create_time', read_only=True)
+    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
     tp_degree_display = serializers.CharField(source='get_tp_degree_display', read_only=True)
     questions = PaperQuestionReadSerializer(source='testpapertestq_set', many=True, read_only=True)
 
@@ -90,20 +103,29 @@ class TestPaperDetailSerializer(serializers.ModelSerializer):
             'total_score',
             'passing_score',
             'question_count',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'created_at',
+            'updated_at',
+            'creat_user',
             'questions',
         ]
         read_only_fields = [
             'id',
             'total_score',
             'question_count',
-            'create_time',
-            'edit_time',
-            'create_user_name',
+            'created_at',
+            'updated_at',
+            'creat_user',
             'questions',
         ]
+
+    def get_creat_user(self, obj):
+        """Return create_user as object with id and nick_name"""
+        if obj.create_user:
+            return {
+                'id': obj.create_user.id,
+                'nick_name': obj.create_user.nick_name,
+            }
+        return None
 
 
 class TestPaperCreateSerializer(serializers.ModelSerializer):
@@ -363,10 +385,18 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
         if not obj.detail_records:
             return []
 
-        # 시험지의 문제 목록 가져오기
+        # 시험지의 문제 목록 가져오기 (옵션도 함께 prefetch)
         paper_questions = TestPaperTestQ.objects.filter(test_paper=obj.test_paper).select_related(
             'test_question'
-        ).order_by('order')
+        ).prefetch_related('test_question__optioninfo_set').order_by('order')
+
+        # 정답 옵션 딕셔너리 미리 생성 (N+1 방지)
+        question_ids = [pq.test_question_id for pq in paper_questions]
+        correct_options = OptionInfo.objects.filter(
+            test_question_id__in=question_ids,
+            is_right=True
+        ).values('test_question_id', 'option')
+        correct_answers = {opt['test_question_id']: opt['option'] for opt in correct_options}
 
         results = []
         for pq in paper_questions:
@@ -374,14 +404,10 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
             question_id_str = str(question.id)
             record = obj.detail_records.get(question_id_str, {})
 
-            # 정답 찾기
+            # 정답 찾기 (딕셔너리 조회로 O(1))
             correct_answer = None
             if question.tq_type in ['xz', 'pd']:  # 객관식, OX
-                try:
-                    correct_option = OptionInfo.objects.get(test_question=question, is_right=True)
-                    correct_answer = correct_option.option
-                except OptionInfo.DoesNotExist:
-                    pass
+                correct_answer = correct_answers.get(question.id)
 
             results.append({
                 'question_id': question.id,

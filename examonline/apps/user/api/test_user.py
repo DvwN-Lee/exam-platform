@@ -176,7 +176,8 @@ class TestAuthentication:
 
         assert response.status_code == 200
         assert 'access' in response.data
-        assert 'refresh' in response.data
+        # refresh token은 HttpOnly Cookie에 저장됨
+        assert 'refresh_token' in response.cookies
 
     def test_login_wrong_password_fails(self, api_client, teacher_user):
         """잘못된 비밀번호 로그인 실패"""
@@ -199,11 +200,12 @@ class TestAuthentication:
         # 먼저 로그인
         login_data = {'username': 'teacher_user', 'password': 'testpass123'}
         login_response = api_client.post('/api/v1/auth/token/', login_data, format='json')
-        refresh_token = login_response.data['refresh']
+        # refresh token은 HttpOnly Cookie에 저장됨
+        refresh_token = login_response.cookies['refresh_token'].value
 
-        # Token 갱신
-        refresh_data = {'refresh': refresh_token}
-        response = api_client.post('/api/v1/auth/token/refresh/', refresh_data, format='json')
+        # Token 갱신 (Cookie로 자동 전송되지만, 테스트에서는 명시적으로 전달)
+        api_client.cookies['refresh_token'] = refresh_token
+        response = api_client.post('/api/v1/auth/token/refresh/', format='json')
 
         assert response.status_code == 200
         assert 'access' in response.data
@@ -342,8 +344,9 @@ class TestSubjectManagement:
         response = api_client.get('/api/v1/subjects/')
 
         assert response.status_code == 200
-        assert len(response.data['data']) == 1
-        assert response.data['data'][0]['subject_name'] == 'Test Subject'
+        # StandardResultsSetPagination 사용 시 'results' 키 사용
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['subject_name'] == 'Test Subject'
 
     def test_create_subject_as_teacher(self, api_client, teacher_user):
         """교사가 과목 생성"""
