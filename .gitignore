@@ -60,6 +60,18 @@ uv.lock
 .coverage
 htmlcov/
 
+# Frontend Testing
+frontend/test-results/
+frontend/e2e/.auth/
+frontend/e2e/reports/
+frontend/playwright-report/
+
+# Playwright
+.playwright-mcp/
+
+# Build artifacts
+frontend/dist/
+
 # Migrations (선택적으로 포함)
 # */migrations/*.py
 # !*/migrations/__init__.py
