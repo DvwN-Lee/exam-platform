@@ -160,6 +160,7 @@ export function InteractivePieChart({
               outerRadius={outerRadius}
               paddingAngle={chartData.length > 1 ? 2 : 0}
               dataKey="displayValue"
+              // @ts-expect-error activeIndex is valid but not in types
               activeIndex={activeIndex ?? undefined}
               activeShape={renderActiveShape}
               onMouseEnter={handleMouseEnter}

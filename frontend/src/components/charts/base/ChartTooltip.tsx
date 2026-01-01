@@ -1,8 +1,16 @@
-import type { TooltipProps } from 'recharts'
 import { useChartTheme } from '../hooks/useChartTheme'
 
-interface ChartTooltipProps
-  extends Omit<TooltipProps<number, string>, 'formatter'> {
+interface PayloadItem {
+  value: number
+  name: string
+  color: string
+  payload: unknown
+}
+
+interface ChartTooltipProps {
+  active?: boolean
+  payload?: PayloadItem[]
+  label?: string | number
   formatter?: (value: number, name: string, payload: unknown) => [string, string]
 }
 
