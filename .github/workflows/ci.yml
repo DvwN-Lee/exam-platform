@@ -39,7 +39,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./examonline
-        run: uv sync
+        run: uv sync --extra dev
 
       - name: Run tests with coverage
         working-directory: ./examonline
@@ -125,7 +125,7 @@ jobs:
 
       - name: Install Backend dependencies
         working-directory: ./examonline
-        run: uv sync
+        run: uv sync --extra dev
 
       - name: Run migrations
         working-directory: ./examonline
