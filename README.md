@@ -1,175 +1,185 @@
-# OnlineExam v2 - 온라인 시험 관리 시스템
+# OnlineExam v2
 
-Django 5.2 + React 19 기반 현대적인 온라인 시험 관리 시스템
+레거시 온라인 시험 시스템(Django 2.1)을 최신 기술 스택(Django 5.2 + React 19)으로 리팩터링하고, 95% 테스트 커버리지를 달성한 풀스택 프로젝트
 
-## 프로젝트 개요
+## Migration Story
 
-기존 Django 2.1 온라인 시험 시스템을 최신 기술 스택으로 완전히 재구성한 풀스택 + DevOps 프로젝트입니다.
+| Before | After |
+|--------|-------|
+| Django 2.1 | Django 5.2 LTS |
+| Python 3.6 | Python 3.14 |
+| jQuery/Vanilla JS | React 19 + TypeScript |
+| 테스트 없음 | 95% 커버리지 (957개 테스트) |
+| FBV | CBV/ViewSet + Service Layer |
 
-### 기술 스택
+## Tech Stack
 
-**Backend:**
-- Django 5.2 LTS
-- Python 3.14
-- Django REST Framework 3.16
-- SimpleJWT (JWT 인증)
-- PostgreSQL 18
-- MongoDB 8 (로그 및 분석)
-- Redis 8 (캐시 및 Celery)
-- Celery 5.5 (비동기 작업)
+### Backend
+- **Framework**: Django 5.2 LTS, Django REST Framework 3.16
+- **Database**: PostgreSQL 18, MongoDB 8, Redis 8
+- **Authentication**: SimpleJWT (HttpOnly Cookie)
+- **Testing**: pytest 8.3+ (95% 커버리지)
+- **Package Manager**: uv
 
-**Frontend:**
-- React 19
-- TypeScript 6
-- Vite 6
-- Tailwind CSS
-- shadcn/ui
+### Frontend
+- **Framework**: React 19, TypeScript 5.9
+- **Build**: Vite 7.2
+- **Styling**: Tailwind CSS 4.1, shadcn/ui
+- **State**: Zustand 5.0, TanStack Query 5.90
+- **Routing**: TanStack Router 1.141
+- **Charts**: Recharts 3.6
+- **Animation**: Framer Motion 12.23
+- **Testing**: Playwright E2E
 
-**DevOps:**
-- Docker & Docker Compose
-- Kubernetes + Helm
-- Terraform (IaC)
-- ArgoCD (GitOps)
-- GitHub Actions (CI/CD)
-- Prometheus + Grafana + Loki (모니터링)
+## Key Features
 
-### 프로젝트 구조
+### 역할 기반 접근 제어 (RBAC)
+- 학생/교사 역할 분리
+- Custom Permission 클래스
+- Frontend Route Guard (beforeLoad)
+
+### 성능 최적화
+- N+1 쿼리 해결 (select_related, prefetch_related)
+- Service Layer 패턴으로 Query 재사용
+- Database Index 최적화
+
+### 보안
+- JWT + HttpOnly Cookie (XSS 방지)
+- CORS 설정
+- Input Validation (Zod)
+
+### 테스트 주도 개발
+- Backend: 957개 테스트 함수, 95% 커버리지
+- Frontend: Playwright E2E 테스트
+- 변경에 대한 자신감 있는 리팩터링
+
+## Project Structure
 
 ```
 OnlineExam-v2/
-├── examonline/          # Django Backend
-│   ├── apps/            # Django 앱
-│   │   ├── user/        # 사용자 관리
-│   │   ├── testquestion/# 문제 관리
-│   │   ├── testpaper/   # 시험지 관리
-│   │   ├── examination/ # 시험 관리
-│   │   └── operation/   # 운영 (댓글, 메시지)
-│   ├── core/            # 공통 유틸리티
-│   │   └── api/         # 공통 API 컴포넌트
-│   ├── config/          # 설정
-│   │   ├── base.py      # 공통 설정
-│   │   ├── local.py     # 개발 환경 설정
-│   │   ├── production.py# 운영 환경 설정
-│   │   └── api.py       # DRF 설정
-│   └── docs/            # 문서
-├── ui-mockups/          # Frontend UI 목업
-└── frontend/            # React Frontend (예정)
+├── examonline/              # Django Backend
+│   ├── apps/
+│   │   ├── user/            # 사용자 관리 + Service Layer
+│   │   ├── testquestion/    # 문제 관리
+│   │   ├── testpaper/       # 시험지 관리
+│   │   └── examination/     # 시험 관리
+│   ├── core/api/            # 공통 API 컴포넌트
+│   ├── config/              # 환경별 설정
+│   └── docs/                # Backend 문서
+├── frontend/                # React Frontend
+│   ├── src/
+│   │   ├── features/        # 페이지별 기능 모듈
+│   │   ├── components/      # 재사용 컴포넌트
+│   │   ├── api/             # API 클라이언트
+│   │   └── stores/          # 상태 관리
+│   └── e2e/                 # Playwright 테스트
+└── docs/                    # 프로젝트 문서
+    └── features/            # 기능별 상세 문서
 ```
 
-## 개발 환경 설정
+## Getting Started
 
-### 사전 요구사항
-
+### Prerequisites
 - Python 3.14+
-- uv (Python package manager)
-- PostgreSQL 18
-- MongoDB 8
-- Redis 8
+- Node.js 22+
 - Docker & Docker Compose
+- uv (Python package manager)
 
-### 설치 방법
+### Quick Start
 
-1. Repository clone:
 ```bash
-git clone https://github.com/yourusername/OnlineExam-v2.git
-cd OnlineExam-v2/examonline
-```
+# 1. Clone repository
+git clone https://github.com/DvwN-Lee/exam-platform.git
+cd exam-platform
 
-2. 의존성 설치:
-```bash
+# 2. Start database services
+docker compose -f examonline/docker-compose.dev.yml up -d
+
+# 3. Backend setup
+cd examonline
 uv sync
-```
-
-3. Database 서비스 시작:
-```bash
-docker compose -f docker-compose.dev.yml up -d
-```
-
-4. Migration 실행:
-```bash
 uv run python manage.py migrate
-```
-
-5. 개발 서버 시작:
-```bash
 uv run python manage.py runserver
+
+# 4. Frontend setup (new terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-6. API 문서 접근:
-- Swagger UI: http://localhost:8000/api/docs/
-- ReDoc: http://localhost:8000/api/redoc/
+### Access URLs
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000/api/v1/
+- API Docs (Swagger): http://localhost:8000/api/docs/
+- API Docs (ReDoc): http://localhost:8000/api/redoc/
 
-## API Endpoint
+## Testing
 
-### 인증
-- `POST /api/v1/auth/register/` - 회원가입
-- `POST /api/v1/auth/token/` - JWT Token 발급
-- `POST /api/v1/auth/token/refresh/` - Token 갱신
+### Backend
+```bash
+cd examonline
+uv run pytest --cov=apps --cov-report=html
+# Coverage: 95% (957 tests)
+```
 
-### 사용자
-- `GET /api/v1/users/me/` - 내 정보 조회
-- `PATCH /api/v1/users/me/` - 프로필 수정
-- `PUT /api/v1/users/me/change-password/` - 비밀번호 변경
+### Frontend
+```bash
+cd frontend
+npm run build          # TypeScript check + build
+npx playwright test    # E2E tests
+```
 
-### 과목
-- `GET /api/v1/subjects/` - 과목 목록
-- `POST /api/v1/subjects/` - 과목 생성 (교사 전용)
+## API Endpoints
 
-## 기능
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/auth/register/` | 회원가입 |
+| POST | `/api/v1/auth/token/` | JWT Token 발급 |
+| POST | `/api/v1/auth/token/refresh/` | Token 갱신 |
 
-### Phase 1: Infrastructure (완료)
-- Django 5.2 LTS 업그레이드
-- PostgreSQL 18 + MongoDB 8 + Redis 8
-- Docker Compose 설정
-- Database 정규화
+### User Management
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/users/me/` | 내 정보 조회 |
+| PATCH | `/api/v1/users/me/` | 프로필 수정 |
+| GET | `/api/v1/dashboard/` | 대시보드 데이터 |
 
-### Phase 2: Core Backend API (완료)
-- Django REST Framework
-- JWT 인증
-- 역할 기반 권한 (학생/교사)
-- Swagger/OpenAPI 문서화
-- 사용자 관리 API
+### Examination System
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/questions/` | 문제 목록 |
+| GET | `/api/v1/testpapers/` | 시험지 목록 |
+| GET | `/api/v1/examinations/` | 시험 목록 |
+| POST | `/api/v1/exams/{id}/submit/` | 시험 제출 |
 
-### Phase 3: Question Management API (완료)
-- Question CRUD (Issues #1)
-- 필터링 및 검색 (Issues #2)
-- 문제 공유 기능 (Issues #3)
-- 문제 은행 관리 (Issues #4)
-- Test Coverage: 98%
+## Documentation
 
-### Phase 4: Examination System API (완료)
-- TestPaper Management (Issues #5)
-- Examination Scheduling (Issues #6)
-- Exam Taking (Issues #7)
-- Scores & Grading (Issues #8)
-- Test Coverage: 92-97%
+### Backend
+- [Backend README](examonline/README.md)
+- [Troubleshooting Guide](examonline/docs/troubleshooting.md)
+- [Database Normalization](examonline/docs/database-normalization.md)
 
-### Phase 5: Frontend Development (계획)
-- React 19 + TypeScript 프로젝트 초기화 (Issues #9)
-- 인증 및 사용자 관리 UI (Issues #10)
-- 문제 관리 UI (Issues #11)
-- 시험지 및 시험 관리 UI (Issues #12)
-- 시험 응시 UI (Issues #13)
-- 대시보드 UI (Issues #14)
+### Frontend
+- [Frontend README](frontend/README.md)
+- [Feature Documentation](docs/features/README.md)
+- [Animation System](docs/features/animation-system.md)
 
-### Phase 6: DevOps & Deployment (계획)
-- Docker & Docker Compose (Issues #15)
-- Kubernetes + Helm (Issues #16)
-- Terraform IaC (Issues #17)
-- CI/CD Pipeline (Issues #18)
-- ArgoCD GitOps (Issues #19)
-- 모니터링 및 로깅 (Issues #20)
-- Celery 비동기 작업 (Issues #21)
+### Code Review
+- [Backend Code Review](refactor/backend-code-review.md)
+- [Frontend Code Review](refactor/frontend-code-review.md)
 
-## 문서
+## Development Phases
 
-- [Database 정규화 문서](examonline/docs/database-normalization.md)
-- [UI 목업](ui-mockups/README.md)
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Infrastructure (Django 5.2, PostgreSQL, Docker) | Done |
+| 2 | Core Backend API (JWT, RBAC) | Done |
+| 3 | Question Management API | Done |
+| 4 | Examination System API | Done |
+| 5 | Frontend Development (React 19) | Done |
+| 6 | DevOps & Deployment | In Progress |
 
-## 기여
-
-포트폴리오 및 학습 프로젝트입니다. Issue 및 Pull Request를 환영합니다.
-
-## 라이선스
+## License
 
 MIT License

@@ -122,6 +122,54 @@ npm run lint -- --fix
 npm run build
 ```
 
+## E2E 테스트 (Playwright)
+
+### 테스트 구조
+
+```
+e2e/
+├── helpers/              # 테스트 헬퍼 함수
+│   ├── api.helper.ts     # API 호출 헬퍼
+│   ├── auth.helper.ts    # 인증 헬퍼
+│   ├── assertions.helper.ts
+│   ├── data-factory.helper.ts
+│   └── selectors.ts      # DOM 선택자
+├── tests/
+│   ├── auth/             # 인증 테스트
+│   ├── dashboard/        # 대시보드 테스트
+│   ├── teacher/          # 교사 기능 테스트
+│   ├── student/          # 학생 기능 테스트
+│   ├── security/         # 보안 테스트 (RBAC)
+│   └── edge-cases/       # 엣지 케이스 테스트
+└── playwright.config.ts
+```
+
+### 테스트 실행
+
+```bash
+# 전체 테스트 실행
+npx playwright test
+
+# UI 모드로 실행
+npx playwright test --ui
+
+# 특정 테스트 파일 실행
+npx playwright test tests/auth/login.spec.ts
+
+# 리포트 확인
+npx playwright show-report
+```
+
+### 주요 테스트 시나리오
+
+| 카테고리 | 테스트 내용 |
+|---------|------------|
+| 인증 | 로그인, 회원가입, 역할별 접근 제어 |
+| 대시보드 | 통계 카드, 차트 렌더링, 데이터 로딩 |
+| 시험 관리 | CRUD, 학생 등록, 상태 변경 |
+| 시험 응시 | 답안 저장, 제출, 결과 확인 |
+| 보안 | RBAC, 권한 없는 접근 차단 |
+
 ## 주요 개선 사항 (Phase 1-4)
 
 ### Phase 1: 상수 추출
