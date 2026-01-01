@@ -161,8 +161,8 @@ export function ScoreTrendChart({
               fill: CHART_COLORS.primary,
               stroke: 'white',
               strokeWidth: 2,
-              onClick: (_, { payload }) =>
-                handlePointClick(payload as ScoreTrendDataItem),
+              onClick: (_, data: { payload?: ScoreTrendDataItem }) =>
+                data.payload && handlePointClick(data.payload),
               cursor: onPointClick ? 'pointer' : undefined,
             }}
             isAnimationActive={true}

@@ -153,7 +153,7 @@ export function InteractiveBarChart({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onClick={(entry, index) =>
-              handleClick(entry as ChartDataItem, index)
+              handleClick(entry as unknown as ChartDataItem, index)
             }
             cursor={onBarClick ? 'pointer' : undefined}
           >
