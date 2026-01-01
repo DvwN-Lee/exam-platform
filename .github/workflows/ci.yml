@@ -138,6 +138,22 @@ jobs:
           DJANGO_SETTINGS_MODULE: config.local
         run: uv run python manage.py migrate
 
+      - name: Create test subjects
+        working-directory: ./examonline
+        env:
+          POSTGRES_DB: examdb
+          POSTGRES_USER: examuser
+          POSTGRES_PASSWORD: exampass
+          DJANGO_SETTINGS_MODULE: config.local
+        run: |
+          uv run python manage.py shell -c "
+          from user.models import SubjectInfo
+          subjects = ['수학', '과학', '영어', '국어', '사회']
+          for name in subjects:
+              SubjectInfo.objects.get_or_create(subject_name=name)
+          print(f'Created {SubjectInfo.objects.count()} subjects')
+          "
+
       - name: Start Backend server
         working-directory: ./examonline
         env:
