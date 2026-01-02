@@ -11,7 +11,7 @@ test.describe('User Registration', () => {
   test.beforeAll(async () => {
     // 과목 조회
     const subjects = await apiGetSubjects()
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0]?.id || 1
     console.log(`Subject ID for teacher registration: ${subjectId}`)
   })
 

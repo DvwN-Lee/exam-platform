@@ -36,12 +36,12 @@ test.describe('Full Exam Flow Integration Test', () => {
 
     // 2. 과목 조회 (첫 번째 과목 사용)
     const subjects = await apiGetSubjects()
-    if (!subjects.results || subjects.results.length === 0) {
+    if (!subjects || subjects.length === 0) {
       throw new Error('No subjects found in database')
     }
 
-    subjectId = subjects.results[0].id
-    console.log(`Using subject: ${subjects.results[0].name} (ID: ${subjectId})`)
+    subjectId = subjects[0].id
+    console.log(`Using subject: ${subjects[0].name} (ID: ${subjectId})`)
 
     // 3. Teacher가 시험 전체 플로우 생성 (문제 -> 시험지 -> 시험)
     examData = await createFullExamFlow(teacher.tokens.access, subjectId, [student.studentId])

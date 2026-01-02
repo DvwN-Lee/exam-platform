@@ -16,10 +16,10 @@ test.describe('Teacher Question Management', () => {
   test.beforeAll(async () => {
     // 과목 조회
     const subjects = await apiGetSubjects()
-    if (!subjects.results || subjects.results.length === 0) {
+    if (!subjects || subjects.length === 0) {
       throw new Error('No subjects found')
     }
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0].id
   })
 
   test('Question 목록 페이지가 렌더링되어야 함', async ({ page }) => {

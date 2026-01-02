@@ -30,7 +30,7 @@ test.describe('Teacher Examination Management', () => {
 
     // 과목 조회
     const subjects = await apiGetSubjects()
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0]?.id || 1
 
     // 테스트용 문제 2개 생성
     for (let i = 0; i < 2; i++) {

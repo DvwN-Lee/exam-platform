@@ -28,7 +28,7 @@ test.describe('Teacher TestPaper Management', () => {
 
     // 과목 조회
     const subjects = await apiGetSubjects()
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0]?.id || 1
 
     // 테스트용 문제 3개 생성 (TestPaper에 추가할 문제들)
     for (let i = 0; i < 3; i++) {

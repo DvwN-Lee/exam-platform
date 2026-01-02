@@ -18,7 +18,7 @@ test.describe('Search and Filter', () => {
 
     // 과목 조회
     const subjects = await apiGetSubjects()
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0]?.id || 1
 
     // 테스트용 문제 생성 (다양한 유형과 난이도)
     const timestamp = Date.now()

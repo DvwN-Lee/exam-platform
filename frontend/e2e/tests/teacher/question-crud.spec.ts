@@ -21,7 +21,7 @@ test.describe('Teacher Question Management', () => {
 
     // 과목 조회
     const subjects = await apiGetSubjects()
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0]?.id || 1
 
     console.log(`=== Setup Complete ===`)
     console.log(`Teacher: ${teacherUsername}`)
