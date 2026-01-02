@@ -25,7 +25,7 @@ test.describe('Student Exam Taking', () => {
 
     // 과목 조회
     const subjects = await apiGetSubjects()
-    subjectId = subjects.results[0].id
+    subjectId = subjects[0]?.id || 1
 
     // 시험 생성
     examData = await createFullExamFlow(teacher.tokens.access, subjectId, [student.studentId])

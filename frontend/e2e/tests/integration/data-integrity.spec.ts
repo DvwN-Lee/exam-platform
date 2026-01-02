@@ -28,8 +28,8 @@ test.describe('Data Integrity Verification', () => {
 
     // 과목 조회
     const subjects = await apiGetSubjects(teacherToken)
-    if (subjects.results && subjects.results.length > 0) {
-      subjectId = subjects.results[0].id
+    if (subjects && subjects.length > 0) {
+      subjectId = subjects[0].id
     }
   })
 
