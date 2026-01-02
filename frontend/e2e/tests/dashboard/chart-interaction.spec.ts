@@ -26,7 +26,12 @@ test.describe('Chart Interaction', () => {
       teacher = await createAndLoginTeacher()
       student = await createAndLoginStudent()
 
-      const subjects = await apiGetSubjects(teacher.tokens.access)
+      const subjectsResponse = await apiGetSubjects(teacher.tokens.access)
+      // Handle both paginated (results array) and non-paginated (direct array) responses
+      const subjects = Array.isArray(subjectsResponse)
+        ? subjectsResponse
+        : subjectsResponse?.results || []
+
       if (!subjects || subjects.length === 0) {
         console.log('No subjects found, using default subject ID')
         subjectId = 1
