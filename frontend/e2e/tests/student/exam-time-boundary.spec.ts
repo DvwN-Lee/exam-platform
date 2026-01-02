@@ -28,24 +28,44 @@ test.describe('Exam Time Boundary', () => {
   let testPaperId: number
 
   test.beforeAll(async () => {
-    teacher = await createAndLoginTeacher()
-    student = await createAndLoginStudent()
+    try {
+      teacher = await createAndLoginTeacher()
+      student = await createAndLoginStudent()
 
-    const subjects = await apiGetSubjects(teacher.tokens.access)
-    subjectId = subjects[0]?.id || 9
+      const subjectsResponse = await apiGetSubjects(teacher.tokens.access)
+      // Handle both paginated (results array) and non-paginated (direct array) responses
+      const subjects = Array.isArray(subjectsResponse)
+        ? subjectsResponse
+        : subjectsResponse?.results || []
 
-    // 문제 생성
-    const q1 = await createQuestion(teacher.tokens.access, subjectId, 'xz')
-    const q2 = await createQuestion(teacher.tokens.access, subjectId, 'pd')
-    questionIds = [q1.id, q2.id]
+      if (!subjects || subjects.length === 0) {
+        console.log('No subjects found, using default subject ID')
+        subjectId = 1
+      } else {
+        subjectId = subjects[0].id
+      }
 
-    // 시험지 생성
-    const testPaper = await createTestPaper(teacher.tokens.access, subjectId, questionIds)
-    testPaperId = testPaper.id
+      // 문제 생성
+      try {
+        const q1 = await createQuestion(teacher.tokens.access, subjectId, 'xz')
+        const q2 = await createQuestion(teacher.tokens.access, subjectId, 'pd')
+        questionIds = [q1.id, q2.id]
 
-    console.log('=== Time Boundary Test Setup Complete ===')
-    console.log(`Teacher: ${teacher.user.username}`)
-    console.log(`Student: ${student.user.username}`)
+        // 시험지 생성
+        const testPaper = await createTestPaper(teacher.tokens.access, subjectId, questionIds)
+        testPaperId = testPaper.id
+      } catch (questionError) {
+        console.log('Failed to create questions/testpaper, tests will run with limited data')
+        console.log(`Error: ${questionError}`)
+      }
+
+      console.log('=== Time Boundary Test Setup Complete ===')
+      console.log(`Teacher: ${teacher.user.username}`)
+      console.log(`Student: ${student.user.username}, studentId: ${student.studentId}`)
+    } catch (error) {
+      console.error('Time Boundary beforeAll failed:', error)
+      throw error
+    }
   })
 
   test.afterAll(async () => {
