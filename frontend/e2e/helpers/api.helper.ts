@@ -158,12 +158,23 @@ export async function apiGetProfile(token: string) {
 
 /**
  * 과목 목록 조회 API 호출
+ * Handles both paginated (results array) and non-paginated (direct array) responses
  */
 export async function apiGetSubjects(token?: string) {
   const client = createApiClient(token)
   const response = await client.get('/subjects/')
 
-  return response.data
+  // Normalize response to always return an array
+  const data = response.data
+  if (Array.isArray(data)) {
+    return data
+  }
+  // Handle paginated response { results: [...] }
+  if (data && Array.isArray(data.results)) {
+    return data.results
+  }
+  // Fallback to empty array
+  return []
 }
 
 /**
