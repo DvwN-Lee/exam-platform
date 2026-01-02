@@ -8,8 +8,20 @@ import {
   waitForLoadingComplete,
 } from '../../helpers/assertions.helper'
 import { selectors } from '../../helpers/selectors'
+import { createAndLoginStudent, createAndLoginTeacher } from '../../helpers/data-factory.helper'
+
+// 테스트에서 사용할 동적 계정 정보
+let testStudent: Awaited<ReturnType<typeof createAndLoginStudent>> | null = null
+let testTeacher: Awaited<ReturnType<typeof createAndLoginTeacher>> | null = null
 
 test.describe('Login Page', () => {
+  test.beforeAll(async () => {
+    // 테스트에 사용할 계정을 미리 생성
+    testStudent = await createAndLoginStudent()
+    testTeacher = await createAndLoginTeacher()
+    console.log(`Test accounts created: ${testStudent.user.username}, ${testTeacher.user.username}`)
+  })
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/login')
   })
@@ -54,10 +66,10 @@ test.describe('Login Page', () => {
   })
 
   test('유효한 Student 자격증명으로 로그인 성공해야 함', async ({ page }) => {
-    // Student 로그인 (기존 테스트 계정 사용)
+    // 동적으로 생성된 Student 계정으로 로그인
     await loginAsStudent(page, {
-      username: 'teststudent2',
-      password: 'test12345678',
+      username: testStudent!.user.username,
+      password: testStudent!.user.password,
     })
 
     // Dashboard로 리다이렉트 확인
@@ -71,10 +83,10 @@ test.describe('Login Page', () => {
     // Teacher 역할 선택
     await page.click(selectors.auth.login.teacherRoleButton)
 
-    // Teacher 로그인 (기존 테스트 계정 사용)
+    // 동적으로 생성된 Teacher 계정으로 로그인
     await loginAsTeacher(page, {
-      username: 'testteacher2',
-      password: 'test12345678',
+      username: testTeacher!.user.username,
+      password: testTeacher!.user.password,
     })
 
     // Dashboard로 리다이렉트 확인
@@ -134,12 +146,20 @@ test.describe('Login Page', () => {
 })
 
 test.describe('Logout', () => {
+  let logoutTestStudent: Awaited<ReturnType<typeof createAndLoginStudent>> | null = null
+
+  test.beforeAll(async () => {
+    // Logout 테스트용 계정 생성
+    logoutTestStudent = await createAndLoginStudent()
+    console.log(`Logout test account created: ${logoutTestStudent.user.username}`)
+  })
+
   test('로그인 후 로그아웃이 동작해야 함', async ({ page }) => {
-    // Student로 로그인
+    // 동적으로 생성된 Student 계정으로 로그인
     await page.goto('/login')
     await loginAsStudent(page, {
-      username: 'teststudent2',
-      password: 'test12345678',
+      username: logoutTestStudent!.user.username,
+      password: logoutTestStudent!.user.password,
     })
 
     await waitForLoadingComplete(page)
