@@ -11,6 +11,8 @@ from django.urls import include, path
 
 # Admin URL 환경 변수화 (기본값: admin/, 운영환경에서는 비밀 경로 사용 권장)
 ADMIN_URL = os.getenv('DJANGO_ADMIN_URL', 'admin/')
+if not ADMIN_URL.endswith('/'):
+    ADMIN_URL += '/'
 
 urlpatterns = [
     # Django Admin (경로 환경 변수화)
