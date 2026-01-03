@@ -204,8 +204,8 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
         return obj.exam_state != '0'
 
     def get_enrolled_students_count(self, obj):
-        """등록된 학생 수"""
-        return ExamStudentsInfo.objects.filter(exam=obj).count()
+        """등록된 학생 수 (annotate된 값 사용으로 N+1 방지)"""
+        return getattr(obj, 'enrolled_count', 0)
 
     def get_duration(self, obj):
         """시험 시간 (분 단위)"""
@@ -412,7 +412,13 @@ class ExamQuestionSerializer(serializers.ModelSerializer):
         ]
 
     def get_assigned_score(self, obj):
-        """이 시험지에서의 배점"""
+        """이 시험지에서의 배점 (context에서 score_map 사용으로 N+1 방지)"""
+        # score_map이 context에 있으면 사용 (N+1 방지)
+        score_map = self.context.get('score_map')
+        if score_map is not None:
+            return score_map.get(obj.id, 0)
+
+        # Fallback: score_map이 없는 경우 (기존 로직)
         paper_id = self.context.get('paper_id')
         if paper_id:
             try:

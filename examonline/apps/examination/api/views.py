@@ -2,7 +2,7 @@
 Examination API Views.
 """
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -49,11 +49,15 @@ class ExaminationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """QuerySet 최적화 (N+1 query 방지)
 
-        Prefetch + to_attr 사용으로 Django 내부 API 의존성 제거
+        - select_related: ForeignKey 관계 최적화
+        - annotate: enrolled_count로 등록 학생 수 집계 (N+1 방지)
+        - Prefetch + to_attr: ManyToMany 관계 최적화
         """
         user = self.request.user
         base_qs = ExaminationInfo.objects.all().select_related(
             'subject', 'create_user'
+        ).annotate(
+            enrolled_count=Count('examstudentsinfo', distinct=True)
         ).prefetch_related(
             Prefetch(
                 'exampaperinfo_set',
