@@ -7,6 +7,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from core.api.fields import XSSSanitizedCharField
 from user.models import EmailVerifyRecord, StudentsInfo, SubjectInfo, TeacherInfo, UserProfile
 
 
@@ -46,6 +47,8 @@ class SubjectSerializer(serializers.ModelSerializer):
     """
     Subject serializer.
     """
+
+    subject_name = XSSSanitizedCharField(max_length=20)
 
     class Meta:
         model = SubjectInfo
@@ -108,16 +111,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True, label='비밀번호 확인')
 
-    # Student fields (optional)
-    student_name = serializers.CharField(required=False, allow_blank=True)
-    student_id = serializers.CharField(required=False, allow_blank=True)
-    student_class = serializers.CharField(required=False, allow_blank=True)
-    student_school = serializers.CharField(required=False, allow_blank=True)
+    # Student fields (optional) - XSS sanitized
+    student_name = XSSSanitizedCharField(required=False, allow_blank=True)
+    student_id = XSSSanitizedCharField(required=False, allow_blank=True)
+    student_class = XSSSanitizedCharField(required=False, allow_blank=True)
+    student_school = XSSSanitizedCharField(required=False, allow_blank=True)
 
-    # Teacher fields (optional)
-    teacher_name = serializers.CharField(required=False, allow_blank=True)
+    # Teacher fields (optional) - XSS sanitized
+    teacher_name = XSSSanitizedCharField(required=False, allow_blank=True)
     work_years = serializers.IntegerField(required=False)
-    teacher_school = serializers.CharField(required=False, allow_blank=True)
+    teacher_school = XSSSanitizedCharField(required=False, allow_blank=True)
     subject_id = serializers.PrimaryKeyRelatedField(
         queryset=SubjectInfo.objects.all(),
         required=False,

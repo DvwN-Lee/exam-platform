@@ -6,6 +6,7 @@ from django.db import transaction
 from django.db.models import Sum
 from rest_framework import serializers
 
+from core.api.fields import XSSSanitizedCharField
 from testpaper.models import TestPaperInfo, TestPaperTestQ
 from testquestion.api.serializers import QuestionListSerializer
 from testquestion.models import TestQuestionInfo
@@ -134,6 +135,7 @@ class TestPaperCreateSerializer(serializers.ModelSerializer):
     문제를 nested로 함께 추가 가능 (선택적).
     """
 
+    name = XSSSanitizedCharField(max_length=50)
     subject_id = serializers.PrimaryKeyRelatedField(queryset=SubjectInfo.objects.all(), source='subject', write_only=True)
     questions = PaperQuestionWriteSerializer(many=True, required=False, write_only=True)
     total_score = serializers.IntegerField(read_only=True)
@@ -196,6 +198,7 @@ class TestPaperUpdateSerializer(serializers.ModelSerializer):
     문제는 ID 기반 부분 수정 지원.
     """
 
+    name = XSSSanitizedCharField(max_length=50, required=False)
     subject_id = serializers.PrimaryKeyRelatedField(
         queryset=SubjectInfo.objects.all(), source='subject', write_only=True, required=False
     )
