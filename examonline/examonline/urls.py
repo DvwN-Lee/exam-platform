@@ -2,14 +2,19 @@
 examonline URL Configuration
 """
 
+import os
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+# Admin URL 환경 변수화 (기본값: admin/, 운영환경에서는 비밀 경로 사용 권장)
+ADMIN_URL = os.getenv('DJANGO_ADMIN_URL', 'admin/')
+
 urlpatterns = [
-    # Django Admin
-    path('admin/', admin.site.urls),
+    # Django Admin (경로 환경 변수화)
+    path(ADMIN_URL, admin.site.urls),
 
     # API v1 endpoints
     path('api/v1/', include('user.api.urls')),
