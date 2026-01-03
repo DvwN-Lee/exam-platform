@@ -204,8 +204,12 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
         return obj.exam_state != '0'
 
     def get_enrolled_students_count(self, obj):
-        """등록된 학생 수 (annotate된 값 사용으로 N+1 방지)"""
-        return getattr(obj, 'enrolled_count', 0)
+        """등록된 학생 수 (annotate된 값 사용, Fallback 포함)"""
+        count = getattr(obj, 'enrolled_count', None)
+        if count is not None:
+            return count
+        # Fallback: annotate가 없는 경우 직접 count (create/update 직후)
+        return ExamStudentsInfo.objects.filter(exam=obj).count()
 
     def get_duration(self, obj):
         """시험 시간 (분 단위)"""
