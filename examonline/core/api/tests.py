@@ -86,8 +86,9 @@ class TestXSSSanitizedCharField:
     def test_max_length_validation(self):
         """max_length 검증이 동작하는지 확인"""
         field = XSSSanitizedCharField(max_length=10)
+        # run_validation includes validators (max_length check)
         with pytest.raises(serializers.ValidationError):
-            field.to_internal_value('a' * 20)
+            field.run_validation('a' * 20)
 
 
 class TestSerializerIntegration:
