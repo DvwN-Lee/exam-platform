@@ -5,6 +5,7 @@ Question Management API serializers.
 from django.db import transaction
 from rest_framework import serializers
 
+from core.api.fields import XSSSanitizedCharField
 from testquestion.models import TestQuestionInfo, OptionInfo
 from user.api.serializers import SubjectSerializer
 from user.models import SubjectInfo
@@ -28,6 +29,7 @@ class OptionWriteSerializer(serializers.ModelSerializer):
     """
 
     id = serializers.IntegerField(required=False)
+    option = XSSSanitizedCharField(max_length=100)
 
     class Meta:
         model = OptionInfo
@@ -134,6 +136,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
     옵션을 nested로 함께 생성.
     """
 
+    name = XSSSanitizedCharField(max_length=500)
     subject_id = serializers.PrimaryKeyRelatedField(
         queryset=SubjectInfo.objects.all(), source='subject', write_only=True
     )
@@ -178,6 +181,7 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
     옵션은 ID 기반 부분 수정 지원.
     """
 
+    name = XSSSanitizedCharField(max_length=500, required=False)
     subject_id = serializers.PrimaryKeyRelatedField(
         queryset=SubjectInfo.objects.all(), source='subject', write_only=True, required=False
     )
