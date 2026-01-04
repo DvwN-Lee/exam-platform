@@ -181,22 +181,30 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
         return None
 
     def get_testpaper(self, obj):
-        """첫 번째 연결된 시험지 정보 (Frontend 호환성)"""
-        from examination.models import ExamPaperInfo
-        exam_paper = ExamPaperInfo.objects.filter(exam=obj).select_related('paper', 'paper__subject').first()
-        if exam_paper and exam_paper.paper:
-            subject_data = None
-            if exam_paper.paper.subject:
-                subject_data = {
-                    'id': exam_paper.paper.subject.id,
-                    'subject_name': exam_paper.paper.subject.subject_name,
+        """첫 번째 연결된 시험지 정보 (Frontend 호환성)
+
+        Note: Prefetch + to_attr로 미리 load된 data 사용 (N+1 방지)
+        """
+        exam_papers = getattr(obj, 'prefetched_exam_papers', None)
+        if exam_papers is None:
+            # prefetch가 안 된 경우 fallback (단일 조회 시)
+            from examination.models import ExamPaperInfo
+            exam_papers = list(ExamPaperInfo.objects.filter(exam=obj).select_related('paper', 'paper__subject'))
+
+        for exam_paper in exam_papers:
+            if exam_paper.paper:
+                subject_data = None
+                if exam_paper.paper.subject:
+                    subject_data = {
+                        'id': exam_paper.paper.subject.id,
+                        'subject_name': exam_paper.paper.subject.subject_name,
+                    }
+                return {
+                    'id': exam_paper.paper.id,
+                    'name': exam_paper.paper.name,
+                    'subject': subject_data,
+                    'question_count': exam_paper.paper.question_count,
                 }
-            return {
-                'id': exam_paper.paper.id,
-                'name': exam_paper.paper.name,
-                'subject': subject_data,
-                'question_count': exam_paper.paper.question_count,
-            }
         return None
 
     def get_is_public(self, obj):
