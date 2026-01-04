@@ -6,7 +6,7 @@ User Dashboard Services.
 
 from datetime import timedelta
 
-from django.db.models import Count, Avg, Prefetch
+from django.db.models import Case, Count, Avg, F, Prefetch, When
 from django.utils import timezone
 
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
@@ -516,50 +516,70 @@ class TeacherDashboardService:
         return ongoing_exams
 
     def _get_question_statistics(self) -> dict:
-        """문제 통계"""
-        user_questions = TestQuestionInfo.objects.filter(
-            create_user=self.user, is_del=False
-        )
-        total_questions = user_questions.count()
-        shared_questions = user_questions.filter(is_share=True).count()
+        """
+        문제 통계 (쿼리 최적화: 6개 -> 3개)
 
-        # 유형별 집계
-        type_counts = user_questions.values('tq_type').annotate(count=Count('id'))
-        questions_by_type = {item['tq_type']: item['count'] for item in type_counts}
-
-        # 난이도별 집계
-        degree_counts = user_questions.values('tq_degree').annotate(count=Count('id'))
-        questions_by_difficulty = {item['tq_degree']: item['count'] for item in degree_counts}
-
-        # 전월 대비 Trend 계산
+        기존: 6개 쿼리 (total, shared, type별, degree별, this_month, last_month)
+        개선: 3개 쿼리 (aggregate 1개 + type 1개 + degree 1개)
+        """
+        # 월별 날짜 계산
         this_month_start = self.now.replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
 
-        this_month_count = user_questions.filter(
-            create_time__gte=this_month_start
-        ).count()
-        last_month_count = user_questions.filter(
-            create_time__gte=last_month_start,
-            create_time__lt=this_month_start
-        ).count()
+        user_questions = TestQuestionInfo.objects.filter(
+            create_user=self.user, is_del=False
+        )
+
+        # 단일 aggregate 쿼리로 total, shared, this_month, last_month 계산
+        stats = user_questions.aggregate(
+            total=Count('id'),
+            shared=Count(Case(When(is_share=True, then=1))),
+            this_month=Count(Case(When(create_time__gte=this_month_start, then=1))),
+            last_month=Count(Case(When(
+                create_time__gte=last_month_start,
+                create_time__lt=this_month_start,
+                then=1
+            ))),
+        )
+
+        # 유형별 집계 (별도 쿼리, 동적 카테고리)
+        type_counts = user_questions.values('tq_type').annotate(count=Count('id'))
+        questions_by_type = {item['tq_type']: item['count'] for item in type_counts}
+
+        # 난이도별 집계 (별도 쿼리, 동적 카테고리)
+        degree_counts = user_questions.values('tq_degree').annotate(count=Count('id'))
+        questions_by_difficulty = {item['tq_degree']: item['count'] for item in degree_counts}
 
         return {
-            'total_questions': total_questions,
-            'shared_questions': shared_questions,
+            'total_questions': stats['total'] or 0,
+            'shared_questions': stats['shared'] or 0,
             'questions_by_type': questions_by_type,
             'questions_by_difficulty': questions_by_difficulty,
-            'trend': this_month_count - last_month_count,
-            'this_month_created': this_month_count,
+            'trend': (stats['this_month'] or 0) - (stats['last_month'] or 0),
+            'this_month_created': stats['this_month'] or 0,
         }
 
     def _get_student_statistics(self) -> dict:
-        """학생 통계"""
-        # 교사가 출제한 시험 조회
-        teacher_exams = ExaminationInfo.objects.filter(create_user=self.user)
-        teacher_exam_ids = teacher_exams.values_list('id', flat=True)
+        """
+        학생 통계 (쿼리 최적화)
+
+        기존: 10개+ 쿼리
+        개선: 3개 쿼리 (teacher_exam_ids 1개 + total_students 1개 + aggregate 1개)
+        """
+        # 월별 날짜 계산
+        this_month_start = self.now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        last_month_end = this_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+
+        # 교사가 출제한 시험 ID 목록
+        teacher_exam_ids = list(
+            ExaminationInfo.objects.filter(create_user=self.user).values_list('id', flat=True)
+        )
 
         # 등록된 학생 수 (중복 제거)
         total_students = ExamStudentsInfo.objects.filter(
@@ -570,46 +590,50 @@ class TeacherDashboardService:
         submissions = TestScores.objects.filter(
             exam_id__in=teacher_exam_ids,
             is_submitted=True
+        ).select_related('test_paper')
+
+        # 단일 aggregate 쿼리로 대부분의 통계 계산
+        stats = submissions.aggregate(
+            total=Count('id'),
+            avg_score=Avg('test_score'),
+            this_month_count=Count(Case(When(submit_time__gte=this_month_start, then=1))),
+            last_month_count=Count(Case(When(
+                submit_time__gte=last_month_start,
+                submit_time__lt=this_month_start,
+                then=1
+            ))),
+            this_month_avg=Avg(Case(
+                When(submit_time__gte=this_month_start, then=F('test_score'))
+            )),
+            last_month_avg=Avg(Case(
+                When(
+                    submit_time__gte=last_month_start,
+                    submit_time__lt=this_month_start,
+                    then=F('test_score')
+                )
+            )),
         )
-        total_submissions = submissions.count()
 
-        # 평균 점수
-        avg_score_result = submissions.aggregate(avg=Avg('test_score'))
-        average_score = round(avg_score_result['avg'] or 0, 1)
+        total_submissions = stats['total'] or 0
+        average_score = round(stats['avg_score'] or 0, 1)
 
-        # 합격률 계산
+        # 합격률 계산 (list 순회 대신 DB 쿼리로 계산)
+        # test_score >= test_paper__passing_score 조건은 F 표현식으로 처리
         if total_submissions > 0:
-            passed_count = 0
-            for submission in submissions.select_related('test_paper'):
-                if submission.test_paper and submission.test_score >= submission.test_paper.passing_score:
-                    passed_count += 1
+            passed_count = submissions.filter(
+                test_score__gte=F('test_paper__passing_score')
+            ).count()
             pass_rate = round((passed_count / total_submissions) * 100, 1)
         else:
             pass_rate = 0.0
 
-        # 전월 대비 Trend 계산 (응시자)
-        this_month_start = self.now.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
-        last_month_end = this_month_start - timedelta(days=1)
-        last_month_start = last_month_end.replace(day=1)
-
-        this_month_submissions = submissions.filter(
-            submit_time__gte=this_month_start
-        ).count()
-        last_month_submissions = submissions.filter(
-            submit_time__gte=last_month_start,
-            submit_time__lt=this_month_start
-        ).count()
+        # 월별 submission trend
+        this_month_submissions = stats['this_month_count'] or 0
+        last_month_submissions = stats['last_month_count'] or 0
 
         # 평균 점수 Trend 계산
-        this_month_avg = submissions.filter(
-            submit_time__gte=this_month_start
-        ).aggregate(avg=Avg('test_score'))['avg']
-        last_month_avg = submissions.filter(
-            submit_time__gte=last_month_start,
-            submit_time__lt=this_month_start
-        ).aggregate(avg=Avg('test_score'))['avg']
+        this_month_avg = stats['this_month_avg']
+        last_month_avg = stats['last_month_avg']
 
         score_trend = 0.0
         if this_month_avg is not None and last_month_avg is not None:
@@ -626,27 +650,32 @@ class TeacherDashboardService:
         }
 
     def _get_testpaper_statistics(self) -> dict:
-        """시험지 통계"""
-        user_testpapers = TestPaperInfo.objects.filter(create_user=self.user)
-        total_testpapers = user_testpapers.count()
+        """
+        시험지 통계 (쿼리 최적화: 3개 -> 1개)
 
-        # 전월 대비 Trend 계산
+        기존: 3개 쿼리 (total, this_month, last_month)
+        개선: 1개 쿼리 (aggregate)
+        """
+        # 월별 날짜 계산
         this_month_start = self.now.replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
 
-        this_month_count = user_testpapers.filter(
-            create_time__gte=this_month_start
-        ).count()
-        last_month_count = user_testpapers.filter(
-            create_time__gte=last_month_start,
-            create_time__lt=this_month_start
-        ).count()
+        # 단일 aggregate 쿼리로 모든 통계 계산
+        stats = TestPaperInfo.objects.filter(create_user=self.user).aggregate(
+            total=Count('id'),
+            this_month=Count(Case(When(create_time__gte=this_month_start, then=1))),
+            last_month=Count(Case(When(
+                create_time__gte=last_month_start,
+                create_time__lt=this_month_start,
+                then=1
+            ))),
+        )
 
         return {
-            'total_testpapers': total_testpapers,
-            'trend': this_month_count - last_month_count,
-            'this_month_created': this_month_count,
+            'total_testpapers': stats['total'] or 0,
+            'trend': (stats['this_month'] or 0) - (stats['last_month'] or 0),
+            'this_month_created': stats['this_month'] or 0,
         }
