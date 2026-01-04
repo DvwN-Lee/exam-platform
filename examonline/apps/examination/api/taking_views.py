@@ -161,6 +161,9 @@ class ExamTakingViewSet(viewsets.ViewSet):
 
         questions = [pq.test_question for pq in paper_questions]
 
+        # 배점 정보를 미리 조회하여 N+1 방지
+        score_map = {pq.test_question_id: pq.score for pq in paper_questions}
+
         # 응시 상태 확인
         test_score = TestScores.objects.filter(exam=exam, user=student_info).first()
         is_started = test_score is not None and test_score.start_time is not None
@@ -180,7 +183,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
             'passing_score': paper.passing_score,
             'question_count': paper.question_count,
             'questions': ExamQuestionSerializer(
-                questions, many=True, context={'paper_id': paper.id}
+                questions, many=True, context={'paper_id': paper.id, 'score_map': score_map}
             ).data,
             'is_started': is_started,
             'is_submitted': is_submitted,
