@@ -2,26 +2,23 @@
 Custom exception handler for consistent error responses.
 """
 
+from django.conf import settings
 from rest_framework.views import exception_handler
-from rest_framework.response import Response
 
 
 def custom_exception_handler(exc, context):
     """
-    Custom exception handler that returns consistent error format.
+    Custom exception handler.
+
+    - 4xx 에러: 기존 DRF 응답 구조 유지 (Frontend 호환성)
+    - 5xx 에러: Production에서 민감 정보 은닉
     """
-    # Call REST framework's default exception handler first
     response = exception_handler(exc, context)
 
     if response is not None:
-        # Customize the error response format
-        custom_response_data = {
-            'error': {
-                'code': exc.__class__.__name__.upper(),
-                'message': str(exc),
-                'details': response.data if isinstance(response.data, dict) else {'detail': response.data}
-            }
-        }
-        response.data = custom_response_data
+        # 500번대 서버 에러인 경우에만 메시지 은닉
+        if not settings.DEBUG and response.status_code >= 500:
+            response.data = {'detail': '서버 내부 오류가 발생했습니다.'}
+        # 4xx 에러는 기존 구조 유지 (유효성 검사 에러 등)
 
     return response
