@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from core.api.fields import XSSSanitizedCharField
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestPaperInfo
 from user.models import StudentsInfo, SubjectInfo
@@ -223,6 +224,7 @@ class ExaminationCreateSerializer(serializers.ModelSerializer):
     시험지를 nested로 함께 추가 가능.
     """
 
+    name = XSSSanitizedCharField(max_length=50)
     subject_id = serializers.PrimaryKeyRelatedField(queryset=SubjectInfo.objects.all(), source='subject', write_only=True)
     papers = ExamPaperWriteSerializer(many=True, required=False, write_only=True)
     duration = serializers.IntegerField(write_only=True, help_text='시험 시간 (분 단위)')
@@ -291,6 +293,7 @@ class ExaminationUpdateSerializer(serializers.ModelSerializer):
     시험 수정용 Serializer.
     """
 
+    name = XSSSanitizedCharField(max_length=50, required=False)
     subject_id = serializers.PrimaryKeyRelatedField(
         queryset=SubjectInfo.objects.all(), source='subject', required=False
     )

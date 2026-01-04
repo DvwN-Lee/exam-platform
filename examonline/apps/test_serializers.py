@@ -705,7 +705,7 @@ class TestExaminationSerializers:
 
         future_time = timezone.now() + timedelta(hours=1)  # 미래 시간
         data = {
-            'exam_name': 'Valid Exam',
+            'name': 'Valid Exam',
             'subject_id': self.subject.id,
             'start_time': future_time,
             'duration': 120,  # 2시간
