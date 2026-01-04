@@ -541,14 +541,29 @@ class ExamTakingViewSet(viewsets.ViewSet):
             user=student_info, is_submitted=True
         ).select_related('exam__subject', 'exam__create_user', 'test_paper').order_by('-submit_time')
 
+        # N+1 방지: 모든 question_id를 수집하여 bulk 조회
+        all_question_ids = set()
+        for submission in submissions:
+            if submission.detail_records:
+                all_question_ids.update(int(q_id) for q_id in submission.detail_records.keys())
+
+        # Bulk 조회 (1 query)
+        questions_dict = {}
+        if all_question_ids:
+            questions_dict = {
+                q.id: q for q in TestQuestionInfo.objects.filter(
+                    id__in=all_question_ids
+                ).select_related('subject').prefetch_related('optioninfo_set')
+            }
+
         submissions_data = []
         for submission in submissions:
-            # 답안 상세 정보 구성
+            # 답안 상세 정보 구성 (Dict 조회로 O(1))
             answers = []
             if submission.detail_records:
                 for q_id, record in submission.detail_records.items():
-                    try:
-                        question = TestQuestionInfo.objects.get(id=int(q_id))
+                    question = questions_dict.get(int(q_id))
+                    if question:
                         answers.append({
                             'id': int(q_id),
                             'question': question,
@@ -558,8 +573,6 @@ class ExamTakingViewSet(viewsets.ViewSet):
                             'score': record.get('score', 0),
                             'max_score': record.get('max_score', 0),
                         })
-                    except TestQuestionInfo.DoesNotExist:
-                        continue
 
             submission_data = {
                 'id': submission.id,
@@ -599,12 +612,26 @@ class ExamTakingViewSet(viewsets.ViewSet):
         if not test_score or not test_score.is_submitted:
             return Response({'detail': '제출된 시험이 없습니다.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # 답안 상세 정보 구성
+        # N+1 방지: 모든 question_id를 수집하여 bulk 조회
+        question_ids = []
+        if test_score.detail_records:
+            question_ids = [int(q_id) for q_id in test_score.detail_records.keys()]
+
+        # Bulk 조회 (1 query)
+        questions_dict = {}
+        if question_ids:
+            questions_dict = {
+                q.id: q for q in TestQuestionInfo.objects.filter(
+                    id__in=question_ids
+                ).select_related('subject').prefetch_related('optioninfo_set')
+            }
+
+        # 답안 상세 정보 구성 (Dict 조회로 O(1))
         answers = []
         if test_score.detail_records:
             for q_id, record in test_score.detail_records.items():
-                try:
-                    question = TestQuestionInfo.objects.select_related('subject').prefetch_related('optioninfo_set').get(id=int(q_id))
+                question = questions_dict.get(int(q_id))
+                if question:
                     answers.append({
                         'id': int(q_id),
                         'question': question,
@@ -614,8 +641,6 @@ class ExamTakingViewSet(viewsets.ViewSet):
                         'score': record.get('score', 0),
                         'max_score': record.get('max_score', 0),
                     })
-                except TestQuestionInfo.DoesNotExist:
-                    continue
 
         submission_data = {
             'id': test_score.id,
