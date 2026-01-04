@@ -114,7 +114,8 @@ class TestExaminationCRUD:
         response = api_client.post('/api/v1/examinations/', data, format='json')
 
         assert response.status_code == 400
-        assert 'papers' in response.data['error']['details']
+        # DRF 표준 ValidationError 형식: {'field_name': ['error message']}
+        assert 'papers' in response.data
 
     def test_create_examination_past_start_time_fails(self, api_client, teacher_user, subject, test_paper):
         """과거 시작 시간으로 시험 생성 실패"""
@@ -132,7 +133,8 @@ class TestExaminationCRUD:
         response = api_client.post('/api/v1/examinations/', data, format='json')
 
         assert response.status_code == 400
-        assert 'start_time' in response.data['error']['details']
+        # DRF 표준 ValidationError 형식: {'field_name': ['error message']}
+        assert 'start_time' in response.data
 
     def test_list_examinations(self, api_client, teacher_user, examination):
         """시험 목록 조회"""
