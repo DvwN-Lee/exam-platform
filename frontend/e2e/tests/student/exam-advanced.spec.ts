@@ -175,10 +175,11 @@ test.describe('Student Exam Advanced Features', () => {
 
       await waitForLoadingComplete(page)
 
-      // 시험 페이지 로드 확인 - 타이머 표시
+      // 타이머 요소가 보일 때까지 명시적 대기
+      await page.waitForSelector('text=/\\d{2}:\\d{2}:\\d{2}/', { timeout: 15000 })
       await expect(
         page.locator('text=/\\d{2}:\\d{2}:\\d{2}/')
-      ).toBeVisible({ timeout: 15000 })
+      ).toBeVisible({ timeout: 5000 })
 
       console.log('✓ Exam started')
     })
