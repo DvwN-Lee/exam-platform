@@ -5,37 +5,36 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('examination', '0004_alter_examinationinfo_create_time_and_more'),
-        ('testpaper', '0005_testscores_exam_testscores_is_submitted_and_more'),
-        ('user', '0003_alter_emailverifyrecord_id_and_more'),
+        ("examination", "0004_alter_examinationinfo_create_time_and_more"),
+        ("testpaper", "0005_testscores_exam_testscores_is_submitted_and_more"),
+        ("user", "0003_alter_emailverifyrecord_id_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='examinationinfo',
-            index=models.Index(fields=['exam_state'], name='exam_state_idx'),
+            model_name="examinationinfo",
+            index=models.Index(fields=["exam_state"], name="exam_state_idx"),
         ),
         migrations.AddIndex(
-            model_name='examinationinfo',
-            index=models.Index(fields=['start_time', 'end_time'], name='exam_time_range_idx'),
+            model_name="examinationinfo",
+            index=models.Index(fields=["start_time", "end_time"], name="exam_time_range_idx"),
         ),
         migrations.AddIndex(
-            model_name='examinationinfo',
-            index=models.Index(fields=['create_user'], name='exam_create_user_idx'),
+            model_name="examinationinfo",
+            index=models.Index(fields=["create_user"], name="exam_create_user_idx"),
         ),
         migrations.AddIndex(
-            model_name='exampaperinfo',
-            index=models.Index(fields=['exam', 'paper'], name='exam_paper_idx'),
+            model_name="exampaperinfo",
+            index=models.Index(fields=["exam", "paper"], name="exam_paper_idx"),
         ),
         migrations.AddIndex(
-            model_name='examstudentsinfo',
-            index=models.Index(fields=['exam', 'student'], name='exam_student_idx'),
+            model_name="examstudentsinfo",
+            index=models.Index(fields=["exam", "student"], name="exam_student_idx"),
         ),
         migrations.AddIndex(
-            model_name='examstudentsinfo',
-            index=models.Index(fields=['student'], name='student_exam_lookup_idx'),
+            model_name="examstudentsinfo",
+            index=models.Index(fields=["student"], name="student_exam_lookup_idx"),
         ),
     ]

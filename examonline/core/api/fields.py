@@ -7,12 +7,8 @@ import re
 import bleach
 from rest_framework import serializers
 
-
 # script, style 태그와 내용을 완전히 제거하는 패턴
-SCRIPT_STYLE_PATTERN = re.compile(
-    r'<(script|style)[^>]*>.*?</\1>',
-    re.IGNORECASE | re.DOTALL
-)
+SCRIPT_STYLE_PATTERN = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
 
 
 class XSSSanitizedCharField(serializers.CharField):
@@ -34,7 +30,7 @@ class XSSSanitizedCharField(serializers.CharField):
         data = super().to_internal_value(data)
         if data:
             # 1. script, style 태그와 내용을 완전히 제거
-            data = SCRIPT_STYLE_PATTERN.sub('', data)
+            data = SCRIPT_STYLE_PATTERN.sub("", data)
             # 2. 나머지 HTML 태그 제거 (내용은 유지)
             return bleach.clean(data, tags=[], strip=True)
         return data

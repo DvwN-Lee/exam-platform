@@ -9,8 +9,6 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-from core.api.permissions import IsTeacher, IsExamCreator
 from testpaper.api.filters import TestPaperFilter
 from testpaper.api.serializers import (
     AddQuestionsSerializer,
@@ -22,22 +20,27 @@ from testpaper.api.serializers import (
 from testpaper.models import TestPaperInfo, TestPaperTestQ
 from testquestion.api.serializers import QuestionDetailSerializer
 
+from core.api.permissions import IsExamCreator, IsTeacher
+
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['papers'],
-        summary='시험지 목록 조회',
-        description='필터링, 검색, 정렬을 지원하는 시험지 목록 조회 API.',
+        tags=["papers"],
+        summary="시험지 목록 조회",
+        description="필터링, 검색, 정렬을 지원하는 시험지 목록 조회 API.",
         parameters=[
-            OpenApiParameter(name='search', description='시험지 이름 검색'),
-            OpenApiParameter(name='ordering', description='정렬 기준 (create_time, -create_time, total_score, question_count)'),
+            OpenApiParameter(name="search", description="시험지 이름 검색"),
+            OpenApiParameter(
+                name="ordering",
+                description="정렬 기준 (create_time, -create_time, total_score, question_count)",
+            ),
         ],
     ),
-    create=extend_schema(tags=['papers'], summary='시험지 생성'),
-    retrieve=extend_schema(tags=['papers'], summary='시험지 상세 조회'),
-    update=extend_schema(tags=['papers'], summary='시험지 전체 수정'),
-    partial_update=extend_schema(tags=['papers'], summary='시험지 부분 수정'),
-    destroy=extend_schema(tags=['papers'], summary='시험지 삭제'),
+    create=extend_schema(tags=["papers"], summary="시험지 생성"),
+    retrieve=extend_schema(tags=["papers"], summary="시험지 상세 조회"),
+    update=extend_schema(tags=["papers"], summary="시험지 전체 수정"),
+    partial_update=extend_schema(tags=["papers"], summary="시험지 부분 수정"),
+    destroy=extend_schema(tags=["papers"], summary="시험지 삭제"),
 )
 class TestPaperViewSet(viewsets.ModelViewSet):
     """
@@ -49,9 +52,9 @@ class TestPaperViewSet(viewsets.ModelViewSet):
     """
 
     filterset_class = TestPaperFilter
-    search_fields = ['name']
-    ordering_fields = ['create_time', 'total_score', 'question_count', 'edit_time']
-    ordering = ['-create_time']
+    search_fields = ["name"]
+    ordering_fields = ["create_time", "total_score", "question_count", "edit_time"]
+    ordering = ["-create_time"]
 
     def get_queryset(self):
         """
@@ -60,11 +63,13 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         - 학생: 추후 연결된 시험의 시험지만 (현재는 전체)
         """
         # Handle schema generation  # pragma: no cover
-        if getattr(self, 'swagger_fake_view', False):  # pragma: no cover
+        if getattr(self, "swagger_fake_view", False):  # pragma: no cover
             return TestPaperInfo.objects.none()  # pragma: no cover
 
-        base_qs = TestPaperInfo.objects.all().select_related('subject', 'create_user').prefetch_related(
-            'testpapertestq_set__test_question'
+        base_qs = (
+            TestPaperInfo.objects.all()
+            .select_related("subject", "create_user")
+            .prefetch_related("testpapertestq_set__test_question")
         )
 
         return base_qs
@@ -73,9 +78,15 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         """
         Action별 Permission 설정.
         """
-        if self.action in ['create']:
+        if self.action in ["create"]:
             return [IsAuthenticated(), IsTeacher()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'add_questions', 'remove_question']:
+        elif self.action in [
+            "update",
+            "partial_update",
+            "destroy",
+            "add_questions",
+            "remove_question",
+        ]:
             return [IsAuthenticated(), IsExamCreator()]
         return [IsAuthenticated()]
 
@@ -83,25 +94,25 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         """
         Action별 Serializer 설정.
         """
-        if self.action == 'list':
+        if self.action == "list":
             return TestPaperListSerializer
-        elif self.action == 'retrieve' or self.action == 'preview':
+        elif self.action == "retrieve" or self.action == "preview":
             return TestPaperDetailSerializer
-        elif self.action == 'create':
+        elif self.action == "create":
             return TestPaperCreateSerializer
-        elif self.action in ['update', 'partial_update']:
+        elif self.action in ["update", "partial_update"]:
             return TestPaperUpdateSerializer
-        elif self.action == 'add_questions':
+        elif self.action == "add_questions":
             return AddQuestionsSerializer
         return TestPaperDetailSerializer
 
     @extend_schema(
-        tags=['papers'],
-        summary='시험지 미리보기',
-        description='시험지의 모든 문제와 옵션을 포함한 상세 정보를 조회합니다.',
+        tags=["papers"],
+        summary="시험지 미리보기",
+        description="시험지의 모든 문제와 옵션을 포함한 상세 정보를 조회합니다.",
         responses={200: TestPaperDetailSerializer},
     )
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def preview(self, request, pk=None):
         """
         시험지 미리보기 (모든 문제 + 옵션 포함).
@@ -109,7 +120,7 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         """
         # 옵션 정보까지 포함하여 조회 (N+1 쿼리 방지)
         paper = TestPaperInfo.objects.prefetch_related(
-            'testpapertestq_set__test_question__optioninfo_set'
+            "testpapertestq_set__test_question__optioninfo_set"
         ).get(pk=pk)
 
         serializer = TestPaperDetailSerializer(paper)
@@ -120,24 +131,26 @@ class TestPaperViewSet(viewsets.ModelViewSet):
 
         for paper_question in paper.testpapertestq_set.all():
             question_data = QuestionDetailSerializer(paper_question.test_question).data
-            questions_with_options.append({
-                'id': paper_question.id,
-                'question': question_data,
-                'score': paper_question.score,
-                'order': paper_question.order,
-            })
+            questions_with_options.append(
+                {
+                    "id": paper_question.id,
+                    "question": question_data,
+                    "score": paper_question.score,
+                    "order": paper_question.order,
+                }
+            )
 
-        data['questions_with_options'] = questions_with_options
+        data["questions_with_options"] = questions_with_options
         return Response(data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=['papers'],
-        summary='시험지에 문제 추가',
-        description='시험지에 새로운 문제를 추가합니다. 시험지 작성자만 추가 가능.',
+        tags=["papers"],
+        summary="시험지에 문제 추가",
+        description="시험지에 새로운 문제를 추가합니다. 시험지 작성자만 추가 가능.",
         request=AddQuestionsSerializer,
         responses={200: TestPaperDetailSerializer},
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def add_questions(self, request, pk=None):
         """
         시험지에 문제 추가.
@@ -146,16 +159,18 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         serializer = AddQuestionsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        questions_data = serializer.validated_data['questions']
+        questions_data = serializer.validated_data["questions"]
 
         # 중복 문제 검증 (기존 문제 + 새 문제)
-        existing_question_ids = set(paper.testpapertestq_set.values_list('test_question_id', flat=True))
-        new_question_ids = [q['test_question'].id for q in questions_data]
+        existing_question_ids = set(
+            paper.testpapertestq_set.values_list("test_question_id", flat=True)
+        )
+        new_question_ids = [q["test_question"].id for q in questions_data]
 
         duplicates = set(new_question_ids) & existing_question_ids
         if duplicates:
             return Response(
-                {'questions': f'이미 시험지에 포함된 문제입니다: {duplicates}'},
+                {"questions": f"이미 시험지에 포함된 문제입니다: {duplicates}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -167,9 +182,9 @@ class TestPaperViewSet(viewsets.ModelViewSet):
             # TestPaperTestQ 객체 리스트 생성
             paper_questions = []
             for idx, question_data in enumerate(questions_data, start=1):
-                test_question = question_data['test_question']
-                score = question_data.get('score', 5)
-                order = question_data.get('order', current_count + idx)
+                test_question = question_data["test_question"]
+                score = question_data.get("score", 5)
+                order = question_data.get("order", current_count + idx)
 
                 paper_questions.append(
                     TestPaperTestQ(
@@ -190,12 +205,12 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         return Response(TestPaperDetailSerializer(paper).data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=['papers'],
-        summary='시험지에서 문제 제거',
-        description='시험지에서 특정 문제를 제거합니다. 시험지 작성자만 제거 가능.',
+        tags=["papers"],
+        summary="시험지에서 문제 제거",
+        description="시험지에서 특정 문제를 제거합니다. 시험지 작성자만 제거 가능.",
         responses={204: None},
     )
-    @action(detail=True, methods=['delete'], url_path='remove-question/(?P<question_id>[^/.]+)')
+    @action(detail=True, methods=["delete"], url_path="remove-question/(?P<question_id>[^/.]+)")
     def remove_question(self, request, pk=None, question_id=None):
         """
         시험지에서 특정 문제 제거.
@@ -203,10 +218,12 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         paper = self.get_object()
 
         try:
-            paper_question = TestPaperTestQ.objects.get(test_paper=paper, test_question_id=question_id)
+            paper_question = TestPaperTestQ.objects.get(
+                test_paper=paper, test_question_id=question_id
+            )
         except TestPaperTestQ.DoesNotExist:
             return Response(
-                {'detail': '시험지에 해당 문제가 없습니다.'},
+                {"detail": "시험지에 해당 문제가 없습니다."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -225,7 +242,7 @@ class TestPaperViewSet(viewsets.ModelViewSet):
         """
         # Clear any cached querysets to ensure fresh data
         paper.refresh_from_db()
-        result = paper.testpapertestq_set.aggregate(total=Sum('score'))
-        paper.total_score = result['total'] or 0
+        result = paper.testpapertestq_set.aggregate(total=Sum("score"))
+        paper.total_score = result["total"] or 0
         paper.question_count = paper.testpapertestq_set.count()
         paper.save()

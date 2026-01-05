@@ -8,10 +8,10 @@ from core.api.pagination import StandardResultsSetPagination
 from core.api.permissions import IsOwnerOrTeacher, IsStudent, IsTeacher
 
 __all__ = [
-    'IsTeacher',
-    'IsStudent',
-    'IsOwnerOrTeacher',
-    'StandardResultsSetPagination',
-    'custom_exception_handler',
-    'XSSSanitizedCharField',
+    "IsTeacher",
+    "IsStudent",
+    "IsOwnerOrTeacher",
+    "StandardResultsSetPagination",
+    "custom_exception_handler",
+    "XSSSanitizedCharField",
 ]

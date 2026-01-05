@@ -1,8 +1,7 @@
 from django.db import models
 from django.utils import timezone
-
-from user.models import UserProfile
 from examination.models import ExaminationInfo
+from user.models import UserProfile
 
 
 # 시험 평가
