@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import apiClient from '@/api/client'
+import { getErrorMessage } from '@/utils/error'
 import { useAuthStore } from '@/stores/authStore'
 import { FadeIn } from '@/components/animation'
 
@@ -59,8 +60,7 @@ export function ProfileSettings() {
       setIsEditing(false)
     },
     onError: (error: unknown) => {
-      const axiosError = error as { response?: { data?: { detail?: string } } }
-      toast.error(axiosError.response?.data?.detail || '프로필 수정에 실패했습니다.')
+      toast.error(getErrorMessage(error, '프로필 수정에 실패했습니다.'))
     },
   })
 

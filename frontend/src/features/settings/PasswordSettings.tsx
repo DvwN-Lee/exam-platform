@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import apiClient from '@/api/client'
+import { getErrorMessage } from '@/utils/error'
 import { FadeIn } from '@/components/animation'
 
 interface PasswordData {
@@ -31,10 +32,7 @@ export function PasswordSettings() {
       })
     },
     onError: (error: unknown) => {
-      const axiosError = error as { response?: { data?: { detail?: string } } }
-      const errorMessage =
-        axiosError.response?.data?.detail || '비밀번호 변경에 실패했습니다.'
-      toast.error(errorMessage)
+      toast.error(getErrorMessage(error, '비밀번호 변경에 실패했습니다.'))
     },
   })
 

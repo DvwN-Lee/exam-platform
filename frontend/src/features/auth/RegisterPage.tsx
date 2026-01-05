@@ -7,6 +7,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { authApi } from '@/api/auth'
+import { getErrorMessage } from '@/utils/error'
 import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -102,12 +103,7 @@ export function RegisterPage() {
       navigate({ to: '/login' })
     },
     onError: (error: unknown) => {
-      const axiosError = error as { response?: { data?: { message?: string; detail?: string } } }
-      const errorMessage =
-        axiosError.response?.data?.message ||
-        axiosError.response?.data?.detail ||
-        '회원가입에 실패했습니다.'
-      toast.error(errorMessage)
+      toast.error(getErrorMessage(error, '회원가입에 실패했습니다.'))
     },
   })
 
