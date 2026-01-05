@@ -2,6 +2,12 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 
+from core.api.validators import (
+    validate_image_extension,
+    validate_image_size,
+    validate_image_mime_type,
+)
+
 
 # 사용자 기본 정보
 class UserProfile(AbstractUser):
@@ -14,7 +20,13 @@ class UserProfile(AbstractUser):
         choices=(('student', '학생'), ('teacher', '선생')), default='student', max_length=7, verbose_name='사용자 유형'
     )
     age = models.IntegerField(default=18, verbose_name='나이')
-    image = models.ImageField(upload_to='image/%Y/%m', default='image/default.png', max_length=200, verbose_name='이미지')
+    image = models.ImageField(
+        upload_to='image/%Y/%m',
+        default='image/default.png',
+        max_length=200,
+        verbose_name='이미지',
+        validators=[validate_image_extension, validate_image_size, validate_image_mime_type],
+    )
 
     class Meta:
         verbose_name = '사용자 정보'
