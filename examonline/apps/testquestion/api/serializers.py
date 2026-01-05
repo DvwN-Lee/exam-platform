@@ -6,6 +6,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from core.api.fields import XSSSanitizedCharField
+from core.api.mixins import CreatUserSerializerMixin
 from testquestion.models import TestQuestionInfo, OptionInfo
 from user.api.serializers import SubjectSerializer
 from user.models import SubjectInfo
@@ -36,7 +37,7 @@ class OptionWriteSerializer(serializers.ModelSerializer):
         fields = ['id', 'option', 'is_right']
 
 
-class QuestionListSerializer(serializers.ModelSerializer):
+class QuestionListSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
     """
     문제 목록 조회용 경량 Serializer.
     옵션은 포함하지 않음.
@@ -70,21 +71,12 @@ class QuestionListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'creat_user', 'is_del', 'options']
 
-    def get_creat_user(self, obj):
-        """Return create_user as object with id and nick_name"""
-        if obj.create_user:
-            return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
-            }
-        return None
-
     def get_options(self, obj):
         """Return empty array for list view (options only in detail view)"""
         return []
 
 
-class QuestionDetailSerializer(serializers.ModelSerializer):
+class QuestionDetailSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
     """
     문제 상세 조회용 Serializer.
     옵션 목록 포함.
@@ -119,15 +111,6 @@ class QuestionDetailSerializer(serializers.ModelSerializer):
             'options',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'creat_user', 'options', 'is_del']
-
-    def get_creat_user(self, obj):
-        """Return create_user as object with id and nick_name"""
-        if obj.create_user:
-            return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
-            }
-        return None
 
 
 class QuestionCreateSerializer(serializers.ModelSerializer):

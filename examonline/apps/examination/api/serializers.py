@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from core.api.fields import XSSSanitizedCharField
+from core.api.mixins import CreatUserSerializerMixin
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestPaperInfo
 from user.models import StudentsInfo, SubjectInfo
@@ -55,7 +56,7 @@ class ExamPaperWriteSerializer(serializers.Serializer):
     )
 
 
-class ExaminationListSerializer(serializers.ModelSerializer):
+class ExaminationListSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
     """
     시험 목록용 Serializer (경량).
     """
@@ -98,15 +99,6 @@ class ExaminationListSerializer(serializers.ModelSerializer):
         duration = obj.end_time - obj.start_time
         return int(duration.total_seconds() / 60)
 
-    def get_creat_user(self, obj):
-        """Frontend 호환성을 위한 create_user 정보"""
-        if obj.create_user:
-            return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
-            }
-        return None
-
     def get_testpaper(self, obj):
         """첫 번째 연결된 시험지 정보 (Frontend 호환성)
 
@@ -131,7 +123,7 @@ class ExaminationListSerializer(serializers.ModelSerializer):
         return obj.exam_state != '0'
 
 
-class ExaminationDetailSerializer(serializers.ModelSerializer):
+class ExaminationDetailSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
     """
     시험 상세 조회용 Serializer.
     시험지 및 응시 학생 정보 포함.
@@ -171,15 +163,6 @@ class ExaminationDetailSerializer(serializers.ModelSerializer):
             'is_public',
             'enrolled_students_count',
         ]
-
-    def get_creat_user(self, obj):
-        """Return create_user as object with id and nick_name"""
-        if obj.create_user:
-            return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
-            }
-        return None
 
     def get_testpaper(self, obj):
         """첫 번째 연결된 시험지 정보 (Frontend 호환성)
