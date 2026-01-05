@@ -19,9 +19,9 @@ test.describe('Teacher Examination Management', () => {
 
   let teacherToken: string
   let subjectId: number
-  let createdQuestionIds: number[] = []
-  let createdTestPaperIds: number[] = []
-  let createdExaminationIds: number[] = []
+  const createdQuestionIds: number[] = []
+  const createdTestPaperIds: number[] = []
+  const createdExaminationIds: number[] = []
 
   test.beforeAll(async () => {
     // Teacher 로그인하여 토큰 얻기
@@ -80,7 +80,7 @@ test.describe('Teacher Examination Management', () => {
             Authorization: `Bearer ${teacherToken}`,
           },
         })
-      } catch (error) {
+      } catch {
         // 이미 삭제된 경우 무시
       }
     }
@@ -90,7 +90,7 @@ test.describe('Teacher Examination Management', () => {
     for (const tpId of createdTestPaperIds) {
       try {
         await apiDeleteTestPaper(teacherToken, tpId)
-      } catch (error) {
+      } catch {
         // 이미 삭제된 경우 무시
       }
     }
@@ -100,7 +100,7 @@ test.describe('Teacher Examination Management', () => {
     for (const qId of createdQuestionIds) {
       try {
         await apiDeleteQuestion(teacherToken, qId)
-      } catch (error) {
+      } catch {
         // 이미 삭제된 경우 무시
       }
     }

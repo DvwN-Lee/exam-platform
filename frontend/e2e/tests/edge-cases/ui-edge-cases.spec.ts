@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginAsTeacher, loginAsStudent } from '../../helpers/auth.helper'
+import { loginAsTeacher } from '../../helpers/auth.helper'
 import { createAndLoginTeacher } from '../../helpers/data-factory.helper'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 

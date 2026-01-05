@@ -12,7 +12,7 @@ test.describe('Teacher Question Management', () => {
 
   let teacherToken: string
   let subjectId: number
-  let createdQuestionIds: number[] = []
+  const createdQuestionIds: number[] = []
 
   test.beforeAll(async () => {
     // Teacher 로그인하여 토큰 얻기 (cleanup용)
@@ -34,7 +34,7 @@ test.describe('Teacher Question Management', () => {
     for (const qId of createdQuestionIds) {
       try {
         await apiDeleteQuestion(teacherToken, qId)
-      } catch (error) {
+      } catch {
         // 이미 삭제된 경우 무시
       }
     }

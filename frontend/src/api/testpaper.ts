@@ -9,6 +9,7 @@ import type {
   CreateExaminationRequest,
   UpdateExaminationRequest,
   ExaminationFilters,
+  EnrolledStudent,
 } from '@/types/testpaper'
 
 export const testPaperApi = {
@@ -156,11 +157,11 @@ export const examinationApi = {
   },
 
   // 등록된 학생 목록 조회
-  getEnrolledStudents: async (id: number): Promise<any[]> => {
+  getEnrolledStudents: async (id: number): Promise<EnrolledStudent[]> => {
     const response = await apiClient.get<{
       exam_id: number
       exam_name: string
-      students: any[]
+      students: EnrolledStudent[]
     }>(`/examinations/${id}/enrolled_students/`)
     return response.data.students
   },

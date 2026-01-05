@@ -5,7 +5,7 @@ import {
   setupTestEnvironment,
 } from '../../helpers/data-factory.helper'
 import { apiGetSubjects } from '../../helpers/api.helper'
-import { loginAsStudent, loginAsTeacher } from '../../helpers/auth.helper'
+import { loginAsStudent } from '../../helpers/auth.helper'
 import {
   expectToBeOnDashboard,
   waitForLoadingComplete,

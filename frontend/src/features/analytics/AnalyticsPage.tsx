@@ -8,6 +8,22 @@ import { motion } from 'framer-motion'
 import { cardHoverVariants } from '@/lib/animations'
 import { FileText, Users, TrendingUp, CheckCircle2 } from 'lucide-react'
 
+interface DashboardQuestion {
+  id: number
+  name: string
+  subject?: { subject_name: string } | string
+  type: string
+  score: number
+  created_at: string
+}
+
+interface DashboardExam {
+  id: number
+  name: string
+  subject?: { subject_name: string } | string
+  student_count: number
+}
+
 export function AnalyticsPage() {
   const navigate = useNavigate()
   const { data, isLoading } = useQuery({
@@ -168,13 +184,13 @@ export function AnalyticsPage() {
             <h2 className="mb-4 text-xl font-semibold">최근 문제</h2>
             {data?.recent_questions && data.recent_questions.length > 0 ? (
               <StaggerContainer className="space-y-3" delay={0.2}>
-                {data.recent_questions.map((question: any) => (
+                {data.recent_questions.map((question: DashboardQuestion) => (
                   <StaggerItem key={question.id}>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                       <div>
                         <div className="font-medium">{question.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {question.subject?.subject_name || question.subject} • {question.type} • {question.score}점
+                          {typeof question.subject === 'object' ? question.subject?.subject_name : question.subject} • {question.type} • {question.score}점
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -195,13 +211,13 @@ export function AnalyticsPage() {
             <h2 className="mb-4 text-xl font-semibold">진행 중인 시험</h2>
             {data?.ongoing_exams && data.ongoing_exams.length > 0 ? (
               <StaggerContainer className="space-y-3" delay={0.2}>
-                {data.ongoing_exams.map((exam: any) => (
+                {data.ongoing_exams.map((exam: DashboardExam) => (
                   <StaggerItem key={exam.id}>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                       <div>
                         <div className="font-medium">{exam.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {exam.subject?.subject_name || exam.subject} • {exam.student_count}명 응시
+                          {typeof exam.subject === 'object' ? exam.subject?.subject_name : exam.subject} • {exam.student_count}명 응시
                         </div>
                       </div>
                       <div className="rounded bg-green-100 px-3 py-1 text-sm font-medium text-green-700">

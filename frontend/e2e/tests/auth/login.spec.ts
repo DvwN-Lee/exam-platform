@@ -1,10 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { login, loginAsTeacher, loginAsStudent, logout } from '../../helpers/auth.helper'
+import { loginAsTeacher, loginAsStudent, logout } from '../../helpers/auth.helper'
 import {
   expectToBeOnDashboard,
   expectToBeOnLoginPage,
   expectToBeLoggedIn,
-  expectToBeLoggedOut,
   waitForLoadingComplete,
 } from '../../helpers/assertions.helper'
 import { selectors } from '../../helpers/selectors'
@@ -98,9 +97,7 @@ test.describe('Login Page', () => {
 
   test('잘못된 자격증명으로 로그인 실패해야 함', async ({ page }) => {
     // Dialog 핸들러 등록 (alert 처리)
-    let alertMessage = ''
     page.on('dialog', async (dialog) => {
-      alertMessage = dialog.message()
       await dialog.accept()
     })
 

@@ -112,3 +112,13 @@ export interface ExaminationFilters {
   ordering?: string
   page?: number
 }
+
+export interface EnrolledStudent {
+  id: number
+  username: string
+  nick_name: string
+  student_name: string
+  student_id: string
+  student_class: string
+  student_school: string
+}

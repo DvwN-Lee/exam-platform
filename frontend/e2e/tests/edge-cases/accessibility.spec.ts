@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { loginAsTeacher, loginAsStudent } from '../../helpers/auth.helper'
-import { createAndLoginTeacher, createAndLoginStudent } from '../../helpers/data-factory.helper'
+import { loginAsTeacher } from '../../helpers/auth.helper'
+import { createAndLoginTeacher } from '../../helpers/data-factory.helper'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 
 /**
@@ -60,8 +60,8 @@ test.describe('Accessibility - Keyboard Navigation', () => {
     await page.keyboard.press('Enter')
     await page.waitForTimeout(2000)
 
-    // 로그인 성공 또는 폼 제출됨 확인
-    const isLoggedIn =
+    // 로그인 성공 또는 폼 제출됨 확인 (키보드 상호작용 검증)
+    const _isLoggedIn =
       !page.url().includes('/login') ||
       (await page.locator('[class*="error"]').isVisible().catch(() => false))
 
@@ -301,13 +301,13 @@ test.describe('Accessibility - Screen Reader', () => {
 
     // 페이지에 aria-live 영역이 있는지 확인
     const ariaLiveRegion = page.locator('[aria-live]')
-    const hasAriaLive = (await ariaLiveRegion.count()) > 0
+    const _hasAriaLive = (await ariaLiveRegion.count()) > 0
 
     // Toast/알림 영역이 있는지 확인
     const toastRegion = page.locator(
       '[role="status"], [role="alert"], .toast, [class*="toast"]'
     )
-    const hasToast = (await toastRegion.count()) > 0
+    const _hasToast = (await toastRegion.count()) > 0
 
     // aria-live 또는 적절한 알림 영역이 있으면 통과
     // (없어도 테스트 실패는 아님 - 권장 사항)
@@ -331,12 +331,12 @@ test.describe('Accessibility - Screen Reader', () => {
     await page.goto('/questions')
 
     // 로딩 중 aria-busy 또는 로딩 인디케이터 확인
-    const hasAriaBusy = await page
+    const _hasAriaBusy = await page
       .locator('[aria-busy="true"]')
       .isVisible({ timeout: 500 })
       .catch(() => false)
 
-    const hasLoadingIndicator = await page
+    const _hasLoadingIndicator = await page
       .locator('[role="progressbar"], .loading, [class*="loading"]')
       .isVisible({ timeout: 500 })
       .catch(() => false)

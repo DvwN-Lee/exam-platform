@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- CVA 패턴에서 variant 함수 export 필요 */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"

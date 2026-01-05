@@ -18,8 +18,8 @@ test.describe('Teacher TestPaper Management', () => {
 
   let teacherToken: string
   let subjectId: number
-  let createdQuestionIds: number[] = []
-  let createdTestPaperIds: number[] = []
+  const createdQuestionIds: number[] = []
+  const createdTestPaperIds: number[] = []
 
   test.beforeAll(async () => {
     // Teacher 로그인하여 토큰 얻기
@@ -58,7 +58,7 @@ test.describe('Teacher TestPaper Management', () => {
     for (const tpId of createdTestPaperIds) {
       try {
         await apiDeleteTestPaper(teacherToken, tpId)
-      } catch (error) {
+      } catch {
         // 이미 삭제된 경우 무시
       }
     }
@@ -68,7 +68,7 @@ test.describe('Teacher TestPaper Management', () => {
     for (const qId of createdQuestionIds) {
       try {
         await apiDeleteQuestion(teacherToken, qId)
-      } catch (error) {
+      } catch {
         // 이미 삭제된 경우 무시
       }
     }
@@ -111,7 +111,7 @@ test.describe('Teacher TestPaper Management', () => {
     })
 
     let testPaperName: string
-    let testPaperId: number
+    let _testPaperId: number
 
     await test.step('TestPaper 생성', async () => {
       // 시험지 생성 페이지로 이동
@@ -184,7 +184,7 @@ test.describe('Teacher TestPaper Management', () => {
 
       // ID를 cleanup 배열에 추가 (성공한 경우에만)
       if (response.status() === 201 && responseData.id) {
-        testPaperId = responseData.id
+        _testPaperId = responseData.id
         createdTestPaperIds.push(responseData.id)
 
         // 목록 페이지로 리디렉션 대기
