@@ -2,10 +2,11 @@
 """
 완전한 E2E 테스트: 교사 계정 생성 -> 문제/시험지/시험 생성 -> 학생 응시 -> 결과 확인
 """
-import urllib.request
+
 import json
-import time
 import subprocess
+import time
+import urllib.request
 from datetime import datetime, timedelta
 
 BASE_URL = "http://localhost:8000/api/v1"
@@ -22,13 +23,14 @@ STUDENT_USERNAME = f"student_e2e_{TIMESTAMP}"
 STUDENT_PASSWORD = "StudentPass2025!"
 STUDENT_NICKNAME = "E2E학생"
 
+
 def http_request(method, url, data=None, token=None):
     """HTTP 요청 헬퍼 함수"""
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
 
-    request_data = json.dumps(data).encode('utf-8') if data else None
+    request_data = json.dumps(data).encode("utf-8") if data else None
     req = urllib.request.Request(url, data=request_data, headers=headers, method=method)
 
     try:
@@ -39,6 +41,7 @@ def http_request(method, url, data=None, token=None):
         print(f"HTTP Error {e.code}: {error_data}")
         raise
 
+
 def register_user(email, username, password, nickname, user_type):
     """사용자 등록"""
     data = {
@@ -47,7 +50,7 @@ def register_user(email, username, password, nickname, user_type):
         "password": password,
         "password2": password,
         "nick_name": nickname,
-        "user_type": user_type
+        "user_type": user_type,
     }
 
     # Add required fields based on user type
@@ -65,15 +68,13 @@ def register_user(email, username, password, nickname, user_type):
     result = http_request("POST", f"{BASE_URL}/auth/register/", data)
     return result
 
+
 def login_user(username, password, user_type):
     """로그인"""
-    data = {
-        "username": username,
-        "password": password,
-        "user_type": user_type
-    }
+    data = {"username": username, "password": password, "user_type": user_type}
     result = http_request("POST", f"{BASE_URL}/auth/token/", data)
-    return result['access'], result['user']['id']
+    return result["access"], result["user"]["id"]
+
 
 def create_question(token, name, options, correct_index):
     """문제 생성"""
@@ -83,32 +84,24 @@ def create_question(token, name, options, correct_index):
         "tq_degree": "jd",  # 쉬움
         "subject_id": 1,  # Mathematics
         "options": [
-            {
-                "option": opt,
-                "is_right": i == correct_index
-            }
-            for i, opt in enumerate(options)
-        ]
+            {"option": opt, "is_right": i == correct_index} for i, opt in enumerate(options)
+        ],
     }
     return http_request("POST", f"{BASE_URL}/questions/", data, token)
 
+
 def create_testpaper(token, name, question_ids):
     """시험지 생성"""
-    data = {
-        "name": name,
-        "subject_id": 1,
-        "is_shared": False
-    }
+    data = {"name": name, "subject_id": 1, "is_shared": False}
     paper = http_request("POST", f"{BASE_URL}/testpapers/", data, token)
 
     # 문제 추가
     for question_id in question_ids:
-        add_data = {
-            "questions": [{"question_id": question_id, "score": 10}]
-        }
+        add_data = {"questions": [{"question_id": question_id, "score": 10}]}
         http_request("POST", f"{BASE_URL}/testpapers/{paper['id']}/add_questions/", add_data, token)
 
     return paper
+
 
 def create_exam(token, name, paper_id):
     """시험 생성"""
@@ -125,24 +118,38 @@ def create_exam(token, name, paper_id):
         "duration": 180,  # 3시간 (분 단위)
         "exam_type": "pt",  # 보통 시험 (pt: 보통, ts: 특수)
         "student_num": 100,
-        "is_shared": True
+        "is_shared": True,
     }
     return http_request("POST", f"{BASE_URL}/examinations/", data, token)
+
 
 def get_student_profile_from_db(user_id):
     """데이터베이스에서 직접 학생 프로필 ID 조회"""
     try:
         # PostgreSQL에서 직접 조회
         import os
+
         env = os.environ.copy()
-        env['PGPASSWORD'] = 'exampass'
+        env["PGPASSWORD"] = "exampass"
         result = subprocess.run(
-            ['psql', '-h', 'localhost', '-p', '5433',
-             '-U', 'examuser', '-d', 'examonline', '-t', '-A', '-c',
-             f"SELECT id FROM user_studentsinfo WHERE user_id = {user_id};"],
+            [
+                "psql",
+                "-h",
+                "localhost",
+                "-p",
+                "5433",
+                "-U",
+                "examuser",
+                "-d",
+                "examonline",
+                "-t",
+                "-A",
+                "-c",
+                f"SELECT id FROM user_studentsinfo WHERE user_id = {user_id};",
+            ],
             capture_output=True,
             text=True,
-            env=env
+            env=env,
         )
         if result.returncode == 0 and result.stdout.strip():
             return int(result.stdout.strip())
@@ -150,10 +157,12 @@ def get_student_profile_from_db(user_id):
         print(f"DB query error: {e}")
     return None
 
+
 def enroll_student(token, exam_id, student_id):
     """학생을 시험에 등록"""
     data = {"student_ids": [student_id]}
     return http_request("POST", f"{BASE_URL}/examinations/{exam_id}/enroll_students/", data, token)
+
 
 def take_exam(token, exam_id, answers):
     """시험 응시"""
@@ -166,6 +175,7 @@ def take_exam(token, exam_id, answers):
     data = {"answers": answers}
     return http_request("POST", f"{BASE_URL}/exams/{exam_id}/submit/", data, token)
 
+
 def main():
     print("=" * 60)
     print("전체 E2E 테스트 시작")
@@ -174,13 +184,15 @@ def main():
     # Step 1: 교사 계정 생성 및 로그인
     print("\n[Step 1] 교사 계정 생성 및 로그인")
     try:
-        register_user(TEACHER_EMAIL, TEACHER_USERNAME, TEACHER_PASSWORD, TEACHER_NICKNAME, "teacher")
+        register_user(
+            TEACHER_EMAIL, TEACHER_USERNAME, TEACHER_PASSWORD, TEACHER_NICKNAME, "teacher"
+        )
         print(f"✓ 교사 계정 생성: {TEACHER_USERNAME}")
     except Exception as e:
         print(f"✗ 교사 계정 생성 실패 (이미 존재할 수 있음): {e}")
 
     teacher_token, _ = login_user(TEACHER_USERNAME, TEACHER_PASSWORD, "teacher")
-    print(f"✓ 교사 로그인 성공")
+    print("✓ 교사 로그인 성공")
 
     # Step 2: 문제 생성
     print("\n[Step 2] 문제 3개 생성")
@@ -193,7 +205,7 @@ def main():
     q3 = create_question(teacher_token, "10-5는?", ["3", "4", "5", "6"], 2)
     print(f"✓ 문제 3 생성: ID={q3['id']}, 정답: 5")
 
-    question_ids = [q1['id'], q2['id'], q3['id']]
+    question_ids = [q1["id"], q2["id"], q3["id"]]
 
     # Step 3: 시험지 생성
     print("\n[Step 3] 시험지 생성")
@@ -202,18 +214,20 @@ def main():
 
     # Step 4: 시험 생성
     print("\n[Step 4] 시험 생성")
-    exam = create_exam(teacher_token, f"Complete E2E Exam {TIMESTAMP}", paper['id'])
+    exam = create_exam(teacher_token, f"Complete E2E Exam {TIMESTAMP}", paper["id"])
     print(f"✓ 시험 생성: ID={exam['id']}")
 
     # Step 5: 학생 계정 생성 및 로그인
     print("\n[Step 5] 학생 계정 생성 및 로그인")
     student_profile_id = None
     try:
-        reg_result = register_user(STUDENT_EMAIL, STUDENT_USERNAME, STUDENT_PASSWORD, STUDENT_NICKNAME, "student")
+        reg_result = register_user(
+            STUDENT_EMAIL, STUDENT_USERNAME, STUDENT_PASSWORD, STUDENT_NICKNAME, "student"
+        )
         print(f"✓ 학생 계정 생성: {STUDENT_USERNAME}")
         # 등록 응답에서 학생 프로필 ID 추출
-        if 'student' in reg_result and 'id' in reg_result['student']:
-            student_profile_id = reg_result['student']['id']
+        if "student" in reg_result and "id" in reg_result["student"]:
+            student_profile_id = reg_result["student"]["id"]
             print(f"✓ 학생 프로필 ID (from registration): {student_profile_id}")
     except Exception as e:
         print(f"✗ 학생 계정 생성 실패 (이미 존재할 수 있음): {e}")
@@ -231,7 +245,7 @@ def main():
 
     # Step 6: 학생을 시험에 등록
     print("\n[Step 6] 학생을 시험에 등록")
-    enroll_result = enroll_student(teacher_token, exam['id'], student_profile_id)
+    enroll_result = enroll_student(teacher_token, exam["id"], student_profile_id)
     print(f"✓ 학생 등록 완료: {enroll_result['detail']}")
 
     # Step 7: 시험 시작 대기
@@ -245,34 +259,35 @@ def main():
     correct_option_ids = []
     for qid in question_ids:
         q_detail = http_request("GET", f"{BASE_URL}/questions/{qid}/", token=teacher_token)
-        for opt in q_detail['options']:
-            if opt['is_right']:
-                correct_option_ids.append(opt['id'])
+        for opt in q_detail["options"]:
+            if opt["is_right"]:
+                correct_option_ids.append(opt["id"])
                 break
 
     answers = [
         {"question_id": question_ids[0], "selected_options": [correct_option_ids[0]]},
         {"question_id": question_ids[1], "selected_options": [correct_option_ids[1]]},
-        {"question_id": question_ids[2], "selected_options": [correct_option_ids[2]]}
+        {"question_id": question_ids[2], "selected_options": [correct_option_ids[2]]},
     ]
 
-    result = take_exam(student_token, exam['id'], answers)
+    result = take_exam(student_token, exam["id"], answers)
 
     # Step 9: 결과 확인
     print("\n[Step 9] 결과 확인")
-    print(f"✓ 시험 제출 완료")
+    print("✓ 시험 제출 완료")
     print(f"✓ 점수: {result['score']}/{result['total_possible']}점")
     print(f"✓ 합격 여부: {'합격' if result['passed'] else '불합격'}")
 
     print("\n" + "=" * 60)
-    if result['score'] == 30:
+    if result["score"] == 30:
         print("전체 E2E 테스트 성공! (30/30점)")
         print("모든 단계가 정상적으로 완료되었습니다.")
     else:
         print(f"전체 E2E 테스트 실패! ({result['score']}/30점)")
     print("=" * 60)
 
-    return result['score'] == 30
+    return result["score"] == 30
+
 
 if __name__ == "__main__":
     success = main()

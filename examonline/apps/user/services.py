@@ -5,14 +5,17 @@ User Dashboard Services.
 """
 
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
-from django.db.models import Case, Count, Avg, F, Prefetch, When
+from django.db.models import Avg, Case, Count, F, Prefetch, QuerySet, When
 from django.utils import timezone
-
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestPaperInfo, TestScores
 from testquestion.models import TestQuestionInfo
-from user.models import StudentsInfo
+from user.models import StudentsInfo, UserProfile
+
+if TYPE_CHECKING:
+    pass
 
 
 class StudentDashboardService:
@@ -41,20 +44,23 @@ class StudentDashboardService:
         submissions_list = list(submissions_qs)  # QuerySet을 list로 변환 (1회 query)
 
         # 2. enrolled_exam_ids 한 번만 조회 (여러 메서드에서 재사용)
-        enrolled_exam_ids = list(ExamStudentsInfo.objects.filter(
-            student=self.student_info
-        ).values_list('exam_id', flat=True))
+        enrolled_exam_ids = list(
+            ExamStudentsInfo.objects.filter(student=self.student_info).values_list(
+                "exam_id", flat=True
+            )
+        )
 
         # 3. recent_submissions_list 한 번만 조회 (score_trend, recent_submissions에서 재사용)
-        recent_submissions_list = sorted(submissions_list, key=lambda x: x.submit_time, reverse=True)[:5]
+        recent_submissions_list = sorted(
+            submissions_list, key=lambda x: x.submit_time, reverse=True
+        )[:5]
 
         # 4. subject_total_exams_dict 한 번만 조회 (progress에서 재사용, N+1 방지)
         subject_total_exams_dict = dict(
-            ExamStudentsInfo.objects.filter(
-                student=self.student_info
-            ).values('exam__subject__subject_name').annotate(
-                total=Count('id')
-            ).values_list('exam__subject__subject_name', 'total')
+            ExamStudentsInfo.objects.filter(student=self.student_info)
+            .values("exam__subject__subject_name")
+            .annotate(total=Count("id"))
+            .values_list("exam__subject__subject_name", "total")
         )
 
         # 5. 조회된 데이터를 각 메서드에 전달하여 재사용
@@ -65,32 +71,31 @@ class StudentDashboardService:
         recent_submissions = self._get_recent_submissions(recent_submissions_list)
 
         return {
-            'statistics': statistics,
-            'score_trend': score_trend,
-            'upcoming_exams': upcoming_exams,
-            'progress': progress,
-            'recent_submissions': recent_submissions,
-            'wrong_questions': [],
+            "statistics": statistics,
+            "score_trend": score_trend,
+            "upcoming_exams": upcoming_exams,
+            "progress": progress,
+            "recent_submissions": recent_submissions,
+            "wrong_questions": [],
         }
 
-    def _get_submissions(self):
+    def _get_submissions(self) -> QuerySet[TestScores]:
         """제출된 시험 기록 조회 (N+1 쿼리 방지)"""
-        return TestScores.objects.filter(
-            user=self.student_info,
-            is_submitted=True
-        ).select_related(
-            'exam', 'exam__subject', 'exam__create_user', 'test_paper'
-        ).prefetch_related(
-            Prefetch(
-                'exam__exampaperinfo_set',
-                queryset=ExamPaperInfo.objects.select_related(
-                    'paper__subject', 'paper__create_user'
-                ),
-                to_attr='prefetched_exam_papers'
+        return (
+            TestScores.objects.filter(user=self.student_info, is_submitted=True)
+            .select_related("exam", "exam__subject", "exam__create_user", "test_paper")
+            .prefetch_related(
+                Prefetch(
+                    "exam__exampaperinfo_set",
+                    queryset=ExamPaperInfo.objects.select_related(
+                        "paper__subject", "paper__create_user"
+                    ),
+                    to_attr="prefetched_exam_papers",
+                )
             )
         )
 
-    def _serialize_testpaper(self, paper) -> dict:
+    def _serialize_testpaper(self, paper: TestPaperInfo | None) -> dict | None:
         """
         TestPaperInfo 객체를 dictionary로 직렬화
 
@@ -104,20 +109,24 @@ class StudentDashboardService:
             return None
 
         return {
-            'id': paper.id,
-            'name': paper.name,
-            'subject': {
-                'id': paper.subject.id,
-                'subject_name': paper.subject.subject_name,
-            } if paper.subject else None,
-            'question_count': paper.question_count,
-            'creat_user': {
-                'id': paper.create_user.id,
-                'nick_name': paper.create_user.nick_name,
-            } if paper.create_user else None,
-            'questions': [],
-            'created_at': paper.create_time.isoformat() if paper.create_time else None,
-            'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
+            "id": paper.id,
+            "name": paper.name,
+            "subject": {
+                "id": paper.subject.id,
+                "subject_name": paper.subject.subject_name,
+            }
+            if paper.subject
+            else None,
+            "question_count": paper.question_count,
+            "creat_user": {
+                "id": paper.create_user.id,
+                "nick_name": paper.create_user.nick_name,
+            }
+            if paper.create_user
+            else None,
+            "questions": [],
+            "created_at": paper.create_time.isoformat() if paper.create_time else None,
+            "updated_at": paper.edit_time.isoformat() if paper.edit_time else None,
         }
 
     def _get_statistics(self, submissions_list: list, enrolled_exam_ids: list) -> dict:
@@ -146,10 +155,10 @@ class StudentDashboardService:
 
                 # 정답 수 계산
                 if sub.detail_records:
-                    for q_id, record in sub.detail_records.items():
+                    for _q_id, record in sub.detail_records.items():
                         if isinstance(record, dict):
                             total_questions += 1
-                            if record.get('is_correct', False):
+                            if record.get("is_correct", False):
                                 total_correct += 1
 
             pass_rate = round((passed_count / total_exams_taken) * 100, 1)
@@ -161,23 +170,22 @@ class StudentDashboardService:
 
         # 예정된 시험 수 (전달받은 enrolled_exam_ids 재사용)
         upcoming_count = ExaminationInfo.objects.filter(
-            id__in=enrolled_exam_ids,
-            start_time__gte=self.now
+            id__in=enrolled_exam_ids, start_time__gte=self.now
         ).count()
 
         # 전월 대비 Trend 계산
-        this_month_start = self.now.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        this_month_start = self.now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
 
         this_month_exams = [
-            sub for sub in submissions_list
+            sub
+            for sub in submissions_list
             if sub.submit_time and sub.submit_time >= this_month_start
         ]
         last_month_exams = [
-            sub for sub in submissions_list
+            sub
+            for sub in submissions_list
             if sub.submit_time and last_month_start <= sub.submit_time < this_month_start
         ]
 
@@ -196,14 +204,14 @@ class StudentDashboardService:
             avg_score_trend = round(this_month_avg - last_month_avg, 1)
 
         return {
-            'total_exams_taken': total_exams_taken,
-            'average_score': average_score,
-            'pass_rate': pass_rate,
-            'correct_answers': total_correct,
-            'total_questions_answered': total_questions,
-            'upcoming_exams_count': upcoming_count,
-            'exams_trend': exams_trend,
-            'avg_score_trend': avg_score_trend,
+            "total_exams_taken": total_exams_taken,
+            "average_score": average_score,
+            "pass_rate": pass_rate,
+            "correct_answers": total_correct,
+            "total_questions_answered": total_questions,
+            "upcoming_exams_count": upcoming_count,
+            "exams_trend": exams_trend,
+            "avg_score_trend": avg_score_trend,
         }
 
     def _get_score_trend(self, recent_submissions_list: list) -> list:
@@ -217,16 +225,20 @@ class StudentDashboardService:
 
         for sub in recent_submissions_list:
             if sub.exam and sub.test_paper:
-                percentage = round(
-                    (sub.test_score / sub.test_paper.total_score) * 100
-                ) if sub.test_paper.total_score > 0 else 0
+                percentage = (
+                    round((sub.test_score / sub.test_paper.total_score) * 100)
+                    if sub.test_paper.total_score > 0
+                    else 0
+                )
 
-                score_trend.append({
-                    'exam_name': sub.exam.name,
-                    'score': sub.test_score,
-                    'percentage': percentage,
-                    'date': sub.submit_time.strftime('%Y-%m-%d') if sub.submit_time else None,
-                })
+                score_trend.append(
+                    {
+                        "exam_name": sub.exam.name,
+                        "score": sub.test_score,
+                        "percentage": percentage,
+                        "date": sub.submit_time.strftime("%Y-%m-%d") if sub.submit_time else None,
+                    }
+                )
 
         return score_trend
 
@@ -239,40 +251,46 @@ class StudentDashboardService:
         """
         # Upcoming exams 조회 (N+1 쿼리 방지)
         # end_time__gt=self.now로 변경하여 진행 중인 시험도 포함
-        upcoming_exams_qs = ExaminationInfo.objects.filter(
-            id__in=enrolled_exam_ids,
-            end_time__gt=self.now
-        ).select_related('create_user', 'subject').prefetch_related(
-            Prefetch(
-                'exampaperinfo_set',
-                queryset=ExamPaperInfo.objects.select_related(
-                    'paper__subject', 'paper__create_user'
-                ),
-                to_attr='prefetched_exam_papers'
+        upcoming_exams_qs = (
+            ExaminationInfo.objects.filter(id__in=enrolled_exam_ids, end_time__gt=self.now)
+            .select_related("create_user", "subject")
+            .prefetch_related(
+                Prefetch(
+                    "exampaperinfo_set",
+                    queryset=ExamPaperInfo.objects.select_related(
+                        "paper__subject", "paper__create_user"
+                    ),
+                    to_attr="prefetched_exam_papers",
+                )
             )
-        ).order_by('start_time')
+            .order_by("start_time")
+        )
 
         # 데이터 직렬화
         upcoming_exams = []
         for exam in upcoming_exams_qs[:10]:
-            exam_papers = getattr(exam, 'prefetched_exam_papers', [])
+            exam_papers = getattr(exam, "prefetched_exam_papers", [])
             exam_paper = exam_papers[0] if exam_papers else None
 
             if exam_paper and exam_paper.paper:
-                upcoming_exams.append({
-                    'id': exam.id,
-                    'exam_name': exam.name,
-                    'testpaper': self._serialize_testpaper(exam_paper.paper),
-                    'start_time': exam.start_time.isoformat(),
-                    'end_time': exam.end_time.isoformat() if exam.end_time else None,
-                    'is_public': True,
-                    'creat_user': {
-                        'id': exam.create_user.id,
-                        'nick_name': exam.create_user.nick_name,
-                    } if exam.create_user else None,
-                    'created_at': exam.create_time.isoformat() if exam.create_time else None,
-                    'updated_at': exam.create_time.isoformat() if exam.create_time else None,
-                })
+                upcoming_exams.append(
+                    {
+                        "id": exam.id,
+                        "exam_name": exam.name,
+                        "testpaper": self._serialize_testpaper(exam_paper.paper),
+                        "start_time": exam.start_time.isoformat(),
+                        "end_time": exam.end_time.isoformat() if exam.end_time else None,
+                        "is_public": True,
+                        "creat_user": {
+                            "id": exam.create_user.id,
+                            "nick_name": exam.create_user.nick_name,
+                        }
+                        if exam.create_user
+                        else None,
+                        "created_at": exam.create_time.isoformat() if exam.create_time else None,
+                        "updated_at": exam.create_time.isoformat() if exam.create_time else None,
+                    }
+                )
 
         return upcoming_exams
 
@@ -299,12 +317,14 @@ class StudentDashboardService:
 
             if total_in_subject > 0:
                 pct = round((completed / total_in_subject) * 100)
-                progress.append({
-                    'subject': subject_name,
-                    'progress_percentage': pct,
-                    'completed_lectures': completed,
-                    'total_lectures': total_in_subject,
-                })
+                progress.append(
+                    {
+                        "subject": subject_name,
+                        "progress_percentage": pct,
+                        "completed_lectures": completed,
+                        "total_lectures": total_in_subject,
+                    }
+                )
 
         return progress
 
@@ -321,7 +341,7 @@ class StudentDashboardService:
             if sub.exam:
                 exam = sub.exam
                 # prefetch된 시험지 조회
-                exam_papers = getattr(exam, 'prefetched_exam_papers', [])
+                exam_papers = getattr(exam, "prefetched_exam_papers", [])
                 exam_paper = exam_papers[0] if exam_papers else None
 
                 # Helper method 사용하여 testpaper 직렬화
@@ -329,32 +349,40 @@ class StudentDashboardService:
                 if exam_paper and exam_paper.paper:
                     testpaper_data = self._serialize_testpaper(exam_paper.paper)
 
-                recent_submissions.append({
-                    'id': sub.id,
-                    'examination': {
-                        'id': exam.id,
-                        'exam_name': exam.name,
-                        'testpaper': testpaper_data,
-                        'start_time': exam.start_time.isoformat() if exam.start_time else None,
-                        'end_time': exam.end_time.isoformat() if exam.end_time else None,
-                        'is_public': exam.exam_state != '0',
-                        'creat_user': {
-                            'id': exam.create_user.id,
-                            'nick_name': exam.create_user.nick_name,
-                        } if exam.create_user else None,
-                        'created_at': exam.create_time.isoformat() if exam.create_time else None,
-                        'updated_at': exam.create_time.isoformat() if exam.create_time else None,
-                    },
-                    'student': {
-                        'id': self.student_info.id,
-                        'nick_name': self.user.nick_name,
-                    },
-                    'answers': [],
-                    'score': sub.test_score,
-                    'total_score': sub.test_paper.total_score if sub.test_paper else 0,
-                    'submitted_at': sub.submit_time.isoformat() if sub.submit_time else None,
-                    'created_at': sub.create_time.isoformat() if sub.create_time else None,
-                })
+                recent_submissions.append(
+                    {
+                        "id": sub.id,
+                        "examination": {
+                            "id": exam.id,
+                            "exam_name": exam.name,
+                            "testpaper": testpaper_data,
+                            "start_time": exam.start_time.isoformat() if exam.start_time else None,
+                            "end_time": exam.end_time.isoformat() if exam.end_time else None,
+                            "is_public": exam.exam_state != "0",
+                            "creat_user": {
+                                "id": exam.create_user.id,
+                                "nick_name": exam.create_user.nick_name,
+                            }
+                            if exam.create_user
+                            else None,
+                            "created_at": exam.create_time.isoformat()
+                            if exam.create_time
+                            else None,
+                            "updated_at": exam.create_time.isoformat()
+                            if exam.create_time
+                            else None,
+                        },
+                        "student": {
+                            "id": self.student_info.id,
+                            "nick_name": self.user.nick_name,
+                        },
+                        "answers": [],
+                        "score": sub.test_score,
+                        "total_score": sub.test_paper.total_score if sub.test_paper else 0,
+                        "submitted_at": sub.submit_time.isoformat() if sub.submit_time else None,
+                        "created_at": sub.create_time.isoformat() if sub.create_time else None,
+                    }
+                )
 
         return recent_submissions
 
@@ -366,7 +394,7 @@ class TeacherDashboardService:
     교사의 통계, 최근 시험, 문제 분포, 점수 분포를 제공.
     """
 
-    def __init__(self, user):
+    def __init__(self, user: UserProfile) -> None:
         self.user = user
         self.now = timezone.now()
 
@@ -385,133 +413,157 @@ class TeacherDashboardService:
         testpaper_statistics = self._get_testpaper_statistics()
 
         return {
-            'recent_questions': recent_questions,
-            'recent_testpapers': recent_testpapers,
-            'ongoing_exams': ongoing_exams,
-            'question_statistics': question_statistics,
-            'student_statistics': student_statistics,
-            'testpaper_statistics': testpaper_statistics,
+            "recent_questions": recent_questions,
+            "recent_testpapers": recent_testpapers,
+            "ongoing_exams": ongoing_exams,
+            "question_statistics": question_statistics,
+            "student_statistics": student_statistics,
+            "testpaper_statistics": testpaper_statistics,
         }
 
     def _get_recent_questions(self) -> list:
         """최근 문제 (최근 5개)"""
-        recent_questions_qs = TestQuestionInfo.objects.filter(
-            create_user=self.user,
-            is_del=False
-        ).select_related(
-            'subject', 'create_user'
-        ).prefetch_related('optioninfo_set').order_by('-create_time')[:5]
+        recent_questions_qs = (
+            TestQuestionInfo.objects.filter(create_user=self.user, is_del=False)
+            .select_related("subject", "create_user")
+            .prefetch_related("optioninfo_set")
+            .order_by("-create_time")[:5]
+        )
 
         recent_questions = []
         for q in recent_questions_qs:
             options = [
-                {'id': opt.id, 'option': opt.option, 'is_right': opt.is_right}
+                {"id": opt.id, "option": opt.option, "is_right": opt.is_right}
                 for opt in q.optioninfo_set.all()
             ]
-            recent_questions.append({
-                'id': q.id,
-                'name': q.name,
-                'subject': {
-                    'id': q.subject.id,
-                    'subject_name': q.subject.subject_name,
-                } if q.subject else None,
-                'score': q.score,
-                'tq_type': q.tq_type,
-                'tq_degree': q.tq_degree,
-                'is_share': q.is_share,
-                'is_del': q.is_del,
-                'creat_user': {
-                    'id': q.create_user.id,
-                    'nick_name': q.create_user.nick_name,
-                } if q.create_user else None,
-                'options': options,
-                'created_at': q.create_time.isoformat() if q.create_time else None,
-                'updated_at': q.edit_time.isoformat() if q.edit_time else None,
-            })
+            recent_questions.append(
+                {
+                    "id": q.id,
+                    "name": q.name,
+                    "subject": {
+                        "id": q.subject.id,
+                        "subject_name": q.subject.subject_name,
+                    }
+                    if q.subject
+                    else None,
+                    "score": q.score,
+                    "tq_type": q.tq_type,
+                    "tq_degree": q.tq_degree,
+                    "is_share": q.is_share,
+                    "is_del": q.is_del,
+                    "creat_user": {
+                        "id": q.create_user.id,
+                        "nick_name": q.create_user.nick_name,
+                    }
+                    if q.create_user
+                    else None,
+                    "options": options,
+                    "created_at": q.create_time.isoformat() if q.create_time else None,
+                    "updated_at": q.edit_time.isoformat() if q.edit_time else None,
+                }
+            )
 
         return recent_questions
 
     def _get_recent_testpapers(self) -> list:
         """최근 시험지 (최근 5개)"""
-        recent_testpapers_qs = TestPaperInfo.objects.filter(
-            create_user=self.user
-        ).select_related('subject', 'create_user').order_by('-create_time')[:5]
+        recent_testpapers_qs = (
+            TestPaperInfo.objects.filter(create_user=self.user)
+            .select_related("subject", "create_user")
+            .order_by("-create_time")[:5]
+        )
 
         recent_testpapers = []
         for tp in recent_testpapers_qs:
-            recent_testpapers.append({
-                'id': tp.id,
-                'name': tp.name,
-                'subject': {
-                    'id': tp.subject.id,
-                    'subject_name': tp.subject.subject_name,
-                } if tp.subject else None,
-                'question_count': tp.question_count,
-                'creat_user': {
-                    'id': tp.create_user.id,
-                    'nick_name': tp.create_user.nick_name,
-                } if tp.create_user else None,
-                'questions': [],
-                'created_at': tp.create_time.isoformat() if tp.create_time else None,
-                'updated_at': tp.edit_time.isoformat() if tp.edit_time else None,
-            })
+            recent_testpapers.append(
+                {
+                    "id": tp.id,
+                    "name": tp.name,
+                    "subject": {
+                        "id": tp.subject.id,
+                        "subject_name": tp.subject.subject_name,
+                    }
+                    if tp.subject
+                    else None,
+                    "question_count": tp.question_count,
+                    "creat_user": {
+                        "id": tp.create_user.id,
+                        "nick_name": tp.create_user.nick_name,
+                    }
+                    if tp.create_user
+                    else None,
+                    "questions": [],
+                    "created_at": tp.create_time.isoformat() if tp.create_time else None,
+                    "updated_at": tp.edit_time.isoformat() if tp.edit_time else None,
+                }
+            )
 
         return recent_testpapers
 
     def _get_ongoing_exams(self) -> list:
         """진행 중/예정된 시험 (최근 5개)"""
-        ongoing_exams_qs = ExaminationInfo.objects.filter(
-            create_user=self.user,
-            end_time__gte=self.now
-        ).select_related('subject', 'create_user').prefetch_related(
-            Prefetch(
-                'exampaperinfo_set',
-                queryset=ExamPaperInfo.objects.select_related(
-                    'paper__subject', 'paper__create_user'
-                ),
-                to_attr='prefetched_exam_papers'
+        ongoing_exams_qs = (
+            ExaminationInfo.objects.filter(create_user=self.user, end_time__gte=self.now)
+            .select_related("subject", "create_user")
+            .prefetch_related(
+                Prefetch(
+                    "exampaperinfo_set",
+                    queryset=ExamPaperInfo.objects.select_related(
+                        "paper__subject", "paper__create_user"
+                    ),
+                    to_attr="prefetched_exam_papers",
+                )
             )
-        ).order_by('start_time')[:5]
+            .order_by("start_time")[:5]
+        )
 
         ongoing_exams = []
         for exam in ongoing_exams_qs:
-            exam_papers = getattr(exam, 'prefetched_exam_papers', [])
+            exam_papers = getattr(exam, "prefetched_exam_papers", [])
             exam_paper = exam_papers[0] if exam_papers else None
 
             testpaper_data = None
             if exam_paper and exam_paper.paper:
                 paper = exam_paper.paper
                 testpaper_data = {
-                    'id': paper.id,
-                    'name': paper.name,
-                    'subject': {
-                        'id': paper.subject.id,
-                        'subject_name': paper.subject.subject_name,
-                    } if paper.subject else None,
-                    'question_count': paper.question_count,
-                    'creat_user': {
-                        'id': paper.create_user.id,
-                        'nick_name': paper.create_user.nick_name,
-                    } if paper.create_user else None,
-                    'questions': [],
-                    'created_at': paper.create_time.isoformat() if paper.create_time else None,
-                    'updated_at': paper.edit_time.isoformat() if paper.edit_time else None,
+                    "id": paper.id,
+                    "name": paper.name,
+                    "subject": {
+                        "id": paper.subject.id,
+                        "subject_name": paper.subject.subject_name,
+                    }
+                    if paper.subject
+                    else None,
+                    "question_count": paper.question_count,
+                    "creat_user": {
+                        "id": paper.create_user.id,
+                        "nick_name": paper.create_user.nick_name,
+                    }
+                    if paper.create_user
+                    else None,
+                    "questions": [],
+                    "created_at": paper.create_time.isoformat() if paper.create_time else None,
+                    "updated_at": paper.edit_time.isoformat() if paper.edit_time else None,
                 }
 
-            ongoing_exams.append({
-                'id': exam.id,
-                'exam_name': exam.name,
-                'testpaper': testpaper_data,
-                'start_time': exam.start_time.isoformat() if exam.start_time else None,
-                'end_time': exam.end_time.isoformat() if exam.end_time else None,
-                'is_public': exam.exam_state != '0',
-                'creat_user': {
-                    'id': exam.create_user.id,
-                    'nick_name': exam.create_user.nick_name,
-                } if exam.create_user else None,
-                'created_at': exam.create_time.isoformat() if exam.create_time else None,
-                'updated_at': exam.create_time.isoformat() if exam.create_time else None,
-            })
+            ongoing_exams.append(
+                {
+                    "id": exam.id,
+                    "exam_name": exam.name,
+                    "testpaper": testpaper_data,
+                    "start_time": exam.start_time.isoformat() if exam.start_time else None,
+                    "end_time": exam.end_time.isoformat() if exam.end_time else None,
+                    "is_public": exam.exam_state != "0",
+                    "creat_user": {
+                        "id": exam.create_user.id,
+                        "nick_name": exam.create_user.nick_name,
+                    }
+                    if exam.create_user
+                    else None,
+                    "created_at": exam.create_time.isoformat() if exam.create_time else None,
+                    "updated_at": exam.create_time.isoformat() if exam.create_time else None,
+                }
+            )
 
         return ongoing_exams
 
@@ -523,43 +575,41 @@ class TeacherDashboardService:
         개선: 3개 쿼리 (aggregate 1개 + type 1개 + degree 1개)
         """
         # 월별 날짜 계산
-        this_month_start = self.now.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        this_month_start = self.now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
 
-        user_questions = TestQuestionInfo.objects.filter(
-            create_user=self.user, is_del=False
-        )
+        user_questions = TestQuestionInfo.objects.filter(create_user=self.user, is_del=False)
 
         # 단일 aggregate 쿼리로 total, shared, this_month, last_month 계산
         stats = user_questions.aggregate(
-            total=Count('id'),
+            total=Count("id"),
             shared=Count(Case(When(is_share=True, then=1))),
             this_month=Count(Case(When(create_time__gte=this_month_start, then=1))),
-            last_month=Count(Case(When(
-                create_time__gte=last_month_start,
-                create_time__lt=this_month_start,
-                then=1
-            ))),
+            last_month=Count(
+                Case(
+                    When(
+                        create_time__gte=last_month_start, create_time__lt=this_month_start, then=1
+                    )
+                )
+            ),
         )
 
         # 유형별 집계 (별도 쿼리, 동적 카테고리)
-        type_counts = user_questions.values('tq_type').annotate(count=Count('id'))
-        questions_by_type = {item['tq_type']: item['count'] for item in type_counts}
+        type_counts = user_questions.values("tq_type").annotate(count=Count("id"))
+        questions_by_type = {item["tq_type"]: item["count"] for item in type_counts}
 
         # 난이도별 집계 (별도 쿼리, 동적 카테고리)
-        degree_counts = user_questions.values('tq_degree').annotate(count=Count('id'))
-        questions_by_difficulty = {item['tq_degree']: item['count'] for item in degree_counts}
+        degree_counts = user_questions.values("tq_degree").annotate(count=Count("id"))
+        questions_by_difficulty = {item["tq_degree"]: item["count"] for item in degree_counts}
 
         return {
-            'total_questions': stats['total'] or 0,
-            'shared_questions': stats['shared'] or 0,
-            'questions_by_type': questions_by_type,
-            'questions_by_difficulty': questions_by_difficulty,
-            'trend': (stats['this_month'] or 0) - (stats['last_month'] or 0),
-            'this_month_created': stats['this_month'] or 0,
+            "total_questions": stats["total"] or 0,
+            "shared_questions": stats["shared"] or 0,
+            "questions_by_type": questions_by_type,
+            "questions_by_difficulty": questions_by_difficulty,
+            "trend": (stats["this_month"] or 0) - (stats["last_month"] or 0),
+            "this_month_created": stats["this_month"] or 0,
         }
 
     def _get_student_statistics(self) -> dict:
@@ -570,83 +620,85 @@ class TeacherDashboardService:
         개선: 3개 쿼리 (teacher_exam_ids 1개 + total_students 1개 + aggregate 1개)
         """
         # 월별 날짜 계산
-        this_month_start = self.now.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        this_month_start = self.now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
 
         # 교사가 출제한 시험 ID 목록
         teacher_exam_ids = list(
-            ExaminationInfo.objects.filter(create_user=self.user).values_list('id', flat=True)
+            ExaminationInfo.objects.filter(create_user=self.user).values_list("id", flat=True)
         )
 
         # 등록된 학생 수 (중복 제거)
-        total_students = ExamStudentsInfo.objects.filter(
-            exam_id__in=teacher_exam_ids
-        ).values('student').distinct().count()
+        total_students = (
+            ExamStudentsInfo.objects.filter(exam_id__in=teacher_exam_ids)
+            .values("student")
+            .distinct()
+            .count()
+        )
 
         # 제출된 답안 조회
         submissions = TestScores.objects.filter(
-            exam_id__in=teacher_exam_ids,
-            is_submitted=True
-        ).select_related('test_paper')
+            exam_id__in=teacher_exam_ids, is_submitted=True
+        ).select_related("test_paper")
 
         # 단일 aggregate 쿼리로 대부분의 통계 계산
         stats = submissions.aggregate(
-            total=Count('id'),
-            avg_score=Avg('test_score'),
+            total=Count("id"),
+            avg_score=Avg("test_score"),
             this_month_count=Count(Case(When(submit_time__gte=this_month_start, then=1))),
-            last_month_count=Count(Case(When(
-                submit_time__gte=last_month_start,
-                submit_time__lt=this_month_start,
-                then=1
-            ))),
-            this_month_avg=Avg(Case(
-                When(submit_time__gte=this_month_start, then=F('test_score'))
-            )),
-            last_month_avg=Avg(Case(
-                When(
-                    submit_time__gte=last_month_start,
-                    submit_time__lt=this_month_start,
-                    then=F('test_score')
+            last_month_count=Count(
+                Case(
+                    When(
+                        submit_time__gte=last_month_start, submit_time__lt=this_month_start, then=1
+                    )
                 )
-            )),
+            ),
+            this_month_avg=Avg(Case(When(submit_time__gte=this_month_start, then=F("test_score")))),
+            last_month_avg=Avg(
+                Case(
+                    When(
+                        submit_time__gte=last_month_start,
+                        submit_time__lt=this_month_start,
+                        then=F("test_score"),
+                    )
+                )
+            ),
         )
 
-        total_submissions = stats['total'] or 0
-        average_score = round(stats['avg_score'] or 0, 1)
+        total_submissions = stats["total"] or 0
+        average_score = round(stats["avg_score"] or 0, 1)
 
         # 합격률 계산 (list 순회 대신 DB 쿼리로 계산)
         # test_score >= test_paper__passing_score 조건은 F 표현식으로 처리
         if total_submissions > 0:
             passed_count = submissions.filter(
-                test_score__gte=F('test_paper__passing_score')
+                test_score__gte=F("test_paper__passing_score")
             ).count()
             pass_rate = round((passed_count / total_submissions) * 100, 1)
         else:
             pass_rate = 0.0
 
         # 월별 submission trend
-        this_month_submissions = stats['this_month_count'] or 0
-        last_month_submissions = stats['last_month_count'] or 0
+        this_month_submissions = stats["this_month_count"] or 0
+        last_month_submissions = stats["last_month_count"] or 0
 
         # 평균 점수 Trend 계산
-        this_month_avg = stats['this_month_avg']
-        last_month_avg = stats['last_month_avg']
+        this_month_avg = stats["this_month_avg"]
+        last_month_avg = stats["last_month_avg"]
 
         score_trend = 0.0
         if this_month_avg is not None and last_month_avg is not None:
             score_trend = round(this_month_avg - last_month_avg, 1)
 
         return {
-            'total_students': total_students,
-            'total_submissions': total_submissions,
-            'average_score': average_score,
-            'pass_rate': pass_rate,
-            'recent_submissions': [],
-            'submissions_trend': this_month_submissions - last_month_submissions,
-            'score_trend': score_trend,
+            "total_students": total_students,
+            "total_submissions": total_submissions,
+            "average_score": average_score,
+            "pass_rate": pass_rate,
+            "recent_submissions": [],
+            "submissions_trend": this_month_submissions - last_month_submissions,
+            "score_trend": score_trend,
         }
 
     def _get_testpaper_statistics(self) -> dict:
@@ -657,25 +709,25 @@ class TeacherDashboardService:
         개선: 1개 쿼리 (aggregate)
         """
         # 월별 날짜 계산
-        this_month_start = self.now.replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0
-        )
+        this_month_start = self.now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_month_end = this_month_start - timedelta(days=1)
         last_month_start = last_month_end.replace(day=1)
 
         # 단일 aggregate 쿼리로 모든 통계 계산
         stats = TestPaperInfo.objects.filter(create_user=self.user).aggregate(
-            total=Count('id'),
+            total=Count("id"),
             this_month=Count(Case(When(create_time__gte=this_month_start, then=1))),
-            last_month=Count(Case(When(
-                create_time__gte=last_month_start,
-                create_time__lt=this_month_start,
-                then=1
-            ))),
+            last_month=Count(
+                Case(
+                    When(
+                        create_time__gte=last_month_start, create_time__lt=this_month_start, then=1
+                    )
+                )
+            ),
         )
 
         return {
-            'total_testpapers': stats['total'] or 0,
-            'trend': (stats['this_month'] or 0) - (stats['last_month'] or 0),
-            'this_month_created': stats['this_month'] or 0,
+            "total_testpapers": stats["total"] or 0,
+            "trend": (stats["this_month"] or 0) - (stats["last_month"] or 0),
+            "this_month_created": stats["this_month"] or 0,
         }

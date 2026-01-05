@@ -24,8 +24,8 @@ class CreatUserSerializerMixin:
         """Return create_user as object with id and nick_name."""
         if obj.create_user:
             return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
+                "id": obj.create_user.id,
+                "nick_name": obj.create_user.nick_name,
             }
         return None
 
@@ -48,7 +48,7 @@ class PassedScoreSerializerMixin:
         """Return pass/fail status based on test score vs passing score."""
         if obj.test_paper:
             # Check is_submitted field if exists
-            if hasattr(obj, 'is_submitted') and not obj.is_submitted:
+            if hasattr(obj, "is_submitted") and not obj.is_submitted:
                 return None
             return obj.test_score >= obj.test_paper.passing_score
         return None

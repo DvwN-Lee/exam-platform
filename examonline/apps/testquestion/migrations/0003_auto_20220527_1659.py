@@ -4,25 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('testquestion', '0002_auto_20190222_2249'),
+        ("testquestion", "0002_auto_20190222_2249"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='testquestioninfo',
-            name='score',
-            field=models.IntegerField(default=0, verbose_name='分值'),
+            model_name="testquestioninfo",
+            name="score",
+            field=models.IntegerField(default=0, verbose_name="分值"),
         ),
         migrations.AlterField(
-            model_name='testquestioninfo',
-            name='tq_degree',
-            field=models.CharField(choices=[('jd', '쉬움'), ('zd', '보통'), ('kn', '어려움')], default='jd', max_length=2, verbose_name='시험 난이도'),
+            model_name="testquestioninfo",
+            name="tq_degree",
+            field=models.CharField(
+                choices=[("jd", "쉬움"), ("zd", "보통"), ("kn", "어려움")],
+                default="jd",
+                max_length=2,
+                verbose_name="시험 난이도",
+            ),
         ),
         migrations.AlterField(
-            model_name='testquestioninfo',
-            name='tq_type',
-            field=models.CharField(choices=[('xz', '객관식'), ('pd', '주관식'), ('tk', '빈칸 채우기')], default='xz', max_length=2, verbose_name='시험 문제 유형'),
+            model_name="testquestioninfo",
+            name="tq_type",
+            field=models.CharField(
+                choices=[("xz", "객관식"), ("pd", "주관식"), ("tk", "빈칸 채우기")],
+                default="xz",
+                max_length=2,
+                verbose_name="시험 문제 유형",
+            ),
         ),
     ]
