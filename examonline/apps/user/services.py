@@ -5,7 +5,6 @@ User Dashboard Services.
 """
 
 from datetime import timedelta
-from typing import TYPE_CHECKING
 
 from django.db.models import Avg, Case, Count, F, Prefetch, QuerySet, When
 from django.utils import timezone
@@ -13,9 +12,6 @@ from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from testpaper.models import TestPaperInfo, TestScores
 from testquestion.models import TestQuestionInfo
 from user.models import StudentsInfo, UserProfile
-
-if TYPE_CHECKING:
-    pass
 
 
 class StudentDashboardService:
