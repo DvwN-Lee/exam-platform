@@ -38,8 +38,9 @@ export function SubjectSettings() {
       setIsAdding(false)
       toast.success('과목이 추가되었습니다.')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || '과목 추가에 실패했습니다.')
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      toast.error(axiosError.response?.data?.detail || '과목 추가에 실패했습니다.')
     },
   })
 
@@ -55,8 +56,9 @@ export function SubjectSettings() {
       setEditingName('')
       toast.success('과목이 수정되었습니다.')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || '과목 수정에 실패했습니다.')
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      toast.error(axiosError.response?.data?.detail || '과목 수정에 실패했습니다.')
     },
   })
 
@@ -69,8 +71,9 @@ export function SubjectSettings() {
       queryClient.invalidateQueries({ queryKey: ['subjects'] })
       toast.success('과목이 삭제되었습니다.')
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || '과목 삭제에 실패했습니다.')
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      toast.error(axiosError.response?.data?.detail || '과목 삭제에 실패했습니다.')
     },
   })
 

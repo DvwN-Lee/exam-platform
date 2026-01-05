@@ -30,9 +30,10 @@ export function PasswordSettings() {
         new_password2: '',
       })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
       const errorMessage =
-        error.response?.data?.detail || '비밀번호 변경에 실패했습니다.'
+        axiosError.response?.data?.detail || '비밀번호 변경에 실패했습니다.'
       toast.error(errorMessage)
     },
   })

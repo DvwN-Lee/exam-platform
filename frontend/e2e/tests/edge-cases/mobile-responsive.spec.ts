@@ -170,7 +170,7 @@ test.describe('Mobile Responsive', () => {
 
       // 컨텐츠가 스크롤 가능
       const body = page.locator('body')
-      const isScrollable = await body.evaluate((el) => el.scrollHeight > el.clientHeight)
+      const _isScrollable = await body.evaluate((el) => el.scrollHeight > el.clientHeight)
       // 스크롤 가능 여부는 컨텐츠 양에 따라 다름
 
       console.log('Exam list renders correctly on mobile')

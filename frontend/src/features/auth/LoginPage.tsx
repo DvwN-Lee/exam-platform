@@ -52,8 +52,9 @@ export function LoginPage() {
       setAuth(data.user, data.access, data.refresh)
       navigate({ to: '/dashboard' })
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || '로그인에 실패했습니다.')
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      toast.error(axiosError.response?.data?.detail || '로그인에 실패했습니다.')
     },
   })
 

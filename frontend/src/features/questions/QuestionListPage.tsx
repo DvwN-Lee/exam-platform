@@ -38,7 +38,7 @@ export function QuestionListPage() {
     setFilters((prev) => ({ ...prev, search: searchText, page: 1 }))
   }
 
-  const handleFilterChange = (key: keyof QuestionFilters, value: any) => {
+  const handleFilterChange = (key: keyof QuestionFilters, value: string | undefined) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }))
   }
 
@@ -49,7 +49,7 @@ export function QuestionListPage() {
       await questionApi.deleteQuestion(id)
       refetch()
       toast.success('문제가 삭제되었습니다.')
-    } catch (error) {
+    } catch {
       toast.error('문제 삭제에 실패했습니다.')
     }
   }

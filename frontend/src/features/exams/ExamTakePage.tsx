@@ -64,6 +64,7 @@ export function ExamTakePage() {
     if (examInfo && !submissionId) {
       startExamMutation.mutate()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mutation과 submissionId는 의도적으로 제외
   }, [examInfo])
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export function ExamTakePage() {
     }, 1000)
 
     return () => clearInterval(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mutation은 의도적으로 제외
   }, [timeRemaining, submissionId])
 
   const formatTime = (seconds: number) => {

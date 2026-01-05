@@ -69,7 +69,7 @@ test.describe('Chart Interaction', () => {
             Authorization: `Bearer ${teacher.tokens.access}`,
           },
         })
-      } catch (e) {
+      } catch {
         // 이미 삭제되었거나 오류 무시
       }
     }

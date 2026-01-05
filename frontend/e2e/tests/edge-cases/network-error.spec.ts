@@ -123,7 +123,7 @@ test.describe('Network Error Handling', () => {
       await page.goto('/questions')
 
       // 로딩 인디케이터가 표시되는지 확인
-      const hasLoadingIndicator = await page
+      const _hasLoadingIndicator = await page
         .locator(
           '.loading, [class*="loading"], [class*="spinner"], [role="progressbar"], .animate-spin'
         )

@@ -1,17 +1,15 @@
 import { test, expect } from '@playwright/test'
-import { apiGetSubjects, apiCreateQuestion } from '../../helpers/api.helper'
-import { setStoredTokens } from '../../helpers/auth.helper'
+import { apiGetSubjects } from '../../helpers/api.helper'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 
 /**
  * Teacher Question 관리 테스트
  */
 test.describe('Teacher Question Management', () => {
-  const teacherToken = process.env.E2E_TEACHER_TOKEN || ''
   const teacherUsername = process.env.E2E_TEACHER_USERNAME || 'testteacher2'
   const teacherPassword = process.env.E2E_TEACHER_PASSWORD || 'test12345678'
 
-  let subjectId: number
+  let _subjectId: number
 
   test.beforeAll(async () => {
     // 과목 조회
@@ -19,7 +17,7 @@ test.describe('Teacher Question Management', () => {
     if (!subjects || subjects.length === 0) {
       throw new Error('No subjects found')
     }
-    subjectId = subjects[0].id
+    _subjectId = subjects[0].id
   })
 
   test('Question 목록 페이지가 렌더링되어야 함', async ({ page }) => {

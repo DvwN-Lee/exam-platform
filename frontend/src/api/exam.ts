@@ -79,7 +79,7 @@ export const examApi = {
         `/exams/${examinationId}/status/`
       )
       return response.data
-    } catch (error) {
+    } catch {
       return null
     }
   },

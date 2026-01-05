@@ -102,8 +102,9 @@ export async function apiCreateExamination(token: string, examinationData: {
   try {
     const response = await client.post('/examinations/', examinationData)
     return response.data
-  } catch (error: any) {
-    console.error('시험 생성 실패:', error.response?.data || error.message)
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown }; message?: string }
+    console.error('시험 생성 실패:', axiosError.response?.data || axiosError.message)
     throw error
   }
 }

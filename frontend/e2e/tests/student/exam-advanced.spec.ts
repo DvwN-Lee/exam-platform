@@ -26,7 +26,7 @@ test.describe('Student Exam Advanced Features', () => {
   let teacher: Awaited<ReturnType<typeof createAndLoginTeacher>>
   let student: Awaited<ReturnType<typeof createAndLoginStudent>>
   let subjectId: number
-  let questionIds: number[] = []
+  const questionIds: number[] = []
   let testPaperId: number
   let examinationId: number
 

@@ -8,6 +8,22 @@ import { motion } from 'framer-motion'
 import { cardHoverVariants } from '@/lib/animations'
 import { FileText, Users, TrendingUp, CheckCircle2 } from 'lucide-react'
 
+interface DashboardQuestion {
+  id: number
+  name: string
+  subject?: { subject_name: string } | string
+  type: string
+  score: number
+  created_at: string
+}
+
+interface DashboardExam {
+  id: number
+  name: string
+  subject?: { subject_name: string } | string
+  student_count: number
+}
+
 export function AnalyticsPage() {
   const navigate = useNavigate()
   const { data, isLoading } = useQuery({
@@ -168,7 +184,7 @@ export function AnalyticsPage() {
             <h2 className="mb-4 text-xl font-semibold">최근 문제</h2>
             {data?.recent_questions && data.recent_questions.length > 0 ? (
               <StaggerContainer className="space-y-3" delay={0.2}>
-                {data.recent_questions.map((question: any) => (
+                {data.recent_questions.map((question: DashboardQuestion) => (
                   <StaggerItem key={question.id}>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                       <div>
@@ -195,7 +211,7 @@ export function AnalyticsPage() {
             <h2 className="mb-4 text-xl font-semibold">진행 중인 시험</h2>
             {data?.ongoing_exams && data.ongoing_exams.length > 0 ? (
               <StaggerContainer className="space-y-3" delay={0.2}>
-                {data.ongoing_exams.map((exam: any) => (
+                {data.ongoing_exams.map((exam: DashboardExam) => (
                   <StaggerItem key={exam.id}>
                     <div className="flex items-center justify-between rounded-lg border p-3">
                       <div>

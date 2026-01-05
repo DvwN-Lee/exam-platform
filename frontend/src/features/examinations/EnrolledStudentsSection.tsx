@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { examinationApi } from '@/api/testpaper'
+import type { EnrolledStudent } from '@/types/testpaper'
 import { Button } from '@/components/ui/button'
 import { FadeIn, StaggerTableBody, StaggerTableRow } from '@/components/animation'
 import { StudentSelectModal } from './StudentSelectModal'
@@ -67,7 +68,7 @@ export function EnrolledStudentsSection({
                 </tr>
               </thead>
               <StaggerTableBody delay={0.1}>
-                {enrolledStudents.map((student: any) => (
+                {enrolledStudents.map((student: EnrolledStudent) => (
                   <StaggerTableRow key={student.id} className="border-b hover:bg-muted/50">
                     <td className="p-3 text-sm">{student.student_name}</td>
                     <td className="p-3 text-sm">
@@ -107,7 +108,7 @@ export function EnrolledStudentsSection({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleEnrollStudents}
-        enrolledStudentIds={enrolledStudents?.map((s: any) => s.id) || []}
+        enrolledStudentIds={enrolledStudents?.map((s: EnrolledStudent) => s.id) || []}
       />
     </div>
   )

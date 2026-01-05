@@ -101,10 +101,11 @@ export function RegisterPage() {
       toast.success('회원가입이 완료되었습니다. 로그인해주세요.')
       navigate({ to: '/login' })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const axiosError = error as { response?: { data?: { message?: string; detail?: string } } }
       const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.detail ||
         '회원가입에 실패했습니다.'
       toast.error(errorMessage)
     },

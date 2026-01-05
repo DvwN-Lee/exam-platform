@@ -39,7 +39,7 @@ export async function waitForLoadingComplete(page: Page) {
 
   try {
     await page.waitForSelector(loadingSelector, { state: 'hidden', timeout: 10000 })
-  } catch (error) {
+  } catch {
     // 로딩 스피너가 없는 경우 무시
   }
 

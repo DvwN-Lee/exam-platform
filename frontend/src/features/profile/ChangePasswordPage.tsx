@@ -42,10 +42,13 @@ export function ChangePasswordPage() {
       reset()
       navigate({ to: '/profile' })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const axiosError = error as {
+        response?: { data?: { old_password?: string[]; detail?: string } }
+      }
       const errorMessage =
-        error.response?.data?.old_password?.[0] ||
-        error.response?.data?.detail ||
+        axiosError.response?.data?.old_password?.[0] ||
+        axiosError.response?.data?.detail ||
         '비밀번호 변경에 실패했습니다.'
       toast.error(errorMessage)
     },
