@@ -7,6 +7,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 
 from core.api.fields import XSSSanitizedCharField
+from core.api.mixins import CreatUserSerializerMixin, PassedScoreSerializerMixin
 from testpaper.models import TestPaperInfo, TestPaperTestQ
 from testquestion.api.serializers import QuestionListSerializer
 from testquestion.models import TestQuestionInfo
@@ -41,7 +42,7 @@ class PaperQuestionWriteSerializer(serializers.Serializer):
     order = serializers.IntegerField(default=1, min_value=1)
 
 
-class TestPaperListSerializer(serializers.ModelSerializer):
+class TestPaperListSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
     """
     시험지 목록 조회용 경량 Serializer.
     문제 목록 미포함.
@@ -70,17 +71,8 @@ class TestPaperListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'total_score', 'question_count', 'created_at', 'updated_at', 'creat_user']
 
-    def get_creat_user(self, obj):
-        """Frontend 호환성을 위한 create_user 정보"""
-        if obj.create_user:
-            return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
-            }
-        return None
 
-
-class TestPaperDetailSerializer(serializers.ModelSerializer):
+class TestPaperDetailSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
     """
     시험지 상세 조회용 Serializer.
     문제 목록 포함.
@@ -118,15 +110,6 @@ class TestPaperDetailSerializer(serializers.ModelSerializer):
             'creat_user',
             'questions',
         ]
-
-    def get_creat_user(self, obj):
-        """Return create_user as object with id and nick_name"""
-        if obj.create_user:
-            return {
-                'id': obj.create_user.id,
-                'nick_name': obj.create_user.nick_name,
-            }
-        return None
 
 
 class TestPaperCreateSerializer(serializers.ModelSerializer):
@@ -299,7 +282,7 @@ class StudentBasicSerializer(serializers.ModelSerializer):
         fields = ['id', 'student_name', 'student_id', 'student_class']
 
 
-class MyScoreListSerializer(serializers.ModelSerializer):
+class MyScoreListSerializer(PassedScoreSerializerMixin, serializers.ModelSerializer):
     """
     학생용 성적 목록 Serializer.
     """
@@ -324,12 +307,6 @@ class MyScoreListSerializer(serializers.ModelSerializer):
             'time_used',
             'passed',
         ]
-
-    def get_passed(self, obj):
-        """합격 여부"""
-        if obj.test_paper and obj.is_submitted:
-            return obj.test_score >= obj.test_paper.passing_score
-        return None
 
 
 class QuestionResultSerializer(serializers.Serializer):
@@ -427,7 +404,7 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
         return results
 
 
-class ExamScoreListSerializer(serializers.ModelSerializer):
+class ExamScoreListSerializer(PassedScoreSerializerMixin, serializers.ModelSerializer):
     """
     교사용 시험별 성적 목록 Serializer.
     """
@@ -447,12 +424,6 @@ class ExamScoreListSerializer(serializers.ModelSerializer):
             'is_submitted',
             'passed',
         ]
-
-    def get_passed(self, obj):
-        """합격 여부"""
-        if obj.test_paper and obj.is_submitted:
-            return obj.test_score >= obj.test_paper.passing_score
-        return None
 
 
 class ExamStatisticsSerializer(serializers.Serializer):
