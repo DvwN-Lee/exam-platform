@@ -5,40 +5,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('examination', '0003_auto_20220527_1659'),
+        ("examination", "0003_auto_20220527_1659"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='examinationinfo',
-            name='create_time',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='생성 시간'),
+            model_name="examinationinfo",
+            name="create_time",
+            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name="생성 시간"),
         ),
         migrations.AlterField(
-            model_name='examinationinfo',
-            name='end_time',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='종료 시간'),
+            model_name="examinationinfo",
+            name="end_time",
+            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name="종료 시간"),
         ),
         migrations.AlterField(
-            model_name='examinationinfo',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="examinationinfo",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='examinationinfo',
-            name='start_time',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='시작 시간'),
+            model_name="examinationinfo",
+            name="start_time",
+            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name="시작 시간"),
         ),
         migrations.AlterField(
-            model_name='exampaperinfo',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="exampaperinfo",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='examstudentsinfo',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="examstudentsinfo",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
     ]

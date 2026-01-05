@@ -5,14 +5,14 @@ Test Paper Management API serializers.
 from django.db import transaction
 from django.db.models import Sum
 from rest_framework import serializers
+from testpaper.models import TestPaperInfo, TestPaperTestQ, TestScores
+from testquestion.api.serializers import QuestionListSerializer
+from testquestion.models import OptionInfo, TestQuestionInfo
+from user.api.serializers import SubjectSerializer
+from user.models import StudentsInfo, SubjectInfo
 
 from core.api.fields import XSSSanitizedCharField
 from core.api.mixins import CreatUserSerializerMixin, PassedScoreSerializerMixin
-from testpaper.models import TestPaperInfo, TestPaperTestQ
-from testquestion.api.serializers import QuestionListSerializer
-from testquestion.models import TestQuestionInfo
-from user.api.serializers import SubjectSerializer
-from user.models import SubjectInfo
 
 
 class PaperQuestionReadSerializer(serializers.ModelSerializer):
@@ -21,12 +21,12 @@ class PaperQuestionReadSerializer(serializers.ModelSerializer):
     문제 정보와 배점, 순서 포함.
     """
 
-    question = QuestionListSerializer(source='test_question', read_only=True)
+    question = QuestionListSerializer(source="test_question", read_only=True)
 
     class Meta:
         model = TestPaperTestQ
-        fields = ['id', 'question', 'score', 'order']
-        read_only_fields = ['id']
+        fields = ["id", "question", "score", "order"]
+        read_only_fields = ["id"]
 
 
 class PaperQuestionWriteSerializer(serializers.Serializer):
@@ -36,7 +36,9 @@ class PaperQuestionWriteSerializer(serializers.Serializer):
     """
 
     question_id = serializers.PrimaryKeyRelatedField(
-        queryset=TestQuestionInfo.objects.filter(is_del=False), source='test_question', write_only=True
+        queryset=TestQuestionInfo.objects.filter(is_del=False),
+        source="test_question",
+        write_only=True,
     )
     score = serializers.IntegerField(default=5, min_value=1)
     order = serializers.IntegerField(default=1, min_value=1)
@@ -50,26 +52,33 @@ class TestPaperListSerializer(CreatUserSerializerMixin, serializers.ModelSeriali
 
     subject = SubjectSerializer(read_only=True)
     creat_user = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(source='create_time', read_only=True)
-    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
-    tp_degree_display = serializers.CharField(source='get_tp_degree_display', read_only=True)
+    created_at = serializers.DateTimeField(source="create_time", read_only=True)
+    updated_at = serializers.DateTimeField(source="edit_time", read_only=True)
+    tp_degree_display = serializers.CharField(source="get_tp_degree_display", read_only=True)
 
     class Meta:
         model = TestPaperInfo
         fields = [
-            'id',
-            'name',
-            'subject',
-            'tp_degree',
-            'tp_degree_display',
-            'total_score',
-            'passing_score',
-            'question_count',
-            'created_at',
-            'updated_at',
-            'creat_user',
+            "id",
+            "name",
+            "subject",
+            "tp_degree",
+            "tp_degree_display",
+            "total_score",
+            "passing_score",
+            "question_count",
+            "created_at",
+            "updated_at",
+            "creat_user",
         ]
-        read_only_fields = ['id', 'total_score', 'question_count', 'created_at', 'updated_at', 'creat_user']
+        read_only_fields = [
+            "id",
+            "total_score",
+            "question_count",
+            "created_at",
+            "updated_at",
+            "creat_user",
+        ]
 
 
 class TestPaperDetailSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
@@ -80,35 +89,35 @@ class TestPaperDetailSerializer(CreatUserSerializerMixin, serializers.ModelSeria
 
     subject = SubjectSerializer(read_only=True)
     creat_user = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(source='create_time', read_only=True)
-    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
-    tp_degree_display = serializers.CharField(source='get_tp_degree_display', read_only=True)
-    questions = PaperQuestionReadSerializer(source='testpapertestq_set', many=True, read_only=True)
+    created_at = serializers.DateTimeField(source="create_time", read_only=True)
+    updated_at = serializers.DateTimeField(source="edit_time", read_only=True)
+    tp_degree_display = serializers.CharField(source="get_tp_degree_display", read_only=True)
+    questions = PaperQuestionReadSerializer(source="testpapertestq_set", many=True, read_only=True)
 
     class Meta:
         model = TestPaperInfo
         fields = [
-            'id',
-            'name',
-            'subject',
-            'tp_degree',
-            'tp_degree_display',
-            'total_score',
-            'passing_score',
-            'question_count',
-            'created_at',
-            'updated_at',
-            'creat_user',
-            'questions',
+            "id",
+            "name",
+            "subject",
+            "tp_degree",
+            "tp_degree_display",
+            "total_score",
+            "passing_score",
+            "question_count",
+            "created_at",
+            "updated_at",
+            "creat_user",
+            "questions",
         ]
         read_only_fields = [
-            'id',
-            'total_score',
-            'question_count',
-            'created_at',
-            'updated_at',
-            'creat_user',
-            'questions',
+            "id",
+            "total_score",
+            "question_count",
+            "created_at",
+            "updated_at",
+            "creat_user",
+            "questions",
         ]
 
 
@@ -119,36 +128,49 @@ class TestPaperCreateSerializer(serializers.ModelSerializer):
     """
 
     name = XSSSanitizedCharField(max_length=50)
-    subject_id = serializers.PrimaryKeyRelatedField(queryset=SubjectInfo.objects.all(), source='subject', write_only=True)
+    subject_id = serializers.PrimaryKeyRelatedField(
+        queryset=SubjectInfo.objects.all(), source="subject", write_only=True
+    )
     questions = PaperQuestionWriteSerializer(many=True, required=False, write_only=True)
     total_score = serializers.IntegerField(read_only=True)
     question_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = TestPaperInfo
-        fields = ['id', 'name', 'subject_id', 'tp_degree', 'passing_score', 'questions', 'total_score', 'question_count']
-        read_only_fields = ['id', 'total_score', 'question_count']
+        fields = [
+            "id",
+            "name",
+            "subject_id",
+            "tp_degree",
+            "passing_score",
+            "questions",
+            "total_score",
+            "question_count",
+        ]
+        read_only_fields = ["id", "total_score", "question_count"]
 
     def validate(self, attrs):
         """
         passing_score는 total_score 이하여야 함.
         문제가 있는 경우 중복 검증.
         """
-        questions = attrs.get('questions', [])
+        questions = attrs.get("questions", [])
 
         # 중복 문제 검증
         if questions:
-            question_ids = [q['test_question'].id for q in questions]
+            question_ids = [q["test_question"].id for q in questions]
             if len(question_ids) != len(set(question_ids)):
-                raise serializers.ValidationError({'questions': '동일한 문제를 중복하여 추가할 수 없습니다.'})
+                raise serializers.ValidationError(
+                    {"questions": "동일한 문제를 중복하여 추가할 수 없습니다."}
+                )
 
         # passing_score는 나중에 total_score 계산 후 검증 (create 메서드에서)
         return attrs
 
     @transaction.atomic
     def create(self, validated_data):
-        questions_data = validated_data.pop('questions', [])
-        validated_data['create_user'] = self.context['request'].user
+        questions_data = validated_data.pop("questions", [])
+        validated_data["create_user"] = self.context["request"].user
 
         # 시험지 생성
         paper = TestPaperInfo.objects.create(**validated_data)
@@ -156,11 +178,13 @@ class TestPaperCreateSerializer(serializers.ModelSerializer):
         # 문제 추가
         total_score = 0
         for question_data in questions_data:
-            test_question = question_data.pop('test_question')
-            score = question_data.get('score', 5)
-            order = question_data.get('order', 1)
+            test_question = question_data.pop("test_question")
+            score = question_data.get("score", 5)
+            order = question_data.get("order", 1)
 
-            TestPaperTestQ.objects.create(test_paper=paper, test_question=test_question, score=score, order=order)
+            TestPaperTestQ.objects.create(
+                test_paper=paper, test_question=test_question, score=score, order=order
+            )
             total_score += score
 
         # total_score, question_count 업데이트
@@ -170,7 +194,9 @@ class TestPaperCreateSerializer(serializers.ModelSerializer):
 
         # passing_score 검증 (문제가 있는 경우에만)
         if questions_data and paper.passing_score > paper.total_score:
-            raise serializers.ValidationError({'passing_score': f'합격점은 총점({paper.total_score}) 이하여야 합니다.'})
+            raise serializers.ValidationError(
+                {"passing_score": f"합격점은 총점({paper.total_score}) 이하여야 합니다."}
+            )
 
         return paper
 
@@ -183,30 +209,32 @@ class TestPaperUpdateSerializer(serializers.ModelSerializer):
 
     name = XSSSanitizedCharField(max_length=50, required=False)
     subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=SubjectInfo.objects.all(), source='subject', write_only=True, required=False
+        queryset=SubjectInfo.objects.all(), source="subject", write_only=True, required=False
     )
     questions = PaperQuestionWriteSerializer(many=True, required=False, write_only=True)
 
     class Meta:
         model = TestPaperInfo
-        fields = ['name', 'subject_id', 'tp_degree', 'passing_score', 'questions']
+        fields = ["name", "subject_id", "tp_degree", "passing_score", "questions"]
 
     def validate(self, attrs):
         """
         passing_score 검증 및 중복 문제 검증.
         """
-        questions = attrs.get('questions')
+        questions = attrs.get("questions")
 
         if questions is not None:
-            question_ids = [q['test_question'].id for q in questions]
+            question_ids = [q["test_question"].id for q in questions]
             if len(question_ids) != len(set(question_ids)):
-                raise serializers.ValidationError({'questions': '동일한 문제를 중복하여 추가할 수 없습니다.'})
+                raise serializers.ValidationError(
+                    {"questions": "동일한 문제를 중복하여 추가할 수 없습니다."}
+                )
 
         return attrs
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        questions_data = validated_data.pop('questions', None)
+        questions_data = validated_data.pop("questions", None)
 
         # Update paper fields
         for attr, value in validated_data.items():
@@ -221,11 +249,13 @@ class TestPaperUpdateSerializer(serializers.ModelSerializer):
             # 새 문제 추가
             total_score = 0
             for question_data in questions_data:
-                test_question = question_data.pop('test_question')
-                score = question_data.get('score', 5)
-                order = question_data.get('order', 1)
+                test_question = question_data.pop("test_question")
+                score = question_data.get("score", 5)
+                order = question_data.get("order", 1)
 
-                TestPaperTestQ.objects.create(test_paper=instance, test_question=test_question, score=score, order=order)
+                TestPaperTestQ.objects.create(
+                    test_paper=instance, test_question=test_question, score=score, order=order
+                )
                 total_score += score
 
             # total_score, question_count 업데이트
@@ -233,15 +263,17 @@ class TestPaperUpdateSerializer(serializers.ModelSerializer):
             instance.question_count = len(questions_data)
         else:
             # 문제 변경 없으면 기존 total_score 재계산
-            result = instance.testpapertestq_set.aggregate(total=Sum('score'))
-            instance.total_score = result['total'] or 0
+            result = instance.testpapertestq_set.aggregate(total=Sum("score"))
+            instance.total_score = result["total"] or 0
             instance.question_count = instance.testpapertestq_set.count()
 
         instance.save()
 
         # passing_score 검증 (문제가 있는 경우에만)
         if instance.question_count > 0 and instance.passing_score > instance.total_score:
-            raise serializers.ValidationError({'passing_score': f'합격점은 총점({instance.total_score}) 이하여야 합니다.'})
+            raise serializers.ValidationError(
+                {"passing_score": f"합격점은 총점({instance.total_score}) 이하여야 합니다."}
+            )
 
         return instance
 
@@ -258,20 +290,16 @@ class AddQuestionsSerializer(serializers.Serializer):
         중복 문제 검증.
         """
         if not value:
-            raise serializers.ValidationError('최소 1개 이상의 문제를 추가해야 합니다.')
+            raise serializers.ValidationError("최소 1개 이상의 문제를 추가해야 합니다.")
 
-        question_ids = [q['test_question'].id for q in value]
+        question_ids = [q["test_question"].id for q in value]
         if len(question_ids) != len(set(question_ids)):
-            raise serializers.ValidationError('동일한 문제를 중복하여 추가할 수 없습니다.')
+            raise serializers.ValidationError("동일한 문제를 중복하여 추가할 수 없습니다.")
 
         return value
 
 
 # ==================== 성적 관련 Serializers ====================
-
-from testpaper.models import TestScores
-from testquestion.models import OptionInfo
-from user.models import StudentsInfo
 
 
 class StudentBasicSerializer(serializers.ModelSerializer):
@@ -279,7 +307,7 @@ class StudentBasicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentsInfo
-        fields = ['id', 'student_name', 'student_id', 'student_class']
+        fields = ["id", "student_name", "student_id", "student_class"]
 
 
 class MyScoreListSerializer(PassedScoreSerializerMixin, serializers.ModelSerializer):
@@ -287,25 +315,25 @@ class MyScoreListSerializer(PassedScoreSerializerMixin, serializers.ModelSeriali
     학생용 성적 목록 Serializer.
     """
 
-    exam_name = serializers.CharField(source='exam.name', read_only=True)
-    subject_name = serializers.CharField(source='exam.subject.subject_name', read_only=True)
-    exam_date = serializers.DateTimeField(source='exam.start_time', read_only=True)
-    paper_name = serializers.CharField(source='test_paper.name', read_only=True)
+    exam_name = serializers.CharField(source="exam.name", read_only=True)
+    subject_name = serializers.CharField(source="exam.subject.subject_name", read_only=True)
+    exam_date = serializers.DateTimeField(source="exam.start_time", read_only=True)
+    paper_name = serializers.CharField(source="test_paper.name", read_only=True)
     passed = serializers.SerializerMethodField()
 
     class Meta:
         model = TestScores
         fields = [
-            'id',
-            'exam_name',
-            'subject_name',
-            'exam_date',
-            'paper_name',
-            'test_score',
-            'start_time',
-            'submit_time',
-            'time_used',
-            'passed',
+            "id",
+            "exam_name",
+            "subject_name",
+            "exam_date",
+            "paper_name",
+            "test_score",
+            "start_time",
+            "submit_time",
+            "time_used",
+            "passed",
         ]
 
 
@@ -329,29 +357,29 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
     문제별 정답/오답 포함.
     """
 
-    exam_name = serializers.CharField(source='exam.name', read_only=True)
-    subject_name = serializers.CharField(source='exam.subject.subject_name', read_only=True)
-    paper_name = serializers.CharField(source='test_paper.name', read_only=True)
-    total_possible = serializers.IntegerField(source='test_paper.total_score', read_only=True)
-    passing_score = serializers.IntegerField(source='test_paper.passing_score', read_only=True)
+    exam_name = serializers.CharField(source="exam.name", read_only=True)
+    subject_name = serializers.CharField(source="exam.subject.subject_name", read_only=True)
+    paper_name = serializers.CharField(source="test_paper.name", read_only=True)
+    total_possible = serializers.IntegerField(source="test_paper.total_score", read_only=True)
+    passing_score = serializers.IntegerField(source="test_paper.passing_score", read_only=True)
     passed = serializers.SerializerMethodField()
     question_results = serializers.SerializerMethodField()
 
     class Meta:
         model = TestScores
         fields = [
-            'id',
-            'exam_name',
-            'subject_name',
-            'paper_name',
-            'test_score',
-            'total_possible',
-            'passing_score',
-            'passed',
-            'start_time',
-            'submit_time',
-            'time_used',
-            'question_results',
+            "id",
+            "exam_name",
+            "subject_name",
+            "paper_name",
+            "test_score",
+            "total_possible",
+            "passing_score",
+            "passed",
+            "start_time",
+            "submit_time",
+            "time_used",
+            "question_results",
         ]
 
     def get_passed(self, obj):
@@ -366,17 +394,19 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
             return []
 
         # 시험지의 문제 목록 가져오기 (옵션도 함께 prefetch)
-        paper_questions = TestPaperTestQ.objects.filter(test_paper=obj.test_paper).select_related(
-            'test_question'
-        ).prefetch_related('test_question__optioninfo_set').order_by('order')
+        paper_questions = (
+            TestPaperTestQ.objects.filter(test_paper=obj.test_paper)
+            .select_related("test_question")
+            .prefetch_related("test_question__optioninfo_set")
+            .order_by("order")
+        )
 
         # 정답 옵션 딕셔너리 미리 생성 (N+1 방지)
         question_ids = [pq.test_question_id for pq in paper_questions]
         correct_options = OptionInfo.objects.filter(
-            test_question_id__in=question_ids,
-            is_right=True
-        ).values('test_question_id', 'option')
-        correct_answers = {opt['test_question_id']: opt['option'] for opt in correct_options}
+            test_question_id__in=question_ids, is_right=True
+        ).values("test_question_id", "option")
+        correct_answers = {opt["test_question_id"]: opt["option"] for opt in correct_options}
 
         results = []
         for pq in paper_questions:
@@ -386,20 +416,22 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
 
             # 정답 찾기 (딕셔너리 조회로 O(1))
             correct_answer = None
-            if question.tq_type in ['xz', 'pd']:  # 객관식, OX
+            if question.tq_type in ["xz", "pd"]:  # 객관식, OX
                 correct_answer = correct_answers.get(question.id)
 
-            results.append({
-                'question_id': question.id,
-                'question_name': question.name,
-                'question_type': question.tq_type,
-                'question_type_display': question.get_tq_type_display(),
-                'user_answer': record.get('answer', ''),
-                'correct_answer': correct_answer,
-                'is_correct': record.get('is_correct'),
-                'score': record.get('score', 0),
-                'max_score': pq.score,
-            })
+            results.append(
+                {
+                    "question_id": question.id,
+                    "question_name": question.name,
+                    "question_type": question.tq_type,
+                    "question_type_display": question.get_tq_type_display(),
+                    "user_answer": record.get("answer", ""),
+                    "correct_answer": correct_answer,
+                    "is_correct": record.get("is_correct"),
+                    "score": record.get("score", 0),
+                    "max_score": pq.score,
+                }
+            )
 
         return results
 
@@ -409,20 +441,20 @@ class ExamScoreListSerializer(PassedScoreSerializerMixin, serializers.ModelSeria
     교사용 시험별 성적 목록 Serializer.
     """
 
-    student = StudentBasicSerializer(source='user', read_only=True)
+    student = StudentBasicSerializer(source="user", read_only=True)
     passed = serializers.SerializerMethodField()
 
     class Meta:
         model = TestScores
         fields = [
-            'id',
-            'student',
-            'test_score',
-            'start_time',
-            'submit_time',
-            'time_used',
-            'is_submitted',
-            'passed',
+            "id",
+            "student",
+            "test_score",
+            "start_time",
+            "submit_time",
+            "time_used",
+            "is_submitted",
+            "passed",
         ]
 
 
@@ -451,20 +483,24 @@ class ManualGradeSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         """배점 검증"""
-        question_id = attrs['question_id']
-        score = attrs['score']
+        question_id = attrs["question_id"]
+        score = attrs["score"]
 
         # TestScores 인스턴스 가져오기
-        test_score = self.context.get('test_score')
+        test_score = self.context.get("test_score")
         if not test_score:
-            raise serializers.ValidationError('성적 정보를 찾을 수 없습니다.')
+            raise serializers.ValidationError("성적 정보를 찾을 수 없습니다.")
 
         # 문제의 최대 배점 확인
         try:
-            pq = TestPaperTestQ.objects.get(test_paper=test_score.test_paper, test_question_id=question_id)
+            pq = TestPaperTestQ.objects.get(
+                test_paper=test_score.test_paper, test_question_id=question_id
+            )
             if score > pq.score:
-                raise serializers.ValidationError({'score': f'배점은 최대 {pq.score}점까지 가능합니다.'})
-        except TestPaperTestQ.DoesNotExist:
-            raise serializers.ValidationError({'question_id': '시험지에 없는 문제입니다.'})
+                raise serializers.ValidationError(
+                    {"score": f"배점은 최대 {pq.score}점까지 가능합니다."}
+                )
+        except TestPaperTestQ.DoesNotExist as e:
+            raise serializers.ValidationError({"question_id": "시험지에 없는 문제입니다."}) from e
 
         return attrs

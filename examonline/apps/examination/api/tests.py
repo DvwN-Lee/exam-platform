@@ -1,14 +1,15 @@
 """
 Examination API Tests.
 """
+
+from datetime import timedelta
+
 import pytest
 from django.utils import timezone
-from datetime import timedelta
-from rest_framework.test import APIClient
-
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
+from rest_framework.test import APIClient
 from testpaper.models import TestPaperInfo
-from user.models import UserProfile, SubjectInfo, StudentsInfo
+from user.models import StudentsInfo, SubjectInfo, UserProfile
 
 
 @pytest.fixture
@@ -19,39 +20,52 @@ def api_client():
 @pytest.fixture
 def teacher_user(db):
     return UserProfile.objects.create_user(
-        username='teacher_exam', password='testpass123', user_type='teacher', nick_name='Exam Teacher'
+        username="teacher_exam",
+        password="testpass123",
+        user_type="teacher",
+        nick_name="Exam Teacher",
     )
 
 
 @pytest.fixture
 def another_teacher(db):
     return UserProfile.objects.create_user(
-        username='teacher2', password='testpass123', user_type='teacher', nick_name='Another Teacher'
+        username="teacher2",
+        password="testpass123",
+        user_type="teacher",
+        nick_name="Another Teacher",
     )
 
 
 @pytest.fixture
 def student_user(db):
     user = UserProfile.objects.create_user(
-        username='student_exam', password='testpass123', user_type='student', nick_name='Exam Student'
+        username="student_exam",
+        password="testpass123",
+        user_type="student",
+        nick_name="Exam Student",
     )
     StudentsInfo.objects.create(
-        user=user, student_name='Exam Student', student_id='20250001', student_class='1-A', student_school='Test School'
+        user=user,
+        student_name="Exam Student",
+        student_id="20250001",
+        student_class="1-A",
+        student_school="Test School",
     )
     return user
 
 
 @pytest.fixture
 def subject(db):
-    return SubjectInfo.objects.create(subject_name='Exam Subject')
+    return SubjectInfo.objects.create(subject_name="Exam Subject")
 
 
 @pytest.fixture
 def test_paper(db, teacher_user, subject):
     return TestPaperInfo.objects.create(
-        name='Test Paper for Exam',
+        name="Test Paper for Exam",
         subject=subject,
-        tp_degree='jd',
+        tp_degree="jd",
         total_score=100,
         question_count=10,
         passing_score=60,
@@ -63,12 +77,12 @@ def test_paper(db, teacher_user, subject):
 def examination(db, teacher_user, subject):
     start_time = timezone.now() + timedelta(days=1)
     return ExaminationInfo.objects.create(
-        name='Test Examination',
+        name="Test Examination",
         subject=subject,
         start_time=start_time,
         end_time=start_time + timedelta(hours=2),
-        exam_state='0',
-        exam_type='pt',
+        exam_state="0",
+        exam_type="pt",
         student_num=0,
         actual_num=0,
         create_user=teacher_user,
@@ -85,23 +99,23 @@ class TestExaminationCRUD:
         start_time = (timezone.now() + timedelta(days=1)).isoformat()
 
         data = {
-            'name': 'New Exam',
-            'subject_id': subject.id,
-            'start_time': start_time,
-            'duration': 120,  # 2 hours
-            'exam_type': 'pt',
-            'papers': [{'paper_id': test_paper.id}],
+            "name": "New Exam",
+            "subject_id": subject.id,
+            "start_time": start_time,
+            "duration": 120,  # 2 hours
+            "exam_type": "pt",
+            "papers": [{"paper_id": test_paper.id}],
         }
 
-        response = api_client.post('/api/v1/examinations/', data, format='json')
+        response = api_client.post("/api/v1/examinations/", data, format="json")
 
         assert response.status_code == 201
-        assert response.data['name'] == 'New Exam'
-        assert response.data['student_num'] == 0
-        assert response.data['exam_state'] == '0'
+        assert response.data["name"] == "New Exam"
+        assert response.data["student_num"] == 0
+        assert response.data["exam_state"] == "0"
 
         # 시험지 연결 확인
-        exam = ExaminationInfo.objects.get(id=response.data['id'])
+        exam = ExaminationInfo.objects.get(id=response.data["id"])
         assert ExamPaperInfo.objects.filter(exam=exam).count() == 1
 
     def test_create_examination_without_papers_fails(self, api_client, teacher_user, subject):
@@ -109,77 +123,85 @@ class TestExaminationCRUD:
         api_client.force_authenticate(user=teacher_user)
         start_time = (timezone.now() + timedelta(days=1)).isoformat()
 
-        data = {'name': 'New Exam', 'subject_id': subject.id, 'start_time': start_time, 'duration': 120, 'papers': []}
+        data = {
+            "name": "New Exam",
+            "subject_id": subject.id,
+            "start_time": start_time,
+            "duration": 120,
+            "papers": [],
+        }
 
-        response = api_client.post('/api/v1/examinations/', data, format='json')
+        response = api_client.post("/api/v1/examinations/", data, format="json")
 
         assert response.status_code == 400
         # DRF 표준 ValidationError 형식: {'field_name': ['error message']}
-        assert 'papers' in response.data
+        assert "papers" in response.data
 
-    def test_create_examination_past_start_time_fails(self, api_client, teacher_user, subject, test_paper):
+    def test_create_examination_past_start_time_fails(
+        self, api_client, teacher_user, subject, test_paper
+    ):
         """과거 시작 시간으로 시험 생성 실패"""
         api_client.force_authenticate(user=teacher_user)
         start_time = (timezone.now() - timedelta(days=1)).isoformat()
 
         data = {
-            'name': 'New Exam',
-            'subject_id': subject.id,
-            'start_time': start_time,
-            'duration': 120,
-            'papers': [{'paper_id': test_paper.id}],
+            "name": "New Exam",
+            "subject_id": subject.id,
+            "start_time": start_time,
+            "duration": 120,
+            "papers": [{"paper_id": test_paper.id}],
         }
 
-        response = api_client.post('/api/v1/examinations/', data, format='json')
+        response = api_client.post("/api/v1/examinations/", data, format="json")
 
         assert response.status_code == 400
         # DRF 표준 ValidationError 형식: {'field_name': ['error message']}
-        assert 'start_time' in response.data
+        assert "start_time" in response.data
 
     def test_list_examinations(self, api_client, teacher_user, examination):
         """시험 목록 조회"""
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.get('/api/v1/examinations/')
+        response = api_client.get("/api/v1/examinations/")
 
         assert response.status_code == 200
         # StandardResultsSetPagination 사용 시 'count', 'results' 키 사용
-        assert response.data['count'] == 1
-        assert response.data['results'][0]['exam_name'] == 'Test Examination'
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["exam_name"] == "Test Examination"
 
     def test_retrieve_examination(self, api_client, teacher_user, examination, test_paper):
         """시험 상세 조회"""
         ExamPaperInfo.objects.create(exam=examination, paper=test_paper)
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.get(f'/api/v1/examinations/{examination.id}/')
+        response = api_client.get(f"/api/v1/examinations/{examination.id}/")
 
         assert response.status_code == 200
-        assert response.data['exam_name'] == 'Test Examination'
+        assert response.data["exam_name"] == "Test Examination"
         # ExaminationDetailSerializer는 testpaper 필드 사용
-        assert response.data['testpaper'] is not None
+        assert response.data["testpaper"] is not None
 
     def test_update_examination(self, api_client, teacher_user, examination):
         """시험 수정"""
         api_client.force_authenticate(user=teacher_user)
 
-        data = {'name': 'Updated Exam Name', 'duration': 180}
+        data = {"name": "Updated Exam Name", "duration": 180}
 
-        response = api_client.patch(f'/api/v1/examinations/{examination.id}/', data, format='json')
+        response = api_client.patch(f"/api/v1/examinations/{examination.id}/", data, format="json")
 
         assert response.status_code == 200
         examination.refresh_from_db()
-        assert examination.name == 'Updated Exam Name'
+        assert examination.name == "Updated Exam Name"
 
     def test_update_started_examination_fails(self, api_client, teacher_user, examination):
         """시작된 시험 수정 실패"""
-        examination.exam_state = '1'  # 시험 중
+        examination.exam_state = "1"  # 시험 중
         examination.save()
         api_client.force_authenticate(user=teacher_user)
 
-        data = {'name': 'Updated Name'}
+        data = {"name": "Updated Name"}
 
-        response = api_client.patch(f'/api/v1/examinations/{examination.id}/', data, format='json')
+        response = api_client.patch(f"/api/v1/examinations/{examination.id}/", data, format="json")
 
         assert response.status_code == 400
 
@@ -187,18 +209,18 @@ class TestExaminationCRUD:
         """시험 삭제"""
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.delete(f'/api/v1/examinations/{examination.id}/')
+        response = api_client.delete(f"/api/v1/examinations/{examination.id}/")
 
         assert response.status_code == 204
         assert not ExaminationInfo.objects.filter(id=examination.id).exists()
 
     def test_delete_started_examination_fails(self, api_client, teacher_user, examination):
         """시작된 시험 삭제 실패"""
-        examination.exam_state = '1'
+        examination.exam_state = "1"
         examination.save()
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.delete(f'/api/v1/examinations/{examination.id}/')
+        response = api_client.delete(f"/api/v1/examinations/{examination.id}/")
 
         assert response.status_code == 400
 
@@ -210,66 +232,92 @@ class TestStudentEnrollment:
     def test_enroll_students_success(self, api_client, teacher_user, examination):
         """학생 일괄 등록 성공"""
         # 학생 생성
-        student1 = UserProfile.objects.create_user(username='student1', password='pass', user_type='student')
-        student2 = UserProfile.objects.create_user(username='student2', password='pass', user_type='student')
-        student_info1 = StudentsInfo.objects.create(user=student1, student_name='Student 1', student_id='001')
-        student_info2 = StudentsInfo.objects.create(user=student2, student_name='Student 2', student_id='002')
+        student1 = UserProfile.objects.create_user(
+            username="student1", password="pass", user_type="student"
+        )
+        student2 = UserProfile.objects.create_user(
+            username="student2", password="pass", user_type="student"
+        )
+        student_info1 = StudentsInfo.objects.create(
+            user=student1, student_name="Student 1", student_id="001"
+        )
+        student_info2 = StudentsInfo.objects.create(
+            user=student2, student_name="Student 2", student_id="002"
+        )
 
         api_client.force_authenticate(user=teacher_user)
 
-        data = {'student_ids': [student_info1.id, student_info2.id]}
+        data = {"student_ids": [student_info1.id, student_info2.id]}
 
-        response = api_client.post(f'/api/v1/examinations/{examination.id}/enroll_students/', data, format='json')
+        response = api_client.post(
+            f"/api/v1/examinations/{examination.id}/enroll_students/", data, format="json"
+        )
 
         assert response.status_code == 200
-        assert response.data['student_num'] == 2
+        assert response.data["student_num"] == 2
         examination.refresh_from_db()
         assert examination.student_num == 2
 
     def test_enroll_duplicate_students_fails(self, api_client, teacher_user, examination):
         """중복 학생 등록 실패"""
-        student = UserProfile.objects.create_user(username='student1', password='pass', user_type='student')
-        student_info = StudentsInfo.objects.create(user=student, student_name='Student 1', student_id='001')
+        student = UserProfile.objects.create_user(
+            username="student1", password="pass", user_type="student"
+        )
+        student_info = StudentsInfo.objects.create(
+            user=student, student_name="Student 1", student_id="001"
+        )
         ExamStudentsInfo.objects.create(exam=examination, student=student_info)
 
         api_client.force_authenticate(user=teacher_user)
 
-        data = {'student_ids': [student_info.id]}
+        data = {"student_ids": [student_info.id]}
 
-        response = api_client.post(f'/api/v1/examinations/{examination.id}/enroll_students/', data, format='json')
+        response = api_client.post(
+            f"/api/v1/examinations/{examination.id}/enroll_students/", data, format="json"
+        )
 
         assert response.status_code == 400
-        assert 'student_ids' in response.data
+        assert "student_ids" in response.data
 
     def test_enroll_students_after_exam_start_fails(self, api_client, teacher_user, examination):
         """시험 시작 후 학생 등록 실패"""
-        examination.exam_state = '1'
+        examination.exam_state = "1"
         examination.save()
 
-        student = UserProfile.objects.create_user(username='student1', password='pass', user_type='student')
-        student_info = StudentsInfo.objects.create(user=student, student_name='Student 1', student_id='001')
+        student = UserProfile.objects.create_user(
+            username="student1", password="pass", user_type="student"
+        )
+        student_info = StudentsInfo.objects.create(
+            user=student, student_name="Student 1", student_id="001"
+        )
 
         api_client.force_authenticate(user=teacher_user)
 
-        data = {'student_ids': [student_info.id]}
+        data = {"student_ids": [student_info.id]}
 
-        response = api_client.post(f'/api/v1/examinations/{examination.id}/enroll_students/', data, format='json')
+        response = api_client.post(
+            f"/api/v1/examinations/{examination.id}/enroll_students/", data, format="json"
+        )
 
         assert response.status_code == 400
 
     def test_get_enrolled_students(self, api_client, teacher_user, examination):
         """등록된 학생 목록 조회"""
-        student = UserProfile.objects.create_user(username='student1', password='pass', user_type='student')
-        student_info = StudentsInfo.objects.create(user=student, student_name='Student 1', student_id='001')
+        student = UserProfile.objects.create_user(
+            username="student1", password="pass", user_type="student"
+        )
+        student_info = StudentsInfo.objects.create(
+            user=student, student_name="Student 1", student_id="001"
+        )
         ExamStudentsInfo.objects.create(exam=examination, student=student_info)
 
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.get(f'/api/v1/examinations/{examination.id}/enrolled_students/')
+        response = api_client.get(f"/api/v1/examinations/{examination.id}/enrolled_students/")
 
         assert response.status_code == 200
-        assert len(response.data['students']) == 1
-        assert response.data['students'][0]['student']['student_name'] == 'Student 1'
+        assert len(response.data["students"]) == 1
+        assert response.data["students"][0]["student"]["student_name"] == "Student 1"
 
 
 @pytest.mark.django_db
@@ -282,14 +330,14 @@ class TestPermissions:
         start_time = (timezone.now() + timedelta(days=1)).isoformat()
 
         data = {
-            'name': 'New Exam',
-            'subject_id': subject.id,
-            'start_time': start_time,
-            'duration': 120,
-            'papers': [{'paper_id': test_paper.id}],
+            "name": "New Exam",
+            "subject_id": subject.id,
+            "start_time": start_time,
+            "duration": 120,
+            "papers": [{"paper_id": test_paper.id}],
         }
 
-        response = api_client.post('/api/v1/examinations/', data, format='json')
+        response = api_client.post("/api/v1/examinations/", data, format="json")
 
         assert response.status_code == 403
 
@@ -297,9 +345,9 @@ class TestPermissions:
         """작성자가 아닌 교사는 시험 수정 불가"""
         api_client.force_authenticate(user=another_teacher)
 
-        data = {'name': 'Updated Name'}
+        data = {"name": "Updated Name"}
 
-        response = api_client.patch(f'/api/v1/examinations/{examination.id}/', data, format='json')
+        response = api_client.patch(f"/api/v1/examinations/{examination.id}/", data, format="json")
 
         assert response.status_code == 403
 
@@ -310,10 +358,10 @@ class TestPermissions:
 
         api_client.force_authenticate(user=student_user)
 
-        response = api_client.get('/api/v1/examinations/')
+        response = api_client.get("/api/v1/examinations/")
 
         assert response.status_code == 200
-        assert response.data['count'] == 1
+        assert response.data["count"] == 1
 
 
 @pytest.mark.django_db
@@ -324,25 +372,25 @@ class TestFiltering:
         """시험 상태로 필터링"""
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.get('/api/v1/examinations/', {'exam_state': '0'})
+        response = api_client.get("/api/v1/examinations/", {"exam_state": "0"})
 
         assert response.status_code == 200
-        assert response.data['count'] == 1
+        assert response.data["count"] == 1
 
     def test_filter_by_subject(self, api_client, teacher_user, subject, examination):
         """과목으로 필터링"""
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.get('/api/v1/examinations/', {'subject': subject.id})
+        response = api_client.get("/api/v1/examinations/", {"subject": subject.id})
 
         assert response.status_code == 200
-        assert response.data['count'] == 1
+        assert response.data["count"] == 1
 
     def test_search_by_name(self, api_client, teacher_user, examination):
         """이름으로 검색"""
         api_client.force_authenticate(user=teacher_user)
 
-        response = api_client.get('/api/v1/examinations/', {'search': 'Test'})
+        response = api_client.get("/api/v1/examinations/", {"search": "Test"})
 
         assert response.status_code == 200
-        assert response.data['count'] == 1
+        assert response.data["count"] == 1

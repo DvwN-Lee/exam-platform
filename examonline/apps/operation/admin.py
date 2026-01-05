@@ -1,15 +1,15 @@
 from django.contrib import admin
 
-from .models import ExamComments, UserMessage, UserFavorite
+from .models import ExamComments, UserFavorite, UserMessage
 
 
 # admin-시험 리뷰 등록
 @admin.register(ExamComments)
 class ExamCommentsAdmin(admin.ModelAdmin):
     # admin 헤더
-    list_display = ('user', 'exam', 'comments', 'add_time')
+    list_display = ("user", "exam", "comments", "add_time")
     # 검색
-    search_fields = ('user',)
+    search_fields = ("user",)
     # 페이지
     list_per_page = 20
 
@@ -18,9 +18,9 @@ class ExamCommentsAdmin(admin.ModelAdmin):
 @admin.register(UserMessage)
 class UserMessageAdmin(admin.ModelAdmin):
     # admin 헤더
-    list_display = ('user', 'message', 'has_read', 'add_time')
+    list_display = ("user", "message", "has_read", "add_time")
     # 검색
-    search_fields = ('user',)
+    search_fields = ("user",)
     # 페이지
     list_per_page = 20
 
@@ -29,8 +29,8 @@ class UserMessageAdmin(admin.ModelAdmin):
 @admin.register(UserFavorite)
 class UserFavoriteAdmin(admin.ModelAdmin):
     # admin 헤더
-    list_display = ('user', 'fav_id', 'add_time')
+    list_display = ("user", "fav_id", "add_time")
     # 검색
-    search_fields = ('user',)
+    search_fields = ("user",)
     # 페이지
     list_per_page = 20

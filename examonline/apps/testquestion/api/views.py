@@ -8,8 +8,6 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-from core.api.permissions import IsQuestionOwner, IsTeacher
 from testquestion.api.filters import QuestionFilter
 from testquestion.api.serializers import (
     QuestionCreateSerializer,
@@ -20,22 +18,26 @@ from testquestion.api.serializers import (
 )
 from testquestion.models import TestQuestionInfo
 
+from core.api.permissions import IsQuestionOwner, IsTeacher
+
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['questions'],
-        summary='문제 목록 조회',
-        description='필터링, 검색, 정렬을 지원하는 문제 목록 조회 API.',
+        tags=["questions"],
+        summary="문제 목록 조회",
+        description="필터링, 검색, 정렬을 지원하는 문제 목록 조회 API.",
         parameters=[
-            OpenApiParameter(name='search', description='문제 제목 검색'),
-            OpenApiParameter(name='ordering', description='정렬 기준 (create_time, -create_time, score, -score)'),
+            OpenApiParameter(name="search", description="문제 제목 검색"),
+            OpenApiParameter(
+                name="ordering", description="정렬 기준 (create_time, -create_time, score, -score)"
+            ),
         ],
     ),
-    create=extend_schema(tags=['questions'], summary='문제 생성'),
-    retrieve=extend_schema(tags=['questions'], summary='문제 상세 조회'),
-    update=extend_schema(tags=['questions'], summary='문제 전체 수정'),
-    partial_update=extend_schema(tags=['questions'], summary='문제 부분 수정'),
-    destroy=extend_schema(tags=['questions'], summary='문제 삭제 (Soft Delete)'),
+    create=extend_schema(tags=["questions"], summary="문제 생성"),
+    retrieve=extend_schema(tags=["questions"], summary="문제 상세 조회"),
+    update=extend_schema(tags=["questions"], summary="문제 전체 수정"),
+    partial_update=extend_schema(tags=["questions"], summary="문제 부분 수정"),
+    destroy=extend_schema(tags=["questions"], summary="문제 삭제 (Soft Delete)"),
 )
 class QuestionViewSet(viewsets.ModelViewSet):
     """
@@ -47,9 +49,9 @@ class QuestionViewSet(viewsets.ModelViewSet):
     """
 
     filterset_class = QuestionFilter
-    search_fields = ['name']
-    ordering_fields = ['create_time', 'score', 'tq_degree', 'edit_time']
-    ordering = ['-create_time']
+    search_fields = ["name"]
+    ordering_fields = ["create_time", "score", "tq_degree", "edit_time"]
+    ordering = ["-create_time"]
 
     def get_queryset(self):
         """
@@ -58,28 +60,30 @@ class QuestionViewSet(viewsets.ModelViewSet):
         - 학생: 공유 문제만
         """
         # Handle schema generation
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return TestQuestionInfo.objects.none()
 
         user = self.request.user
         base_qs = TestQuestionInfo.objects.filter(is_del=False)
 
-        if user.user_type == 'teacher':
+        if user.user_type == "teacher":
             # 교사: 본인 문제 + 공유 문제
-            return base_qs.filter(Q(create_user=user) | Q(is_share=True)).select_related(
-                'subject', 'create_user'
-            ).distinct()
+            return (
+                base_qs.filter(Q(create_user=user) | Q(is_share=True))
+                .select_related("subject", "create_user")
+                .distinct()
+            )
         else:
             # 학생: 공유 문제만
-            return base_qs.filter(is_share=True).select_related('subject', 'create_user')
+            return base_qs.filter(is_share=True).select_related("subject", "create_user")
 
     def get_permissions(self):
         """
         Action별 Permission 설정.
         """
-        if self.action in ['create']:
+        if self.action in ["create"]:
             return [IsAuthenticated(), IsTeacher()]
-        elif self.action in ['update', 'partial_update', 'destroy', 'share']:
+        elif self.action in ["update", "partial_update", "destroy", "share"]:
             return [IsAuthenticated(), IsQuestionOwner()]
         return [IsAuthenticated(), IsQuestionOwner()]
 
@@ -87,17 +91,17 @@ class QuestionViewSet(viewsets.ModelViewSet):
         """
         Action별 Serializer 설정.
         """
-        if self.action == 'list':
+        if self.action == "list":
             return QuestionListSerializer
-        elif self.action == 'retrieve':
+        elif self.action == "retrieve":
             return QuestionDetailSerializer
-        elif self.action == 'create':
+        elif self.action == "create":
             return QuestionCreateSerializer
-        elif self.action in ['update', 'partial_update']:
+        elif self.action in ["update", "partial_update"]:
             return QuestionUpdateSerializer
-        elif self.action == 'share':
+        elif self.action == "share":
             return QuestionShareSerializer
-        elif self.action in ['my', 'shared']:
+        elif self.action in ["my", "shared"]:
             return QuestionListSerializer
         return QuestionDetailSerializer
 
@@ -109,13 +113,13 @@ class QuestionViewSet(viewsets.ModelViewSet):
         instance.save()
 
     @extend_schema(
-        tags=['questions'],
-        summary='문제 공유 상태 변경',
-        description='문제의 공유 상태를 변경합니다. 문제 생성자만 변경 가능.',
+        tags=["questions"],
+        summary="문제 공유 상태 변경",
+        description="문제의 공유 상태를 변경합니다. 문제 생성자만 변경 가능.",
         request=QuestionShareSerializer,
         responses={200: QuestionDetailSerializer},
     )
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def share(self, request, pk=None):
         """
         문제 공유 상태 토글.
@@ -124,28 +128,28 @@ class QuestionViewSet(viewsets.ModelViewSet):
         serializer = QuestionShareSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        question.is_share = serializer.validated_data['is_share']
+        question.is_share = serializer.validated_data["is_share"]
         question.save()
 
         return Response(QuestionDetailSerializer(question).data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=['questions'],
-        summary='내 문제 목록',
-        description='현재 로그인한 교사가 생성한 문제 목록을 조회합니다.',
+        tags=["questions"],
+        summary="내 문제 목록",
+        description="현재 로그인한 교사가 생성한 문제 목록을 조회합니다.",
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def my(self, request):
         """
         내가 생성한 문제 목록 조회 (교사 전용).
         """
-        if request.user.user_type != 'teacher':
-            return Response({'detail': '교사만 접근 가능합니다.'}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.user_type != "teacher":
+            return Response({"detail": "교사만 접근 가능합니다."}, status=status.HTTP_403_FORBIDDEN)
 
         queryset = (
             TestQuestionInfo.objects.filter(create_user=request.user, is_del=False)
-            .select_related('subject', 'create_user')
-            .order_by('-create_time')
+            .select_related("subject", "create_user")
+            .order_by("-create_time")
         )
 
         # Apply filters
@@ -161,19 +165,19 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
-        tags=['questions'],
-        summary='공유 문제 목록',
-        description='공유된 문제 목록을 조회합니다. 모든 인증된 사용자가 접근 가능.',
+        tags=["questions"],
+        summary="공유 문제 목록",
+        description="공유된 문제 목록을 조회합니다. 모든 인증된 사용자가 접근 가능.",
     )
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def shared(self, request):
         """
         공유된 문제 목록 조회.
         """
         queryset = (
             TestQuestionInfo.objects.filter(is_share=True, is_del=False)
-            .select_related('subject', 'create_user')
-            .order_by('-create_time')
+            .select_related("subject", "create_user")
+            .order_by("-create_time")
         )
 
         # Apply filters

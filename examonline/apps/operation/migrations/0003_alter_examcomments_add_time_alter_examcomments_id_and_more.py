@@ -5,40 +5,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('operation', '0002_auto_20220527_1659'),
+        ("operation", "0002_auto_20220527_1659"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='examcomments',
-            name='add_time',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='추가 시간'),
+            model_name="examcomments",
+            name="add_time",
+            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name="추가 시간"),
         ),
         migrations.AlterField(
-            model_name='examcomments',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="examcomments",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='userfavorite',
-            name='add_time',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='추가 시간'),
+            model_name="userfavorite",
+            name="add_time",
+            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name="추가 시간"),
         ),
         migrations.AlterField(
-            model_name='userfavorite',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="userfavorite",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
         migrations.AlterField(
-            model_name='usermessage',
-            name='add_time',
-            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name='추가 시간'),
+            model_name="usermessage",
+            name="add_time",
+            field=models.DateTimeField(default=django.utils.timezone.now, verbose_name="추가 시간"),
         ),
         migrations.AlterField(
-            model_name='usermessage',
-            name='id',
-            field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            model_name="usermessage",
+            name="id",
+            field=models.BigAutoField(
+                auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+            ),
         ),
     ]

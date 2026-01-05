@@ -15,99 +15,84 @@ class TestModelsStr:
     @pytest.fixture(autouse=True)
     def setup_test_data(self, db):
         """테스트용 기본 데이터 생성"""
-        from user.models import UserProfile, SubjectInfo, StudentsInfo, TeacherInfo
         from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
-        from testpaper.models import TestPaperInfo, TestScores
-        from testquestion.models import TestQuestionInfo, OptionInfo
+        from testpaper.models import TestPaperInfo
+        from testquestion.models import OptionInfo, TestQuestionInfo
+        from user.models import StudentsInfo, SubjectInfo, TeacherInfo, UserProfile
 
         # Subject 생성
-        self.subject = SubjectInfo.objects.create(subject_name='Test Subject')
+        self.subject = SubjectInfo.objects.create(subject_name="Test Subject")
 
         # User 생성
         self.user = UserProfile.objects.create_user(
-            username='testuser', password='testpass', user_type='student'
+            username="testuser", password="testpass", user_type="student"
         )
 
         # StudentsInfo 생성
-        self.student = StudentsInfo.objects.create(
-            user=self.user,
-            student_name='Test Student'
-        )
+        self.student = StudentsInfo.objects.create(user=self.user, student_name="Test Student")
 
         # Question 생성
         self.question = TestQuestionInfo.objects.create(
-            name='Test Question',
+            name="Test Question",
             subject=self.subject,
             score=10,
-            tq_type='xz',
-            tq_degree='jd',
-            create_user=self.user
+            tq_type="xz",
+            tq_degree="jd",
+            create_user=self.user,
         )
 
         # Option 생성
         self.option = OptionInfo.objects.create(
-            test_question=self.question,
-            option='Test Option',
-            is_right=True
+            test_question=self.question, option="Test Option", is_right=True
         )
 
         # TestPaper 생성
         self.paper = TestPaperInfo.objects.create(
-            name='Test Paper',
+            name="Test Paper",
             subject=self.subject,
-            tp_degree='jd',
+            tp_degree="jd",
             total_score=10,
             passing_score=6,
-            create_user=self.user
+            create_user=self.user,
         )
 
         # Examination 생성
         from django.utils import timezone
+
         self.exam = ExaminationInfo.objects.create(
-            name='Test Exam',
+            name="Test Exam",
             subject=self.subject,
             start_time=timezone.now(),
             end_time=timezone.now() + timezone.timedelta(hours=2),
-            create_user=self.user
+            create_user=self.user,
         )
 
         # ExamPaperInfo 생성
-        ExamPaperInfo.objects.create(
-            exam=self.exam,
-            paper=self.paper
-        )
+        ExamPaperInfo.objects.create(exam=self.exam, paper=self.paper)
 
         # ExamStudentsInfo 생성
-        ExamStudentsInfo.objects.create(
-            exam=self.exam,
-            student=self.student
-        )
+        ExamStudentsInfo.objects.create(exam=self.exam, student=self.student)
 
         # TestPaperTestQ 생성
         from testpaper.models import TestPaperTestQ
+
         TestPaperTestQ.objects.create(
-            test_paper=self.paper,
-            test_question=self.question,
-            score=10,
-            order=1
+            test_paper=self.paper, test_question=self.question, score=10, order=1
         )
 
         # TeacherInfo 생성 (user_type을 teacher로 변경한 교사 생성)
         teacher_user = UserProfile.objects.create_user(
-            username='teacher', password='testpass', user_type='teacher'
+            username="teacher", password="testpass", user_type="teacher"
         )
         TeacherInfo.objects.create(
-            user=teacher_user,
-            teacher_name='Test Teacher',
-            subject=self.subject
+            user=teacher_user, teacher_name="Test Teacher", subject=self.subject
         )
 
         # EmailVerifyRecord 생성
         from user.models import EmailVerifyRecord
+
         EmailVerifyRecord.objects.create(
-            code='TEST123',
-            email='test@example.com',
-            send_type='register'
+            code="TEST123", email="test@example.com", send_type="register"
         )
 
     def test_all_models_str_method(self):
@@ -120,7 +105,13 @@ class TestModelsStr:
 
         for model in all_models:
             # 테스트용 모델이거나 Django 내장 모델은 스킵
-            if model._meta.app_label in ['contenttypes', 'auth', 'admin', 'sessions', 'token_blacklist']:
+            if model._meta.app_label in [
+                "contenttypes",
+                "auth",
+                "admin",
+                "sessions",
+                "token_blacklist",
+            ]:
                 continue
 
             try:
@@ -141,10 +132,12 @@ class TestModelsStr:
 
         # 에러가 있으면 실패
         if errors:
-            pytest.fail(f"Errors in __str__ methods:\n" + "\n".join(errors))
+            pytest.fail("Errors in __str__ methods:\n" + "\n".join(errors))
 
         # 최소한 몇 개의 모델은 테스트되었는지 확인
-        assert len(tested_models) >= 5, f"At least 5 models should be tested, but only {len(tested_models)} were tested"
+        assert len(tested_models) >= 5, (
+            f"At least 5 models should be tested, but only {len(tested_models)} were tested"
+        )
 
 
 @pytest.mark.django_db
@@ -157,7 +150,13 @@ class TestModelsBasic:
 
         for model in all_models:
             # 프로젝트의 앱만 검사
-            if model._meta.app_label in ['examination', 'testpaper', 'testquestion', 'user', 'operation']:
+            if model._meta.app_label in [
+                "examination",
+                "testpaper",
+                "testquestion",
+                "user",
+                "operation",
+            ]:
                 # verbose_name이 기본값(모델명)이 아닌지 확인 (선택적 검증)
                 # 이 테스트는 코드 품질 향상을 위한 것
                 pass  # 일단 pass, 필요시 검증 추가

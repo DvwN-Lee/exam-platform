@@ -8,19 +8,19 @@ from .models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 class ExaminationInfoAdmin(admin.ModelAdmin):
     # admin 헤더
     list_display = (
-        'name',
-        'subject',
-        'start_time',
-        'end_time',
-        'student_num',
-        'actual_num',
-        'exam_state',
-        'exam_type',
-        'create_user',
-        'create_time',
+        "name",
+        "subject",
+        "start_time",
+        "end_time",
+        "student_num",
+        "actual_num",
+        "exam_state",
+        "exam_type",
+        "create_user",
+        "create_time",
     )
     # 검색
-    search_fields = ('name',)
+    search_fields = ("name",)
     # 페이지
     list_per_page = 20
 
@@ -30,11 +30,11 @@ class ExaminationInfoAdmin(admin.ModelAdmin):
 class ExamPaperInfoAdmin(admin.ModelAdmin):
     # admin 헤더
     list_display = (
-        'exam',
-        'paper',
+        "exam",
+        "paper",
     )
     # 검색
-    search_fields = ('exam',)
+    search_fields = ("exam",)
     # 페이지
     list_per_page = 20
 
@@ -44,10 +44,10 @@ class ExamPaperInfoAdmin(admin.ModelAdmin):
 class ExamStudentsInfoAdmin(admin.ModelAdmin):
     # admin 헤더
     list_display = (
-        'exam',
-        'student',
+        "exam",
+        "student",
     )
     # 검색
-    search_fields = ('exam',)
+    search_fields = ("exam",)
     # 페이지
     list_per_page = 20

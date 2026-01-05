@@ -8,17 +8,17 @@ from .models import TestPaperInfo, TestPaperTestQ, TestScores
 class TestPaperInfoAdmin(admin.ModelAdmin):
     # admin 헤더
     list_display = (
-        'name',
-        'subject',
-        'tp_degree',
-        'total_score',
-        'passing_score',
-        'create_user',
-        'create_time',
-        'edit_time',
+        "name",
+        "subject",
+        "tp_degree",
+        "total_score",
+        "passing_score",
+        "create_user",
+        "create_time",
+        "edit_time",
     )
     # 검색
-    search_fields = ('name',)
+    search_fields = ("name",)
     # 페이지
     list_per_page = 20
 
@@ -27,9 +27,9 @@ class TestPaperInfoAdmin(admin.ModelAdmin):
 @admin.register(TestPaperTestQ)
 class TestPaperTestQAdmin(admin.ModelAdmin):
     # admin 헤더
-    list_display = ('test_paper', 'test_question')
+    list_display = ("test_paper", "test_question")
     # 검색
-    search_fields = ('test_paper',)
+    search_fields = ("test_paper",)
     # 페이지
     list_per_page = 20
 
@@ -38,8 +38,8 @@ class TestPaperTestQAdmin(admin.ModelAdmin):
 @admin.register(TestScores)
 class TestScoresAdmin(admin.ModelAdmin):
     # admin 헤더
-    list_display = ('user', 'test_paper', 'test_score', 'create_time')
+    list_display = ("user", "test_paper", "test_score", "create_time")
     # 검색
-    search_fields = ('user',)
+    search_fields = ("user",)
     # 페이지
     list_per_page = 20

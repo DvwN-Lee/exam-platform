@@ -4,12 +4,12 @@ Question Management API serializers.
 
 from django.db import transaction
 from rest_framework import serializers
+from testquestion.models import OptionInfo, TestQuestionInfo
+from user.api.serializers import SubjectSerializer
+from user.models import SubjectInfo
 
 from core.api.fields import XSSSanitizedCharField
 from core.api.mixins import CreatUserSerializerMixin
-from testquestion.models import TestQuestionInfo, OptionInfo
-from user.api.serializers import SubjectSerializer
-from user.models import SubjectInfo
 
 
 class OptionReadSerializer(serializers.ModelSerializer):
@@ -19,8 +19,8 @@ class OptionReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OptionInfo
-        fields = ['id', 'option', 'is_right', 'create_time']
-        read_only_fields = ['id', 'create_time']
+        fields = ["id", "option", "is_right", "create_time"]
+        read_only_fields = ["id", "create_time"]
 
 
 class OptionWriteSerializer(serializers.ModelSerializer):
@@ -34,7 +34,7 @@ class OptionWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OptionInfo
-        fields = ['id', 'option', 'is_right']
+        fields = ["id", "option", "is_right"]
 
 
 class QuestionListSerializer(CreatUserSerializerMixin, serializers.ModelSerializer):
@@ -45,31 +45,31 @@ class QuestionListSerializer(CreatUserSerializerMixin, serializers.ModelSerializ
 
     subject = SubjectSerializer(read_only=True)
     creat_user = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(source='create_time', read_only=True)
-    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
-    tq_type_display = serializers.CharField(source='get_tq_type_display', read_only=True)
-    tq_degree_display = serializers.CharField(source='get_tq_degree_display', read_only=True)
+    created_at = serializers.DateTimeField(source="create_time", read_only=True)
+    updated_at = serializers.DateTimeField(source="edit_time", read_only=True)
+    tq_type_display = serializers.CharField(source="get_tq_type_display", read_only=True)
+    tq_degree_display = serializers.CharField(source="get_tq_degree_display", read_only=True)
     options = serializers.SerializerMethodField()
 
     class Meta:
         model = TestQuestionInfo
         fields = [
-            'id',
-            'name',
-            'subject',
-            'score',
-            'tq_type',
-            'tq_type_display',
-            'tq_degree',
-            'tq_degree_display',
-            'is_share',
-            'is_del',
-            'created_at',
-            'updated_at',
-            'creat_user',
-            'options',
+            "id",
+            "name",
+            "subject",
+            "score",
+            "tq_type",
+            "tq_type_display",
+            "tq_degree",
+            "tq_degree_display",
+            "is_share",
+            "is_del",
+            "created_at",
+            "updated_at",
+            "creat_user",
+            "options",
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'creat_user', 'is_del', 'options']
+        read_only_fields = ["id", "created_at", "updated_at", "creat_user", "is_del", "options"]
 
     def get_options(self, obj):
         """Return empty array for list view (options only in detail view)"""
@@ -84,33 +84,33 @@ class QuestionDetailSerializer(CreatUserSerializerMixin, serializers.ModelSerial
 
     subject = SubjectSerializer(read_only=True)
     creat_user = serializers.SerializerMethodField()
-    created_at = serializers.DateTimeField(source='create_time', read_only=True)
-    updated_at = serializers.DateTimeField(source='edit_time', read_only=True)
-    tq_img = serializers.ImageField(source='image', read_only=True)
-    options = OptionReadSerializer(source='optioninfo_set', many=True, read_only=True)
-    tq_type_display = serializers.CharField(source='get_tq_type_display', read_only=True)
-    tq_degree_display = serializers.CharField(source='get_tq_degree_display', read_only=True)
+    created_at = serializers.DateTimeField(source="create_time", read_only=True)
+    updated_at = serializers.DateTimeField(source="edit_time", read_only=True)
+    tq_img = serializers.ImageField(source="image", read_only=True)
+    options = OptionReadSerializer(source="optioninfo_set", many=True, read_only=True)
+    tq_type_display = serializers.CharField(source="get_tq_type_display", read_only=True)
+    tq_degree_display = serializers.CharField(source="get_tq_degree_display", read_only=True)
 
     class Meta:
         model = TestQuestionInfo
         fields = [
-            'id',
-            'name',
-            'subject',
-            'score',
-            'tq_type',
-            'tq_type_display',
-            'tq_degree',
-            'tq_degree_display',
-            'tq_img',
-            'is_share',
-            'is_del',
-            'created_at',
-            'updated_at',
-            'creat_user',
-            'options',
+            "id",
+            "name",
+            "subject",
+            "score",
+            "tq_type",
+            "tq_type_display",
+            "tq_degree",
+            "tq_degree_display",
+            "tq_img",
+            "is_share",
+            "is_del",
+            "created_at",
+            "updated_at",
+            "creat_user",
+            "options",
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'creat_user', 'options', 'is_del']
+        read_only_fields = ["id", "created_at", "updated_at", "creat_user", "options", "is_del"]
 
 
 class QuestionCreateSerializer(serializers.ModelSerializer):
@@ -121,34 +121,48 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
 
     name = XSSSanitizedCharField(max_length=500)
     subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=SubjectInfo.objects.all(), source='subject', write_only=True
+        queryset=SubjectInfo.objects.all(), source="subject", write_only=True
     )
     options = OptionWriteSerializer(many=True, required=False)
 
     class Meta:
         model = TestQuestionInfo
-        fields = ['id', 'name', 'subject_id', 'score', 'tq_type', 'tq_degree', 'image', 'is_share', 'options']
-        read_only_fields = ['id']
+        fields = [
+            "id",
+            "name",
+            "subject_id",
+            "score",
+            "tq_type",
+            "tq_degree",
+            "image",
+            "is_share",
+            "options",
+        ]
+        read_only_fields = ["id"]
 
     def validate(self, attrs):
         """
         객관식(xz)인 경우 최소 2개 이상의 옵션 필요.
         정답 옵션이 최소 1개 이상 있어야 함.
         """
-        tq_type = attrs.get('tq_type', 'xz')
-        options = attrs.get('options', [])
+        tq_type = attrs.get("tq_type", "xz")
+        options = attrs.get("options", [])
 
-        if tq_type == 'xz':
+        if tq_type == "xz":
             if len(options) < 2:
-                raise serializers.ValidationError({'options': '객관식 문제는 최소 2개 이상의 옵션이 필요합니다.'})
-            if not any(opt.get('is_right') for opt in options):
-                raise serializers.ValidationError({'options': '최소 1개 이상의 정답 옵션이 필요합니다.'})
+                raise serializers.ValidationError(
+                    {"options": "객관식 문제는 최소 2개 이상의 옵션이 필요합니다."}
+                )
+            if not any(opt.get("is_right") for opt in options):
+                raise serializers.ValidationError(
+                    {"options": "최소 1개 이상의 정답 옵션이 필요합니다."}
+                )
         return attrs
 
     @transaction.atomic
     def create(self, validated_data):
-        options_data = validated_data.pop('options', [])
-        validated_data['create_user'] = self.context['request'].user
+        options_data = validated_data.pop("options", [])
+        validated_data["create_user"] = self.context["request"].user
 
         question = TestQuestionInfo.objects.create(**validated_data)
 
@@ -166,31 +180,44 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
 
     name = XSSSanitizedCharField(max_length=500, required=False)
     subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=SubjectInfo.objects.all(), source='subject', write_only=True, required=False
+        queryset=SubjectInfo.objects.all(), source="subject", write_only=True, required=False
     )
     options = OptionWriteSerializer(many=True, required=False)
 
     class Meta:
         model = TestQuestionInfo
-        fields = ['name', 'subject_id', 'score', 'tq_type', 'tq_degree', 'image', 'is_share', 'options']
+        fields = [
+            "name",
+            "subject_id",
+            "score",
+            "tq_type",
+            "tq_degree",
+            "image",
+            "is_share",
+            "options",
+        ]
 
     def validate(self, attrs):
         """
         객관식 문제에 대한 옵션 검증 (update 시에도 적용).
         """
-        tq_type = attrs.get('tq_type', self.instance.tq_type if self.instance else 'xz')
-        options = attrs.get('options')
+        tq_type = attrs.get("tq_type", self.instance.tq_type if self.instance else "xz")
+        options = attrs.get("options")
 
-        if options is not None and tq_type == 'xz':
+        if options is not None and tq_type == "xz":
             if len(options) < 2:
-                raise serializers.ValidationError({'options': '객관식 문제는 최소 2개 이상의 옵션이 필요합니다.'})
-            if not any(opt.get('is_right') for opt in options):
-                raise serializers.ValidationError({'options': '최소 1개 이상의 정답 옵션이 필요합니다.'})
+                raise serializers.ValidationError(
+                    {"options": "객관식 문제는 최소 2개 이상의 옵션이 필요합니다."}
+                )
+            if not any(opt.get("is_right") for opt in options):
+                raise serializers.ValidationError(
+                    {"options": "최소 1개 이상의 정답 옵션이 필요합니다."}
+                )
         return attrs
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        options_data = validated_data.pop('options', None)
+        options_data = validated_data.pop("options", None)
 
         # Update question fields
         for attr, value in validated_data.items():
@@ -202,7 +229,7 @@ class QuestionUpdateSerializer(serializers.ModelSerializer):
             existing_option_ids = set()
 
             for option_data in options_data:
-                option_id = option_data.pop('id', None)
+                option_id = option_data.pop("id", None)
                 if option_id:
                     # Update existing option
                     option = OptionInfo.objects.filter(id=option_id, test_question=instance).first()
