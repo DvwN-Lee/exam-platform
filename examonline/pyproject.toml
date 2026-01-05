@@ -25,6 +25,9 @@ dev = [
     "pytest-django>=4.9",
     "pytest-cov>=6.0",
     "ipython>=8.30",
+    "mypy>=1.13",
+    "django-stubs>=5.1",
+    "djangorestframework-stubs>=3.15",
 ]
 
 [build-system]
@@ -34,6 +37,8 @@ build-backend = "hatchling.build"
 [tool.ruff]
 line-length = 100
 target-version = "py314"
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "F",   # pyflakes
@@ -71,3 +76,16 @@ addopts = [
 filterwarnings = [
     "ignore::pytest.PytestCollectionWarning",
 ]
+
+[tool.mypy]
+python_version = "3.14"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+check_untyped_defs = true
+disallow_any_generics = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+
+[tool.django-stubs]
+django_settings_module = "config.local"
