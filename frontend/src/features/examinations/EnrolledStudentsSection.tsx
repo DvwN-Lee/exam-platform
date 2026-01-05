@@ -76,7 +76,7 @@ export function EnrolledStudentsSection({
                         <span className="text-muted-foreground">-</span>
                       )}
                     </td>
-                    <td className="p-3 text-sm">{student.email}</td>
+                    <td className="p-3 text-sm">{student.username}</td>
                     <td className="p-3 text-sm">
                       {student.student_school || (
                         <span className="text-muted-foreground">-</span>

@@ -190,7 +190,7 @@ export function AnalyticsPage() {
                       <div>
                         <div className="font-medium">{question.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {question.subject?.subject_name || question.subject} • {question.type} • {question.score}점
+                          {typeof question.subject === 'object' ? question.subject?.subject_name : question.subject} • {question.type} • {question.score}점
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -217,7 +217,7 @@ export function AnalyticsPage() {
                       <div>
                         <div className="font-medium">{exam.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {exam.subject?.subject_name || exam.subject} • {exam.student_count}명 응시
+                          {typeof exam.subject === 'object' ? exam.subject?.subject_name : exam.subject} • {exam.student_count}명 응시
                         </div>
                       </div>
                       <div className="rounded bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
