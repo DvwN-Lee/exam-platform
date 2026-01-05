@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- 유틸리티 함수 export 필요 */
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 

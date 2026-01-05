@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { authApi } from '@/api/auth'
+import { getFieldErrorMessage } from '@/utils/error'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -42,12 +43,8 @@ export function ChangePasswordPage() {
       reset()
       navigate({ to: '/profile' })
     },
-    onError: (error: any) => {
-      const errorMessage =
-        error.response?.data?.old_password?.[0] ||
-        error.response?.data?.detail ||
-        '비밀번호 변경에 실패했습니다.'
-      toast.error(errorMessage)
+    onError: (error: unknown) => {
+      toast.error(getFieldErrorMessage(error, 'old_password', '비밀번호 변경에 실패했습니다.'))
     },
   })
 

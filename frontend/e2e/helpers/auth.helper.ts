@@ -86,11 +86,19 @@ export async function getStoredTokens(page: Page): Promise<{
 /**
  * localStorage에 토큰 및 user 정보 직접 설정 (API 로그인 후 사용)
  */
+interface StoredUser {
+  id: number
+  username: string
+  email: string
+  nick_name: string
+  user_type: 'student' | 'teacher'
+}
+
 export async function setStoredTokens(
   page: Page,
   accessToken: string,
   refreshToken: string,
-  user?: any
+  user?: StoredUser
 ) {
   await page.evaluate(
     ({ access, refresh, userData }) => {

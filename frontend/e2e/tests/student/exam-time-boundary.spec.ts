@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test } from '@playwright/test'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 import {
   createAndLoginStudent,
@@ -7,7 +7,7 @@ import {
   createTestPaper,
   cleanupTestData,
 } from '../../helpers/data-factory.helper'
-import { loginAsStudent, loginAsTeacher } from '../../helpers/auth.helper'
+import { loginAsStudent } from '../../helpers/auth.helper'
 import {
   apiCreateExamination,
   apiEnrollStudents,
@@ -422,7 +422,7 @@ test.describe('Exam Time Boundary', () => {
       })
 
       await test.step('페이지 새로고침', async () => {
-        const currentUrl = page.url()
+        const _currentUrl = page.url()
         await page.reload()
         await waitForLoadingComplete(page)
 

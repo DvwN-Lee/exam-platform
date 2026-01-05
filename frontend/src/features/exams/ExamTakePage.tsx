@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -60,25 +60,41 @@ export function ExamTakePage() {
     },
   })
 
+  // 시험 시작 핸들러
+  const handleStartExam = useCallback(() => {
+    startExamMutation.mutate()
+  }, [startExamMutation])
+
+  // 시간 만료 핸들러
+  const handleTimeUp = useCallback(() => {
+    toast.warning('시험 시간이 종료되었습니다. 자동으로 제출됩니다.')
+    submitExamMutation.mutate()
+  }, [submitExamMutation])
+
+  // 시험 시작
   useEffect(() => {
     if (examInfo && !submissionId) {
-      startExamMutation.mutate()
+      handleStartExam()
     }
-  }, [examInfo])
+  }, [examInfo, submissionId, handleStartExam])
 
+  // 타이머 (1초마다 감소)
   useEffect(() => {
-    if (timeRemaining <= 0 && submissionId) {
-      toast.warning('시험 시간이 종료되었습니다. 자동으로 제출됩니다.')
-      submitExamMutation.mutate()
-      return
-    }
+    if (!submissionId) return
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => (prev > 0 ? prev - 1 : 0))
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [timeRemaining, submissionId])
+  }, [submissionId])
+
+  // 시간 만료 감지
+  useEffect(() => {
+    if (timeRemaining <= 0 && submissionId) {
+      handleTimeUp()
+    }
+  }, [timeRemaining, submissionId, handleTimeUp])
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)

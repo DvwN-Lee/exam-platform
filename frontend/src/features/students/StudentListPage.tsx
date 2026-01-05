@@ -30,7 +30,7 @@ export function StudentListPage() {
     setFilters((prev) => ({ ...prev, search: searchText, page: 1 }))
   }
 
-  const handleFilterChange = (key: keyof StudentListParams, value: any) => {
+  const handleFilterChange = (key: keyof StudentListParams, value: string | undefined) => {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }))
   }
 

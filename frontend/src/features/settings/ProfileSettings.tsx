@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import apiClient from '@/api/client'
+import { getErrorMessage } from '@/utils/error'
 import { useAuthStore } from '@/stores/authStore'
 import { FadeIn } from '@/components/animation'
 
@@ -34,8 +35,10 @@ export function ProfileSettings() {
   })
 
   // 프로필 데이터가 로드되면 form 초기화
+  // 서버 데이터를 폼 상태로 동기화하는 의도적 패턴
   useEffect(() => {
     if (profileData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 서버 데이터 → 폼 상태 동기화
       setFormData({
         nick_name: profileData.nick_name,
         email: profileData.email,
@@ -56,8 +59,8 @@ export function ProfileSettings() {
       setUser({ ...user!, ...data })
       setIsEditing(false)
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || '프로필 수정에 실패했습니다.')
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, '프로필 수정에 실패했습니다.'))
     },
   })
 

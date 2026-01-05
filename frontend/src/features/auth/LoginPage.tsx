@@ -7,6 +7,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { authApi } from '@/api/auth'
+import { getErrorMessage } from '@/utils/error'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,8 +53,8 @@ export function LoginPage() {
       setAuth(data.user, data.access, data.refresh)
       navigate({ to: '/dashboard' })
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || '로그인에 실패했습니다.')
+    onError: (error: unknown) => {
+      toast.error(getErrorMessage(error, '로그인에 실패했습니다.'))
     },
   })
 

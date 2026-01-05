@@ -5,8 +5,6 @@ import {
   apiCreateQuestion,
   apiDeleteQuestion,
   apiGetTestPapers,
-  apiCreateTestPaper,
-  apiDeleteTestPaper,
   apiGetSubjects,
 } from '../../helpers/api.helper'
 import { createAndLoginTeacher } from '../../helpers/data-factory.helper'
@@ -161,7 +159,7 @@ test.describe('Data Integrity Verification', () => {
 
     test('Recent Questions가 실제 데이터 반환', async () => {
       const dashboard = await apiGetTeacherDashboard(teacherToken)
-      const questions = await apiGetQuestions(teacherToken)
+      const _questions = await apiGetQuestions(teacherToken)
 
       // 검증: recent_questions가 배열인지 확인
       expect(Array.isArray(dashboard.recent_questions)).toBe(true)

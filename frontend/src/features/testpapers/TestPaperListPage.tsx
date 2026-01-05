@@ -26,7 +26,7 @@ export function TestPaperListPage() {
       await testPaperApi.deleteTestPaper(id)
       refetch()
       toast.success('시험지가 삭제되었습니다.')
-    } catch (error) {
+    } catch {
       toast.error('시험지 삭제에 실패했습니다.')
     }
   }
