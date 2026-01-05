@@ -2,6 +2,11 @@ from django.db import models
 from django.utils import timezone
 
 from user.models import UserProfile, SubjectInfo
+from core.api.validators import (
+    validate_image_extension,
+    validate_image_size,
+    validate_image_mime_type,
+)
 
 
 # 시험 문제 정보
@@ -15,7 +20,14 @@ class TestQuestionInfo(models.Model):
     tq_degree = models.CharField(
         choices=(('jd', '쉬움'), ('zd', '보통'), ('kn', '어려움')), max_length=2, verbose_name='시험 난이도', default='jd'
     )
-    image = models.ImageField(upload_to='test_question/%Y/%m', max_length=200, verbose_name='시험 문제 사진', blank=True, null=True)
+    image = models.ImageField(
+        upload_to='test_question/%Y/%m',
+        max_length=200,
+        verbose_name='시험 문제 사진',
+        blank=True,
+        null=True,
+        validators=[validate_image_extension, validate_image_size, validate_image_mime_type],
+    )
     is_del = models.BooleanField(default=False, verbose_name='삭제 여부')
     is_share = models.BooleanField(default=False, verbose_name='공유 여부')
     create_time = models.DateTimeField(default=timezone.now, verbose_name='생성 시간')
