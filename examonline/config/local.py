@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 
 from .base import *
 
+# E2E Mock Time 활성화 (환경 변수로 제어)
+# E2E 테스트에서 시간 동기화 문제 해결을 위해 사용
+E2E_MOCK_TIME_ENABLED = os.getenv("E2E_MOCK_TIME_ENABLED", "false").lower() == "true"
+
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / ".env")
 

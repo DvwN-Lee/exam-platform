@@ -136,6 +136,7 @@ jobs:
           POSTGRES_USER: examuser
           POSTGRES_PASSWORD: exampass
           DJANGO_SETTINGS_MODULE: config.local
+          E2E_MOCK_TIME_ENABLED: "true"
         run: uv run python manage.py migrate
 
       - name: Create test subjects
@@ -145,6 +146,7 @@ jobs:
           POSTGRES_USER: examuser
           POSTGRES_PASSWORD: exampass
           DJANGO_SETTINGS_MODULE: config.local
+          E2E_MOCK_TIME_ENABLED: "true"
         run: |
           uv run python manage.py shell -c "
           from user.models import SubjectInfo
@@ -161,6 +163,7 @@ jobs:
           POSTGRES_USER: examuser
           POSTGRES_PASSWORD: exampass
           DJANGO_SETTINGS_MODULE: config.local
+          E2E_MOCK_TIME_ENABLED: "true"
         run: |
           uv run python manage.py runserver &
           sleep 10
