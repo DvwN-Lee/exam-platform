@@ -79,7 +79,8 @@ test.describe('Full Exam Flow Integration Test', () => {
     })
 
     await test.step('시험 시작', async () => {
-      // 시험은 과거 시간으로 생성되어 즉시 응시 가능
+      // 시험 시작 시간 대기 (시험은 +10초 후 시작으로 생성됨)
+      await page.waitForTimeout(12000) // 12초 대기 (10초 + 2초 버퍼)
 
       // 시험 카드 찾기 및 시작 버튼 클릭
       const examCard = page.locator(`text=${examTitle}`).locator('..')

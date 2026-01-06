@@ -103,10 +103,10 @@ test.describe('Student Exam Advanced Features', () => {
     testPaperId = testPaper.id
     console.log(`Created test paper: ${testPaperId}`)
 
-    // 시험 생성 (현재 시간으로 즉시 응시 가능)
-    // Backend: start_time >= now 검증, Taking API: now >= start_time 검증
+    // 시험 시작 시간 설정 (10초 후)
+    // Backend: start_time >= now 검증 통과를 위해 미래 시간 필요
     const now = new Date()
-    const startTime = now.toISOString()
+    const startTime = new Date(now.getTime() + 10 * 1000).toISOString()
 
     const examination = await apiCreateExamination(teacher.tokens.access, {
       name: `고급 기능 테스트 시험 ${Date.now()}`,
@@ -156,8 +156,13 @@ test.describe('Student Exam Advanced Features', () => {
     })
 
     await test.step('시험 시작', async () => {
-      // 내 시험 페이지로 이동 (시험은 과거 시간으로 생성되어 즉시 응시 가능)
+      // 내 시험 페이지로 이동
       await page.goto('/exams')
+      await waitForLoadingComplete(page)
+
+      // 시험 시작 시간 대기 (시험은 +10초 후 시작으로 생성됨)
+      await page.waitForTimeout(12000) // 12초 대기 (10초 + 2초 버퍼)
+      await page.reload()
       await waitForLoadingComplete(page)
 
       // 시험 응시 버튼 클릭
