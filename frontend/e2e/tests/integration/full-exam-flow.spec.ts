@@ -10,6 +10,7 @@ import {
   expectToBeOnDashboard,
   waitForLoadingComplete,
 } from '../../helpers/assertions.helper'
+import { setMockTime, resetMockTime } from '../../helpers/time.helper'
 
 /**
  * 통합 E2E 테스트: Teacher가 시험을 생성하고 Student가 응시하는 전체 플로우 검증
@@ -52,6 +53,12 @@ test.describe('Full Exam Flow Integration Test', () => {
   })
 
   test.afterAll(async () => {
+    // Mock 시간 초기화
+    console.log('=== Resetting mock time ===')
+    await resetMockTime().catch(() => {
+      console.log('Mock time reset skipped (API may not be available)')
+    })
+
     // 테스트 데이터 정리
     console.log('=== Cleaning up test data ===')
 
@@ -62,8 +69,8 @@ test.describe('Full Exam Flow Integration Test', () => {
     })
   })
 
-  // TODO: CI 환경 타이밍 문제로 임시 비활성화 (Issue #54 참조)
-  test.skip('Student가 시험 전체 과정을 완료할 수 있어야 함', async ({ page }) => {
+  // Mock 시간 시스템을 사용하여 CI 환경 타이밍 문제 해결 (Issue #54)
+  test('Student가 시험 전체 과정을 완료할 수 있어야 함', async ({ page }) => {
     const examTitle = examData.examination.name
 
     await test.step('Dashboard에서 시험 확인', async () => {
@@ -80,8 +87,13 @@ test.describe('Full Exam Flow Integration Test', () => {
     })
 
     await test.step('시험 시작', async () => {
-      // 시험 시작 시간 대기 (시험은 +10초 후 시작으로 생성됨)
-      await page.waitForTimeout(12000) // 12초 대기 (10초 + 2초 버퍼)
+      // Mock 시간을 시험 시작 시간으로 설정 (대기 없이 즉시 응시 가능)
+      console.log(`Setting mock time to exam start time: ${examData.examination.start_time}`)
+      await setMockTime(examData.examination.start_time)
+
+      // 페이지 새로고침하여 시간 변경 반영
+      await page.reload()
+      await waitForLoadingComplete(page)
 
       // 시험 카드 찾기 및 시작 버튼 클릭
       const examCard = page.locator(`text=${examTitle}`).locator('..')
