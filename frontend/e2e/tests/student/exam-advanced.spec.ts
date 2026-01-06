@@ -13,6 +13,7 @@ import {
   apiEnrollStudents,
 } from '../../helpers/api.helper'
 import { loginAsStudent } from '../../helpers/auth.helper'
+import { setMockTime, resetMockTime } from '../../helpers/time.helper'
 
 /**
  * Student 시험 고급 기능 테스트
@@ -29,6 +30,7 @@ test.describe('Student Exam Advanced Features', () => {
   const questionIds: number[] = []
   let testPaperId: number
   let examinationId: number
+  let examStartTime: string
 
   test.beforeAll(async () => {
     // Teacher & Student 계정 생성
@@ -106,12 +108,12 @@ test.describe('Student Exam Advanced Features', () => {
     // 시험 시작 시간 설정 (10초 후)
     // Backend: start_time >= now 검증 통과를 위해 미래 시간 필요
     const now = new Date()
-    const startTime = new Date(now.getTime() + 10 * 1000).toISOString()
+    examStartTime = new Date(now.getTime() + 10 * 1000).toISOString()
 
     const examination = await apiCreateExamination(teacher.tokens.access, {
       name: `고급 기능 테스트 시험 ${Date.now()}`,
       subject_id: subjectId,
-      start_time: startTime,
+      start_time: examStartTime,
       duration: 30, // 30분
       exam_type: 'pt',
       papers: [{ paper_id: testPaperId }],
@@ -129,6 +131,11 @@ test.describe('Student Exam Advanced Features', () => {
   })
 
   test.afterAll(async () => {
+    // Mock 시간 초기화
+    await resetMockTime().catch(() => {
+      console.log('Mock time reset skipped (API may not be available)')
+    })
+
     // 테스트 데이터 정리
     await cleanupTestData(teacher.tokens.access, {
       examinationIds: [examinationId],
@@ -137,8 +144,8 @@ test.describe('Student Exam Advanced Features', () => {
     })
   })
 
-  // TODO: CI 환경 타이밍 문제로 임시 비활성화 (Issue #54 참조)
-  test.skip('Student가 시험 고급 기능을 사용할 수 있어야 함', async ({ page }) => {
+  // Mock 시간 시스템을 사용하여 CI 환경 타이밍 문제 해결 (Issue #54)
+  test('Student가 시험 고급 기능을 사용할 수 있어야 함', async ({ page }) => {
     // 브라우저 콘솔 로그 캡처
     page.on('console', (msg) => {
       if (msg.type() === 'error' || msg.type() === 'warning') {
@@ -157,13 +164,12 @@ test.describe('Student Exam Advanced Features', () => {
     })
 
     await test.step('시험 시작', async () => {
+      // Mock 시간을 시험 시작 시간으로 설정 (대기 없이 즉시 응시 가능)
+      console.log(`Setting mock time to exam start time: ${examStartTime}`)
+      await setMockTime(examStartTime)
+
       // 내 시험 페이지로 이동
       await page.goto('/exams')
-      await waitForLoadingComplete(page)
-
-      // 시험 시작 시간 대기 (시험은 +10초 후 시작으로 생성됨)
-      await page.waitForTimeout(12000) // 12초 대기 (10초 + 2초 버퍼)
-      await page.reload()
       await waitForLoadingComplete(page)
 
       // 시험 응시 버튼 클릭
