@@ -43,8 +43,12 @@ export async function waitForLoadingComplete(page: Page) {
     // 로딩 스피너가 없는 경우 무시
   }
 
-  // 네트워크 요청이 완료될 때까지 대기
-  await page.waitForLoadState('networkidle', { timeout: 10000 })
+  // 네트워크 요청이 완료될 때까지 대기 (시험 페이지는 Timer/Heartbeat로 인해 networkidle 불가)
+  try {
+    await page.waitForLoadState('networkidle', { timeout: 5000 })
+  } catch {
+    await page.waitForLoadState('domcontentloaded', { timeout: 3000 })
+  }
 }
 
 /**

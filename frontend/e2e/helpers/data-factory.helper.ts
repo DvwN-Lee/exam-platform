@@ -182,9 +182,11 @@ export async function createExamination(
 ) {
   const timestamp = Date.now()
 
-  // 5초 후에 시작하는 시험 (네트워크 지연 고려, 곧 응시 가능)
+  // 시험 시작 시간 설정 (10초 후)
+  // Backend: start_time >= now 검증 통과를 위해 미래 시간 필요
+  // 테스트에서 대기 후 시험 시작 API 호출 시점에 start_time 도래
   const now = new Date()
-  const startTime = new Date(now.getTime() + 5 * 1000).toISOString()
+  const startTime = new Date(now.getTime() + 10 * 1000).toISOString()
 
   const examinationData = {
     name: `테스트 시험 ${timestamp}`,
