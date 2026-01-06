@@ -182,9 +182,9 @@ export async function createExamination(
 ) {
   const timestamp = Date.now()
 
-  // 5초 후에 시작하는 시험 (네트워크 지연 고려, 곧 응시 가능)
+  // 즉시 응시 가능한 시험 (1분 전 시작으로 설정하여 CI 환경 시간 동기화 문제 방지)
   const now = new Date()
-  const startTime = new Date(now.getTime() + 5 * 1000).toISOString()
+  const startTime = new Date(now.getTime() - 60 * 1000).toISOString()
 
   const examinationData = {
     name: `테스트 시험 ${timestamp}`,
