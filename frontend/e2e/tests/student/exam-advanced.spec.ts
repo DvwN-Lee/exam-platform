@@ -9,8 +9,9 @@ import {
   apiGetSubjects,
   apiCreateQuestion,
   apiCreateTestPaper,
-  apiCreateExamination,
-  apiEnrollStudents,
+  apiCreateExaminationE2E,
+  apiEnrollStudentsE2E,
+  apiForceStartExam,
 } from '../../helpers/api.helper'
 import { loginAsStudent } from '../../helpers/auth.helper'
 
@@ -103,12 +104,11 @@ test.describe('Student Exam Advanced Features', () => {
     testPaperId = testPaper.id
     console.log(`Created test paper: ${testPaperId}`)
 
-    // 시험 시작 시간 설정 (10초 후)
-    // Backend: start_time >= now 검증 통과를 위해 미래 시간 필요
+    // E2E API 사용: 현재 시간으로 설정하여 즉시 시작 가능
     const now = new Date()
-    const startTime = new Date(now.getTime() + 10 * 1000).toISOString()
+    const startTime = now.toISOString()
 
-    const examination = await apiCreateExamination(teacher.tokens.access, {
+    const examination = await apiCreateExaminationE2E(teacher.tokens.access, {
       name: `고급 기능 테스트 시험 ${Date.now()}`,
       subject_id: subjectId,
       start_time: startTime,
@@ -119,12 +119,12 @@ test.describe('Student Exam Advanced Features', () => {
     examinationId = examination.id
     console.log(`Created examination: ${examinationId}`)
 
-    // Student 등록
+    // Student 등록 (E2E API 사용)
     if (student.studentId) {
-      await apiEnrollStudents(teacher.tokens.access, examinationId, [
+      await apiEnrollStudentsE2E(teacher.tokens.access, examinationId, [
         student.studentId,
       ])
-      console.log('✓ Student enrolled in examination')
+      console.log('Student enrolled in examination')
     }
   })
 
@@ -137,8 +137,7 @@ test.describe('Student Exam Advanced Features', () => {
     })
   })
 
-  // TODO: CI 환경 타이밍 문제로 임시 비활성화 (Issue #54 참조)
-  test.skip('Student가 시험 고급 기능을 사용할 수 있어야 함', async ({ page }) => {
+  test('Student가 시험 고급 기능을 사용할 수 있어야 함', async ({ page }) => {
     // 브라우저 콘솔 로그 캡처
     page.on('console', (msg) => {
       if (msg.type() === 'error' || msg.type() === 'warning') {
@@ -153,28 +152,15 @@ test.describe('Student Exam Advanced Features', () => {
       })
       await waitForLoadingComplete(page)
 
-      console.log('✓ Student logged in')
+      console.log('Student logged in')
     })
 
-    await test.step('시험 시작', async () => {
-      // 내 시험 페이지로 이동
-      await page.goto('/exams')
-      await waitForLoadingComplete(page)
+    await test.step('시험 시작 (E2E API 사용)', async () => {
+      // E2E API를 통해 시험 강제 시작 (시간 검증 우회)
+      await apiForceStartExam(student.tokens.access, examinationId)
 
-      // 시험 시작 시간 대기 (시험은 +10초 후 시작으로 생성됨)
-      await page.waitForTimeout(12000) // 12초 대기 (10초 + 2초 버퍼)
-      await page.reload()
-      await waitForLoadingComplete(page)
-
-      // 시험 응시 버튼 클릭
-      const examButtons = page.locator('button:has-text("응시하기")')
-      if ((await examButtons.count()) > 0) {
-        await examButtons.first().click()
-      } else {
-        // 대체: 직접 URL로 이동
-        await page.goto(`/exams/${examinationId}/take`)
-      }
-
+      // 시험 응시 페이지로 직접 이동
+      await page.goto(`/exams/${examinationId}/take`)
       await waitForLoadingComplete(page)
 
       // 타이머 요소가 보일 때까지 명시적 대기
@@ -183,7 +169,7 @@ test.describe('Student Exam Advanced Features', () => {
         page.locator('text=/\\d{2}:\\d{2}:\\d{2}/')
       ).toBeVisible({ timeout: 5000 })
 
-      console.log('✓ Exam started')
+      console.log('Exam started')
     })
 
     await test.step('답안 작성 및 자동 임시 저장', async () => {
