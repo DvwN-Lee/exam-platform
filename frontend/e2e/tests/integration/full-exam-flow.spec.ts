@@ -63,7 +63,7 @@ test.describe('Full Exam Flow Integration Test', () => {
   })
 
   test('Student가 시험 전체 과정을 완료할 수 있어야 함', async ({ page }) => {
-    const examTitle = examData.examination.name
+    const examTitle = examData.examination.exam_name
 
     await test.step('Dashboard에서 시험 확인', async () => {
       await loginAsStudent(page, {
