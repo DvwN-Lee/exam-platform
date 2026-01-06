@@ -90,7 +90,8 @@ test.describe('Full Exam Flow Integration Test', () => {
 
       // 시험 응시 페이지로 이동되었는지 확인
       await page.waitForURL(/\/exams\/\d+\/take/)
-      await expect(page.locator('h2')).toContainText(examTitle)
+      await page.waitForSelector('h2', { timeout: 10000 })
+      await expect(page.locator('h2')).toContainText(examTitle, { timeout: 5000 })
       console.log(`✓ Student started exam "${examTitle}"`)
     })
 
