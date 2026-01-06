@@ -126,9 +126,62 @@ export async function apiEnrollStudents(token: string, examId: number, studentId
  */
 export async function apiStartExam(token: string, examId: number) {
   const client = createApiClient(token)
-  const response = await client.post(`/examinations/${examId}/start/`)
+  const response = await client.post(`/exams/${examId}/start/`)
 
   return response.data
+}
+
+/**
+ * 시험 시작 시간까지 정밀 대기 후 API로 시험 시작
+ * CI 환경에서 타이밍 문제를 해결하기 위한 유틸리티 함수
+ *
+ * @param token - 인증 토큰
+ * @param examId - 시험 ID
+ * @param startTime - 시험 시작 시간 (Date 객체)
+ * @param bufferMs - 추가 버퍼 시간 (기본 2000ms)
+ */
+export async function waitAndStartExam(
+  token: string,
+  examId: number,
+  startTime: Date,
+  bufferMs: number = 2000
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
+  const now = Date.now()
+  const targetTime = startTime.getTime() + bufferMs
+  const waitTime = Math.max(0, targetTime - now)
+
+  // 정밀 대기
+  if (waitTime > 0) {
+    console.log(`Waiting ${waitTime}ms for exam start time...`)
+    await new Promise(resolve => setTimeout(resolve, waitTime))
+  }
+
+  // Retry 로직 (최대 3회)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const data = await apiStartExam(token, examId)
+      console.log(`Exam started successfully on attempt ${attempt}`)
+      return { success: true, data }
+    } catch (error: unknown) {
+      const axiosError = error as { response?: { status?: number; data?: { detail?: string } } }
+
+      // "아직 시험 시작 시간이 아닙니다" 에러인 경우 추가 대기
+      if (axiosError.response?.status === 400 &&
+          axiosError.response?.data?.detail?.includes('시작 시간')) {
+        console.log(`Attempt ${attempt}: Start time not reached, waiting 1s...`)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        continue
+      }
+
+      // 다른 에러는 즉시 반환
+      return {
+        success: false,
+        error: axiosError.response?.data?.detail || 'Unknown error'
+      }
+    }
+  }
+
+  return { success: false, error: 'Max retry attempts exceeded' }
 }
 
 /**

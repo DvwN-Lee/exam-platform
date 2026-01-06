@@ -173,6 +173,7 @@ export async function createTestPaper(
 
 /**
  * API를 통한 시험 생성
+ * @returns examination 객체 + _startTime (정밀 대기용 Date 객체)
  */
 export async function createExamination(
   token: string,
@@ -186,12 +187,13 @@ export async function createExamination(
   // Backend: start_time >= now 검증 통과를 위해 미래 시간 필요
   // 테스트에서 대기 후 시험 시작 API 호출 시점에 start_time 도래
   const now = new Date()
-  const startTime = new Date(now.getTime() + 10 * 1000).toISOString()
+  const startTime = new Date(now.getTime() + 10 * 1000)
+  const startTimeISO = startTime.toISOString()
 
   const examinationData = {
     name: `테스트 시험 ${timestamp}`,
     subject_id: subjectId,
-    start_time: startTime,
+    start_time: startTimeISO,
     duration: 60, // 60분
     exam_type: 'pt' as const, // 보통 유형
     papers: [{ paper_id: testPaperId }],
@@ -204,7 +206,11 @@ export async function createExamination(
     await apiEnrollStudents(token, examination.id, studentIds)
   }
 
-  return examination
+  // _startTime: waitAndStartExam()에서 정밀 대기용으로 사용
+  return {
+    ...examination,
+    _startTime: startTime,
+  }
 }
 
 /**
