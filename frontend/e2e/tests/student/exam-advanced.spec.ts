@@ -103,9 +103,10 @@ test.describe('Student Exam Advanced Features', () => {
     testPaperId = testPaper.id
     console.log(`Created test paper: ${testPaperId}`)
 
-    // 시험 생성 (1분 전 시작으로 즉시 응시 가능, CI 환경 시간 동기화 문제 방지)
+    // 시험 생성 (현재 시간으로 즉시 응시 가능)
+    // Backend: start_time >= now 검증, Taking API: now >= start_time 검증
     const now = new Date()
-    const startTime = new Date(now.getTime() - 60 * 1000).toISOString()
+    const startTime = now.toISOString()
 
     const examination = await apiCreateExamination(teacher.tokens.access, {
       name: `고급 기능 테스트 시험 ${Date.now()}`,
