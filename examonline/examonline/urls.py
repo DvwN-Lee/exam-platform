@@ -14,6 +14,9 @@ ADMIN_URL = os.getenv("DJANGO_ADMIN_URL", "admin/")
 if not ADMIN_URL.endswith("/"):
     ADMIN_URL += "/"
 
+# E2E 테스트 API 활성화 여부 (Production에서는 반드시 false)
+E2E_TEST_API_ENABLED = os.getenv("E2E_TEST_API_ENABLED", "false").lower() == "true"
+
 urlpatterns = [
     # Django Admin (경로 환경 변수화)
     path(ADMIN_URL, admin.site.urls),
@@ -25,6 +28,12 @@ urlpatterns = [
     path("api/v1/", include("core.api.urls")),
     # path('api/v1/', include('operation.api.urls')),
 ]
+
+# E2E 테스트 전용 API (E2E_TEST_API_ENABLED=true일 때만 활성화)
+if E2E_TEST_API_ENABLED:
+    urlpatterns += [
+        path("api/v1/e2e/", include("examination.api.e2e_urls")),
+    ]
 
 # API 문서 및 정적 파일은 DEBUG 모드에서만 활성화
 if settings.DEBUG:

@@ -286,7 +286,7 @@ class TestExamStart:
         ExamStudentsInfo.objects.create(exam=ongoing_examination, student=student_info)
 
         # 첫 번째 시작
-        TestScores.objects.create(
+        test_score = TestScores.objects.create(
             exam=ongoing_examination,
             user=student_info,
             test_paper=ongoing_examination.exampaperinfo_set.first().paper,
@@ -297,7 +297,10 @@ class TestExamStart:
         response = api_client.post(f"/api/v1/exams/{ongoing_examination.id}/start/")
 
         assert response.status_code == 200
-        assert "이미 시작한 시험입니다" in response.data["detail"]
+        # 이미 시작된 시험도 submission_id 반환 (Frontend 호환)
+        assert "submission_id" in response.data
+        assert response.data["submission_id"] == test_score.id
+        assert "started_at" in response.data
 
     def test_start_exam_already_submitted_fails(
         self, api_client, student_user, ongoing_examination

@@ -51,7 +51,7 @@ test.describe('Student Exam Taking', () => {
     await waitForLoadingComplete(page)
 
     // Dashboard에서 시험 확인
-    const examTitle = examData.examination.name
+    const examTitle = examData.examination.exam_name
     await expect(page.locator(`text=${examTitle}`).first()).toBeVisible({ timeout: 10000 })
 
     console.log('✓ Exam visible on Student Dashboard')

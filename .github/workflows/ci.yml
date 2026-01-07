@@ -163,6 +163,7 @@ jobs:
           POSTGRES_USER: examuser
           POSTGRES_PASSWORD: exampass
           DJANGO_SETTINGS_MODULE: config.local
+          E2E_TEST_API_ENABLED: "true"
           E2E_MOCK_TIME_ENABLED: "true"
         run: |
           uv run python manage.py runserver &
