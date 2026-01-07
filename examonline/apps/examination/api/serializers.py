@@ -12,6 +12,7 @@ from user.models import StudentsInfo, SubjectInfo
 
 from core.api.fields import XSSSanitizedCharField
 from core.api.mixins import CreatUserSerializerMixin
+from core.time import get_now
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -248,7 +249,7 @@ class ExaminationCreateSerializer(serializers.ModelSerializer):
         duration = attrs.get("duration")
 
         # 시작 시간 검증
-        if start_time and start_time < timezone.now():
+        if start_time and start_time < get_now():
             raise serializers.ValidationError(
                 {"start_time": "시작 시간은 현재 시간 이후여야 합니다."}
             )
@@ -317,7 +318,7 @@ class ExaminationUpdateSerializer(serializers.ModelSerializer):
         duration = attrs.get("duration")
 
         # 시작 시간 검증
-        if start_time < timezone.now():
+        if start_time < get_now():
             raise serializers.ValidationError(
                 {"start_time": "시작 시간은 현재 시간 이후여야 합니다."}
             )

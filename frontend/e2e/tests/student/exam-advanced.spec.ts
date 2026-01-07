@@ -14,6 +14,7 @@ import {
   apiForceStartExam,
 } from '../../helpers/api.helper'
 import { loginAsStudent } from '../../helpers/auth.helper'
+import { setMockTime, resetMockTime } from '../../helpers/time.helper'
 
 /**
  * Student 시험 고급 기능 테스트
@@ -30,6 +31,7 @@ test.describe('Student Exam Advanced Features', () => {
   const questionIds: number[] = []
   let testPaperId: number
   let examinationId: number
+  let examStartTime: string
 
   test.beforeAll(async () => {
     // Teacher & Student 계정 생성
@@ -106,12 +108,12 @@ test.describe('Student Exam Advanced Features', () => {
 
     // E2E API 사용: 현재 시간으로 설정하여 즉시 시작 가능
     const now = new Date()
-    const startTime = now.toISOString()
+    examStartTime = now.toISOString()
 
     const examination = await apiCreateExaminationE2E(teacher.tokens.access, {
       name: `고급 기능 테스트 시험 ${Date.now()}`,
       subject_id: subjectId,
-      start_time: startTime,
+      start_time: examStartTime,
       duration: 30, // 30분
       exam_type: 'pt',
       papers: [{ paper_id: testPaperId }],
@@ -129,6 +131,11 @@ test.describe('Student Exam Advanced Features', () => {
   })
 
   test.afterAll(async () => {
+    // Mock 시간 초기화
+    await resetMockTime().catch(() => {
+      console.log('Mock time reset skipped (API may not be available)')
+    })
+
     // 테스트 데이터 정리
     await cleanupTestData(teacher.tokens.access, {
       examinationIds: [examinationId],
@@ -137,6 +144,7 @@ test.describe('Student Exam Advanced Features', () => {
     })
   })
 
+  // E2E API를 사용하여 CI 환경 타이밍 문제 해결 (Issue #54)
   test('Student가 시험 고급 기능을 사용할 수 있어야 함', async ({ page }) => {
     // 브라우저 콘솔 로그 캡처
     page.on('console', (msg) => {

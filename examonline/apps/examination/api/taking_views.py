@@ -16,6 +16,8 @@ from testpaper.models import TestPaperTestQ, TestScores
 from testquestion.models import OptionInfo, TestQuestionInfo
 from user.models import StudentsInfo
 
+from core.time import get_now
+
 from .serializers import (
     AnswerSubmissionSerializer,
     ExamQuestionSerializer,
@@ -58,7 +60,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
             )
 
         # 학생이 등록된 시험 중 아직 제출하지 않은 시험 조회
-        now = timezone.now()
+        now = get_now()
         student_exams = (
             ExamStudentsInfo.objects.filter(student=student_info)
             .select_related("exam")
@@ -241,7 +243,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         # 시험 시간 확인 (새로 시작하는 경우에만 검증)
-        now = timezone.now()
+        now = get_now()
         if now < exam.start_time:
             return Response(
                 {"detail": "아직 시험 시작 시간이 아닙니다."}, status=status.HTTP_400_BAD_REQUEST
@@ -319,7 +321,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
             )
 
         # 제한 시간 확인
-        now = timezone.now()
+        now = get_now()
         is_auto_submitted = False
 
         if now > exam.end_time:
@@ -466,7 +468,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
         else:
             time_remaining = None
             if test_score.start_time and not test_score.is_submitted:
-                now = timezone.now()
+                now = get_now()
                 remaining_seconds = (exam.end_time - now).total_seconds()
                 time_remaining = max(0, int(remaining_seconds / 60))
 
@@ -522,7 +524,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
         test_score.save()
 
         return Response(
-            {"detail": "임시 저장되었습니다.", "saved_at": timezone.now()},
+            {"detail": "임시 저장되었습니다.", "saved_at": get_now()},
             status=status.HTTP_200_OK,
         )
 

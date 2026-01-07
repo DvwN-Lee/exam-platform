@@ -10,6 +10,7 @@ import {
   expectToBeOnDashboard,
   waitForLoadingComplete,
 } from '../../helpers/assertions.helper'
+import { setMockTime, resetMockTime } from '../../helpers/time.helper'
 
 /**
  * 통합 E2E 테스트: Teacher가 시험을 생성하고 Student가 응시하는 전체 플로우 검증
@@ -52,6 +53,12 @@ test.describe('Full Exam Flow Integration Test', () => {
   })
 
   test.afterAll(async () => {
+    // Mock 시간 초기화
+    console.log('=== Resetting mock time ===')
+    await resetMockTime().catch(() => {
+      console.log('Mock time reset skipped (API may not be available)')
+    })
+
     // 테스트 데이터 정리
     console.log('=== Cleaning up test data ===')
 
@@ -62,6 +69,7 @@ test.describe('Full Exam Flow Integration Test', () => {
     })
   })
 
+  // E2E API와 Mock 시간 시스템을 사용하여 CI 환경 타이밍 문제 해결 (Issue #54)
   test('Student가 시험 전체 과정을 완료할 수 있어야 함', async ({ page }) => {
     const examTitle = examData.examination.exam_name
 
