@@ -149,8 +149,9 @@ class E2EExaminationViewSet(viewsets.ViewSet):
                 )
             return Response(
                 {
+                    "submission_id": existing_score.id,
                     "detail": "이미 시작한 시험입니다.",
-                    "start_time": existing_score.start_time,
+                    "started_at": existing_score.start_time,
                 },
                 status=status.HTTP_200_OK,
             )
