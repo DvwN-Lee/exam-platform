@@ -10,7 +10,7 @@ import {
   expectToBeOnDashboard,
   waitForLoadingComplete,
 } from '../../helpers/assertions.helper'
-import { setMockTime, resetMockTime } from '../../helpers/time.helper'
+import { resetMockTime } from '../../helpers/time.helper'
 
 /**
  * 통합 E2E 테스트: Teacher가 시험을 생성하고 Student가 응시하는 전체 플로우 검증

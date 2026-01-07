@@ -14,7 +14,7 @@ import {
   apiForceStartExam,
 } from '../../helpers/api.helper'
 import { loginAsStudent } from '../../helpers/auth.helper'
-import { setMockTime, resetMockTime } from '../../helpers/time.helper'
+import { resetMockTime } from '../../helpers/time.helper'
 
 /**
  * Student 시험 고급 기능 테스트
