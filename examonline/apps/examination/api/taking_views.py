@@ -243,8 +243,10 @@ class ExamTakingViewSet(viewsets.ViewSet):
                 return Response(
                     {"detail": "이미 제출한 시험입니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
+            # Frontend 호환: submission_id 포함하여 반환
             return Response(
                 {
+                    "submission_id": existing_score.id,
                     "detail": "이미 시작한 시험입니다.",
                     "start_time": existing_score.start_time,
                 },

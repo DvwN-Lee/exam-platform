@@ -10,12 +10,24 @@ export interface TestCredentials {
  */
 export async function login(page: Page, credentials: TestCredentials) {
   await page.goto('/login')
-  await page.fill('input[id="username"]', credentials.username)
-  await page.fill('input[id="password"]', credentials.password)
-  await page.click('button[type="submit"]')
+
+  // 페이지 로딩 완료 대기
+  await page.waitForLoadState('networkidle')
+
+  // 입력 필드 대기 및 입력
+  const usernameInput = page.locator('input[id="username"]')
+  const passwordInput = page.locator('input[id="password"]')
+
+  await usernameInput.waitFor({ state: 'visible', timeout: 10000 })
+  await usernameInput.fill(credentials.username)
+  await passwordInput.fill(credentials.password)
+
+  // 로그인 버튼 클릭 (form 내부 submit 버튼 직접 선택)
+  const submitButton = page.locator('form button[type="submit"]')
+  await submitButton.click()
 
   // Dashboard로 리다이렉트될 때까지 대기
-  await page.waitForURL('/dashboard')
+  await page.waitForURL('/dashboard', { timeout: 15000 })
 }
 
 /**
@@ -130,4 +142,25 @@ export async function clearAuth(page: Page) {
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('auth-storage')
   })
+}
+
+/**
+ * API 토큰을 사용하여 로그인 상태 설정 후 Dashboard로 이동
+ * UI 로그인 대신 API에서 받은 토큰을 직접 localStorage에 설정
+ */
+export async function loginWithTokens(
+  page: Page,
+  tokens: { access: string; refresh: string },
+  user: StoredUser
+) {
+  // 먼저 페이지를 로드하여 localStorage에 접근 가능하게 함
+  await page.goto('/login')
+  await page.waitForLoadState('domcontentloaded')
+
+  // 토큰 및 사용자 정보 설정
+  await setStoredTokens(page, tokens.access, tokens.refresh, user)
+
+  // Dashboard로 이동
+  await page.goto('/dashboard')
+  await page.waitForURL('/dashboard', { timeout: 15000 })
 }
