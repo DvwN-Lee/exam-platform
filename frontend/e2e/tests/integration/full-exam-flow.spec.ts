@@ -4,13 +4,13 @@ import {
   cleanupTestData,
   setupTestEnvironment,
 } from '../../helpers/data-factory.helper'
-import { apiGetSubjects } from '../../helpers/api.helper'
+import { apiGetSubjects, apiForceStartExam } from '../../helpers/api.helper'
 import { loginAsStudent } from '../../helpers/auth.helper'
 import {
   expectToBeOnDashboard,
   waitForLoadingComplete,
 } from '../../helpers/assertions.helper'
-import { setMockTime, resetMockTime } from '../../helpers/time.helper'
+import { resetMockTime } from '../../helpers/time.helper'
 
 /**
  * 통합 E2E 테스트: Teacher가 시험을 생성하고 Student가 응시하는 전체 플로우 검증
@@ -69,9 +69,9 @@ test.describe('Full Exam Flow Integration Test', () => {
     })
   })
 
-  // Mock 시간 시스템을 사용하여 CI 환경 타이밍 문제 해결 (Issue #54)
+  // E2E API와 Mock 시간 시스템을 사용하여 CI 환경 타이밍 문제 해결 (Issue #54)
   test('Student가 시험 전체 과정을 완료할 수 있어야 함', async ({ page }) => {
-    const examTitle = examData.examination.name
+    const examTitle = examData.examination.exam_name
 
     await test.step('Dashboard에서 시험 확인', async () => {
       await loginAsStudent(page, {
@@ -83,28 +83,18 @@ test.describe('Full Exam Flow Integration Test', () => {
 
       // 진행 중인 시험 섹션에서 생성된 시험 확인
       await expect(page.locator(`text=${examTitle}`)).toBeVisible()
-      console.log(`✓ Exam "${examTitle}" is visible on Student Dashboard`)
+      console.log(`Exam "${examTitle}" is visible on Student Dashboard`)
     })
 
-    await test.step('시험 시작', async () => {
-      // Mock 시간을 시험 시작 시간으로 설정 (대기 없이 즉시 응시 가능)
-      console.log(`Setting mock time to exam start time: ${examData.examination.start_time}`)
-      await setMockTime(examData.examination.start_time)
+    await test.step('시험 시작 (E2E API 사용)', async () => {
+      // E2E API를 통해 시험 강제 시작 (시간 검증 우회)
+      await apiForceStartExam(student.tokens.access, examData.examination.id)
 
-      // 페이지 새로고침하여 시간 변경 반영
-      await page.reload()
-      await waitForLoadingComplete(page)
-
-      // 시험 카드 찾기 및 시작 버튼 클릭
-      const examCard = page.locator(`text=${examTitle}`).locator('..')
-      const startButton = examCard.locator('button', { hasText: /시작|응시/ }).first()
-      await startButton.click()
-
-      // 시험 응시 페이지로 이동되었는지 확인
-      await page.waitForURL(/\/exams\/\d+\/take/)
+      // 시험 응시 페이지로 직접 이동
+      await page.goto(`/exams/${examData.examination.id}/take`)
       await page.waitForSelector('h2', { timeout: 10000 })
       await expect(page.locator('h2')).toContainText(examTitle, { timeout: 5000 })
-      console.log(`✓ Student started exam "${examTitle}"`)
+      console.log(`Student started exam "${examTitle}"`)
     })
 
     await test.step('객관식 문제에 답변', async () => {

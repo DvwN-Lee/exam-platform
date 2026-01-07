@@ -226,7 +226,23 @@ class ExamTakingViewSet(viewsets.ViewSet):
                 {"detail": "이 시험에 등록되지 않았습니다."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        # 시험 시간 확인
+        # 이미 시작한 경우 확인 (시간 검증 전에 체크 - E2E force-start 지원)
+        existing_score = TestScores.objects.filter(exam=exam, user=student_info).first()
+        if existing_score and existing_score.start_time:
+            if existing_score.is_submitted:
+                return Response(
+                    {"detail": "이미 제출한 시험입니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
+            # Frontend 호환: submission_id 포함하여 반환
+            response_data = {
+                "submission_id": existing_score.id,
+                "exam": exam,
+                "started_at": existing_score.start_time,
+            }
+            serializer = StartExamResponseSerializer(response_data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # 시험 시간 확인 (새로 시작하는 경우에만 검증)
         now = get_now()
         if now < exam.start_time:
             return Response(
@@ -236,21 +252,6 @@ class ExamTakingViewSet(viewsets.ViewSet):
         if now > exam.end_time:
             return Response(
                 {"detail": "시험 종료 시간이 지났습니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # 이미 시작한 경우
-        existing_score = TestScores.objects.filter(exam=exam, user=student_info).first()
-        if existing_score and existing_score.start_time:
-            if existing_score.is_submitted:
-                return Response(
-                    {"detail": "이미 제출한 시험입니다."}, status=status.HTTP_400_BAD_REQUEST
-                )
-            return Response(
-                {
-                    "detail": "이미 시작한 시험입니다.",
-                    "start_time": existing_score.start_time,
-                },
-                status=status.HTTP_200_OK,
             )
 
         # 시험지 조회

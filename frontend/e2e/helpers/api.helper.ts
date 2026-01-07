@@ -268,3 +268,49 @@ export async function apiDeleteTestPaper(token: string, testPaperId: number) {
 
   return response.data
 }
+
+// ==================== E2E 테스트 전용 API ====================
+
+/**
+ * E2E 테스트용 시험 생성 API (시간 검증 없음)
+ * 시작 시간을 현재 시간 또는 과거로 설정해도 생성 가능합니다.
+ */
+export async function apiCreateExaminationE2E(token: string, examinationData: {
+  name: string
+  subject_id: number
+  start_time?: string
+  duration: number
+  exam_type: 'pt' | 'ts'
+  papers: { paper_id: number }[]
+}) {
+  const client = createApiClient(token)
+  try {
+    const response = await client.post('/e2e/examinations/', examinationData)
+    return response.data
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: unknown }; message?: string }
+    console.error('E2E 시험 생성 실패:', axiosError.response?.data || axiosError.message)
+    throw error
+  }
+}
+
+/**
+ * E2E 테스트용 학생 등록 API
+ */
+export async function apiEnrollStudentsE2E(token: string, examId: number, studentIds: number[]) {
+  const client = createApiClient(token)
+  const response = await client.post(`/e2e/examinations/${examId}/enroll-students/`, {
+    student_ids: studentIds
+  })
+  return response.data
+}
+
+/**
+ * E2E 테스트용 시험 강제 시작 API (시간 검증 없음)
+ * 시험 시작 시간과 관계없이 즉시 시험을 시작합니다.
+ */
+export async function apiForceStartExam(token: string, examId: number) {
+  const client = createApiClient(token)
+  const response = await client.post(`/e2e/examinations/${examId}/force-start/`)
+  return response.data
+}

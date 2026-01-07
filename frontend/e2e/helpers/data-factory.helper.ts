@@ -3,8 +3,8 @@ import {
   apiRegister,
   apiCreateQuestion,
   apiCreateTestPaper,
-  apiCreateExamination,
-  apiEnrollStudents,
+  apiCreateExaminationE2E,
+  apiEnrollStudentsE2E,
   apiDeleteQuestion,
   apiDeleteTestPaper,
   apiDeleteExamination,
@@ -172,7 +172,8 @@ export async function createTestPaper(
 }
 
 /**
- * API를 통한 시험 생성
+ * API를 통한 시험 생성 (E2E 테스트용)
+ * E2E API를 사용하여 시간 검증 없이 즉시 시작 가능한 시험을 생성합니다.
  */
 export async function createExamination(
   token: string,
@@ -182,11 +183,9 @@ export async function createExamination(
 ) {
   const timestamp = Date.now()
 
-  // 시험 시작 시간 설정 (10초 후)
-  // Backend: start_time >= now 검증 통과를 위해 미래 시간 필요
-  // 테스트에서 대기 후 시험 시작 API 호출 시점에 start_time 도래
+  // E2E API 사용: 현재 시간으로 설정하여 즉시 시작 가능
   const now = new Date()
-  const startTime = new Date(now.getTime() + 10 * 1000).toISOString()
+  const startTime = now.toISOString()
 
   const examinationData = {
     name: `테스트 시험 ${timestamp}`,
@@ -197,11 +196,12 @@ export async function createExamination(
     papers: [{ paper_id: testPaperId }],
   }
 
-  const examination = await apiCreateExamination(token, examinationData)
+  // E2E 전용 API 사용 (시간 검증 없음)
+  const examination = await apiCreateExaminationE2E(token, examinationData)
 
-  // 학생 등록
+  // 학생 등록 (E2E API 사용)
   if (studentIds && studentIds.length > 0) {
-    await apiEnrollStudents(token, examination.id, studentIds)
+    await apiEnrollStudentsE2E(token, examination.id, studentIds)
   }
 
   return examination
