@@ -118,11 +118,11 @@ export function ExamListPage() {
                         <div className="space-y-1 text-sm text-muted-foreground">
                           <div className="flex items-center gap-2">
                             <BookOpen className="h-4 w-4" />
-                            <span>{exam.testpaper.subject.subject_name}</span>
+                            <span>{exam.testpaper?.subject?.subject_name ?? '-'}</span>
                             <span className="text-muted-foreground/50">|</span>
-                            <span>{exam.testpaper.name}</span>
+                            <span>{exam.testpaper?.name ?? '-'}</span>
                             <span className="text-muted-foreground/50">|</span>
-                            <span>{exam.testpaper.question_count}문제</span>
+                            <span>{exam.testpaper?.question_count ?? 0}문제</span>
                           </div>
 
                           <div className="flex items-center gap-2">

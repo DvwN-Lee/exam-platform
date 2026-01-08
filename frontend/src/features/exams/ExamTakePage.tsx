@@ -27,7 +27,8 @@ export function ExamTakePage() {
     mutationFn: () => examApi.startExam(Number(id)),
     onSuccess: (data) => {
       setSubmissionId(data.submission_id)
-      const endTime = new Date(examInfo!.end_time).getTime()
+      if (!examInfo) return
+      const endTime = new Date(examInfo.end_time).getTime()
       const now = new Date().getTime()
       setTimeRemaining(Math.floor((endTime - now) / 1000))
     },
@@ -142,7 +143,9 @@ export function ExamTakePage() {
   }
 
   const handleSubmit = () => {
-    const unanswered = examInfo!.questions.filter(
+    if (!examInfo) return
+
+    const unanswered = examInfo.questions.filter(
       (q) => !answers.has(q.id)
     )
 
