@@ -330,13 +330,18 @@ class ExamTakingViewSet(viewsets.ViewSet):
             logger.info(f"[AUTO_SUBMIT] Time exceeded for exam {exam.id}, user {student_info.id}")
 
             # 임시 저장된 답안이 있으면 사용, 없으면 빈 답안으로 처리
-            if not answers and test_score.detail_records:
+            if not answers and isinstance(test_score.detail_records, dict):
                 # 임시 저장된 답안에서 answer 정보 추출
-                answers = [
-                    {"question_id": int(q_id), "answer": record.get("answer", "")}
-                    for q_id, record in test_score.detail_records.items()
-                    if isinstance(record, dict)
-                ]
+                answers = []
+                for q_id, record in test_score.detail_records.items():
+                    if isinstance(record, dict):
+                        try:
+                            answers.append({
+                                "question_id": int(q_id),
+                                "answer": record.get("answer", "")
+                            })
+                        except (ValueError, TypeError):
+                            continue
 
         # 자동 채점 (N+1 쿼리 최적화)
         total_score = 0
@@ -420,12 +425,16 @@ class ExamTakingViewSet(viewsets.ViewSet):
             "시간 초과로 자동 제출되었습니다." if is_auto_submitted else "답안이 제출되었습니다."
         )
 
+        # 시험지 정보 안전하게 가져오기
+        total_possible = test_score.test_paper.total_score if test_score.test_paper else 0
+        passing_score = test_score.test_paper.passing_score if test_score.test_paper else 0
+
         return Response(
             {
                 "detail": detail_message,
                 "score": total_score,
-                "total_possible": test_score.test_paper.total_score,
-                "passed": total_score >= test_score.test_paper.passing_score,
+                "total_possible": total_possible,
+                "passed": total_score >= passing_score,
                 "time_used": time_used,
                 "is_auto_submitted": is_auto_submitted,
             },
@@ -598,7 +607,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
         # N+1 방지: 모든 question_id를 수집하여 bulk 조회
         all_question_ids = set()
         for submission in submissions:
-            if submission.detail_records:
+            if submission.detail_records and isinstance(submission.detail_records, dict):
                 all_question_ids.update(int(q_id) for q_id in submission.detail_records.keys())
 
         # Bulk 조회 (1 query)
@@ -681,7 +690,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
 
         # N+1 방지: 모든 question_id를 수집하여 bulk 조회
         question_ids = []
-        if test_score.detail_records:
+        if test_score.detail_records and isinstance(test_score.detail_records, dict):
             question_ids = [int(q_id) for q_id in test_score.detail_records.keys()]
 
         # Bulk 조회 (1 query)

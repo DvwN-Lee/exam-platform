@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from testpaper.models import TestScores
+from user.models import StudentsInfo
 
 from .serializers import (
     ExamScoreListSerializer,
@@ -35,7 +36,7 @@ class ScoresViewSet(viewsets.ViewSet):
         """사용자의 학생 정보 조회"""
         try:
             return user.studentsinfo
-        except Exception:
+        except StudentsInfo.DoesNotExist:
             return None
 
     @action(detail=False, methods=["get"], url_path="my")
@@ -176,9 +177,8 @@ class ScoresViewSet(viewsets.ViewSet):
             )
 
             # 합격/불합격 수 계산
-            paper = (
-                exam.exampaperinfo_set.first().paper if exam.exampaperinfo_set.exists() else None
-            )
+            exam_paper_info = exam.exampaperinfo_set.first()
+            paper = exam_paper_info.paper if exam_paper_info else None
             if paper:
                 pass_count = scores.filter(test_score__gte=paper.passing_score).count()
                 fail_count = submitted_count - pass_count
