@@ -607,7 +607,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
         # N+1 방지: 모든 question_id를 수집하여 bulk 조회
         all_question_ids = set()
         for submission in submissions:
-            if submission.detail_records:
+            if submission.detail_records and isinstance(submission.detail_records, dict):
                 all_question_ids.update(int(q_id) for q_id in submission.detail_records.keys())
 
         # Bulk 조회 (1 query)
@@ -690,7 +690,7 @@ class ExamTakingViewSet(viewsets.ViewSet):
 
         # N+1 방지: 모든 question_id를 수집하여 bulk 조회
         question_ids = []
-        if test_score.detail_records:
+        if test_score.detail_records and isinstance(test_score.detail_records, dict):
             question_ids = [int(q_id) for q_id in test_score.detail_records.keys()]
 
         # Bulk 조회 (1 query)

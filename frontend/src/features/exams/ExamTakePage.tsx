@@ -16,6 +16,7 @@ export function ExamTakePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [timeRemaining, setTimeRemaining] = useState<number>(0)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 제출 상태 추적을 위한 ref (Race Condition 방지)
   const isSubmittingRef = useRef(false)
@@ -59,11 +60,15 @@ export function ExamTakePage() {
     onSuccess: () => {
       hasSubmittedRef.current = true
       isSubmittingRef.current = false
+      setIsSubmitting(false)
+      setShowSubmitModal(false)
       toast.success('시험이 제출되었습니다.')
       navigate({ to: `/exams/${id}/result` })
     },
     onError: () => {
       isSubmittingRef.current = false
+      setIsSubmitting(false)
+      setShowSubmitModal(false)
       toast.error('시험 제출에 실패했습니다.')
     },
   })
@@ -183,6 +188,7 @@ export function ExamTakePage() {
       return
     }
     isSubmittingRef.current = true
+    setIsSubmitting(true)
     setShowSubmitModal(false)
     submitExamMutation.mutate()
   }
@@ -217,7 +223,10 @@ export function ExamTakePage() {
             >
               {formatTime(timeRemaining)}
             </div>
-            <Button onClick={handleSubmit} disabled={submitExamMutation.isPending}>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitExamMutation.isPending || isSubmitting}
+            >
               제출하기
             </Button>
           </div>
