@@ -31,7 +31,10 @@ export function ExamResultPage() {
   }
 
   const { submission } = result
-  const scorePercentage = (submission.score / submission.total_score) * 100
+  const scorePercentage =
+    submission.total_score > 0
+      ? (submission.score / submission.total_score) * 100
+      : 0
 
   return (
     <div className="space-y-6">
