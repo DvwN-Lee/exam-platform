@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
@@ -16,6 +16,11 @@ export function ExamTakePage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [timeRemaining, setTimeRemaining] = useState<number>(0)
   const [showSubmitModal, setShowSubmitModal] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // 제출 상태 추적을 위한 ref (Race Condition 방지)
+  const isSubmittingRef = useRef(false)
+  const hasSubmittedRef = useRef(false)
 
   const { data: examInfo } = useQuery({
     queryKey: ['exam-info', id],
@@ -53,10 +58,17 @@ export function ExamTakePage() {
         answers: Array.from(answers.values()),
       }),
     onSuccess: () => {
+      hasSubmittedRef.current = true
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+      setShowSubmitModal(false)
       toast.success('시험이 제출되었습니다.')
       navigate({ to: `/exams/${id}/result` })
     },
     onError: () => {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
+      setShowSubmitModal(false)
       toast.error('시험 제출에 실패했습니다.')
     },
   })
@@ -66,8 +78,12 @@ export function ExamTakePage() {
     startExamMutation.mutate()
   }, [startExamMutation])
 
-  // 시간 만료 핸들러
+  // 시간 만료 핸들러 - ref를 사용하여 중복 호출 방지
   const handleTimeUp = useCallback(() => {
+    if (isSubmittingRef.current || hasSubmittedRef.current) {
+      return
+    }
+    isSubmittingRef.current = true
     toast.warning('시험 시간이 종료되었습니다. 자동으로 제출됩니다.')
     submitExamMutation.mutate()
   }, [submitExamMutation])
@@ -90,9 +106,14 @@ export function ExamTakePage() {
     return () => clearInterval(timer)
   }, [submissionId])
 
-  // 시간 만료 감지
+  // 시간 만료 감지 - 중복 제출 방지 조건 추가
   useEffect(() => {
-    if (timeRemaining <= 0 && submissionId) {
+    if (
+      timeRemaining <= 0 &&
+      submissionId &&
+      !isSubmittingRef.current &&
+      !hasSubmittedRef.current
+    ) {
       handleTimeUp()
     }
   }, [timeRemaining, submissionId, handleTimeUp])
@@ -143,7 +164,7 @@ export function ExamTakePage() {
   }
 
   const handleSubmit = () => {
-    if (!examInfo) return
+    if (!examInfo || isSubmittingRef.current || hasSubmittedRef.current) return
 
     const unanswered = examInfo.questions.filter(
       (q) => !answers.has(q.id)
@@ -163,6 +184,11 @@ export function ExamTakePage() {
   }
 
   const confirmSubmit = () => {
+    if (isSubmittingRef.current || hasSubmittedRef.current) {
+      return
+    }
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
     setShowSubmitModal(false)
     submitExamMutation.mutate()
   }
@@ -197,7 +223,10 @@ export function ExamTakePage() {
             >
               {formatTime(timeRemaining)}
             </div>
-            <Button onClick={handleSubmit} disabled={submitExamMutation.isPending}>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitExamMutation.isPending || isSubmitting}
+            >
               제출하기
             </Button>
           </div>

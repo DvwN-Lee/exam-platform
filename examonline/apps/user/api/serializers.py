@@ -273,19 +273,25 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
         # Update student/teacher info
         if instance.user_type == "student" and student_info_data:
-            student_info = StudentsInfo.objects.get(user=instance)
-            for attr, value in student_info_data.items():
-                setattr(student_info, attr, value)
-            student_info.save()
+            try:
+                student_info = StudentsInfo.objects.get(user=instance)
+                for attr, value in student_info_data.items():
+                    setattr(student_info, attr, value)
+                student_info.save()
+            except StudentsInfo.DoesNotExist:
+                StudentsInfo.objects.create(user=instance, **student_info_data)
 
         elif instance.user_type == "teacher" and teacher_info_data:
-            teacher_info = TeacherInfo.objects.get(user=instance)
-            subject = teacher_info_data.pop("subject", None)
-            for attr, value in teacher_info_data.items():
-                setattr(teacher_info, attr, value)
-            if subject:
-                teacher_info.subject = subject
-            teacher_info.save()
+            try:
+                teacher_info = TeacherInfo.objects.get(user=instance)
+                subject = teacher_info_data.pop("subject", None)
+                for attr, value in teacher_info_data.items():
+                    setattr(teacher_info, attr, value)
+                if subject:
+                    teacher_info.subject = subject
+                teacher_info.save()
+            except TeacherInfo.DoesNotExist:
+                TeacherInfo.objects.create(user=instance, **teacher_info_data)
 
         return instance
 

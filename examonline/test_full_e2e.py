@@ -10,6 +10,7 @@ import urllib.request
 from datetime import datetime, timedelta
 
 BASE_URL = "http://localhost:8000/api/v1"
+E2E_URL = "http://localhost:8000/api/v1/e2e"
 TIMESTAMP = str(int(time.time()))
 
 # 테스트 데이터
@@ -104,9 +105,9 @@ def create_testpaper(token, name, question_ids):
 
 
 def create_exam(token, name, paper_id):
-    """시험 생성"""
+    """E2E 테스트용 시험 생성 (시간 검증 없음)"""
     now = datetime.now()
-    start_time = (now + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    start_time = now.strftime("%Y-%m-%dT%H:%M:%S")  # 즉시 시작 가능
     end_time = (now + timedelta(hours=3)).strftime("%Y-%m-%dT%H:%M:%S")
 
     data = {
@@ -120,7 +121,7 @@ def create_exam(token, name, paper_id):
         "student_num": 100,
         "is_shared": True,
     }
-    return http_request("POST", f"{BASE_URL}/examinations/", data, token)
+    return http_request("POST", f"{E2E_URL}/examinations/", data, token)
 
 
 def get_student_profile_from_db(user_id):
@@ -159,17 +160,15 @@ def get_student_profile_from_db(user_id):
 
 
 def enroll_student(token, exam_id, student_id):
-    """학생을 시험에 등록"""
+    """학생을 시험에 등록 (E2E API)"""
     data = {"student_ids": [student_id]}
-    return http_request("POST", f"{BASE_URL}/examinations/{exam_id}/enroll_students/", data, token)
+    return http_request("POST", f"{E2E_URL}/examinations/{exam_id}/enroll-students/", data, token)
 
 
 def take_exam(token, exam_id, answers):
-    """시험 응시"""
-    # 시험 시작
-    http_request("POST", f"{BASE_URL}/exams/{exam_id}/start/", token=token)
-
-    time.sleep(1)
+    """시험 응시 (E2E API로 강제 시작)"""
+    # 시험 강제 시작 (시간 검증 없음)
+    http_request("POST", f"{E2E_URL}/examinations/{exam_id}/force-start/", token=token)
 
     # 답안 제출
     data = {"answers": answers}
@@ -248,12 +247,8 @@ def main():
     enroll_result = enroll_student(teacher_token, exam["id"], student_profile_id)
     print(f"✓ 학생 등록 완료: {enroll_result['detail']}")
 
-    # Step 7: 시험 시작 대기
-    print("\n[Step 7] 시험 시작 대기 (60초)")
-    time.sleep(61)  # 시험 시작 시간까지 대기
-
-    # Step 8: 시험 응시
-    print("\n[Step 8] 시험 응시")
+    # Step 7: 시험 응시 (E2E API 사용으로 대기 불필요)
+    print("\n[Step 7] 시험 응시")
 
     # 정답 찾기 (각 문제의 정답 옵션 ID)
     correct_option_ids = []
@@ -272,8 +267,8 @@ def main():
 
     result = take_exam(student_token, exam["id"], answers)
 
-    # Step 9: 결과 확인
-    print("\n[Step 9] 결과 확인")
+    # Step 8: 결과 확인
+    print("\n[Step 8] 결과 확인")
     print("✓ 시험 제출 완료")
     print(f"✓ 점수: {result['score']}/{result['total_possible']}점")
     print(f"✓ 합격 여부: {'합격' if result['passed'] else '불합격'}")

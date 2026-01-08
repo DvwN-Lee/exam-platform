@@ -55,7 +55,9 @@ export function ExamResultsListPage() {
           ) : (
             submissions.map((submission) => {
               const scorePercentage =
-                (submission.score / submission.total_score) * 100
+                submission.total_score > 0
+                  ? (submission.score / submission.total_score) * 100
+                  : 0
               const correctCount = submission.answers.filter(
                 (a) => a.is_correct
               ).length
@@ -108,9 +110,9 @@ export function ExamResultsListPage() {
                               정답률:{' '}
                             </span>
                             <span className="text-lg font-bold">
-                              {((correctCount / submission.answers.length) * 100).toFixed(
-                                1
-                              )}
+                              {submission.answers.length > 0
+                                ? ((correctCount / submission.answers.length) * 100).toFixed(1)
+                                : '0.0'}
                               %
                             </span>
                           </div>
