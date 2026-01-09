@@ -1,0 +1,17 @@
+apiVersion: v2
+name: exam-platform
+description: Online Exam Platform - Django Backend + React Frontend
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - django
+  - react
+  - exam
+  - education
+
+home: https://github.com/DvwN-Lee/OnlineExam-v2
+
+maintainers:
+  - name: DvwN-Lee
