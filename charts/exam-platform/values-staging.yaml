@@ -1,0 +1,101 @@
+# =============================================================================
+# Exam Platform Helm Chart - Staging Environment Values
+# =============================================================================
+# Usage: helm install exam-platform ./charts/exam-platform -f values-staging.yaml
+# =============================================================================
+
+namespace:
+  name: exam-platform-staging
+
+# -----------------------------------------------------------------------------
+# Backend
+# -----------------------------------------------------------------------------
+backend:
+  replicaCount: 2
+
+  image:
+    tag: "staging"
+
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  gunicorn:
+    workers: 3
+    threads: 2
+
+  autoscaling:
+    enabled: false
+
+# -----------------------------------------------------------------------------
+# Frontend
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 2
+
+  image:
+    tag: "staging"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+  hosts:
+    - host: staging.exam.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /admin
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+  tls: []
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+config:
+  allowedHosts: "staging.exam.example.com"
+  debug: "False"
+
+  # Staging database endpoints (Managed Service)
+  postgresHost: "postgres-staging.database.svc.cluster.local"
+  mongodbHost: "mongodb-staging.database.svc.cluster.local"
+  redisHost: "redis-staging.cache.svc.cluster.local"
+
+  secureSSLRedirect: "False"
+  sessionCookieSecure: "False"
+  csrfCookieSecure: "False"
+
+# -----------------------------------------------------------------------------
+# Secrets
+# -----------------------------------------------------------------------------
+secrets:
+  # In staging, still use Helm-managed secrets
+  # Consider using external secrets for better security
+  create: true
+  secretKey: "staging-secret-key-change-me"
+  postgresPassword: "staging-password"
+  mongodbPassword: "staging-password"
+  redisPassword: "staging-password"

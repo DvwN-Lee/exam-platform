@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "exam-platform.backend.fullname" . }}
+  namespace: {{ include "exam-platform.namespace" . }}
+  labels:
+    {{- include "exam-platform.backend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "exam-platform.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "exam-platform.backend.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      {{- include "exam-platform.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "exam-platform.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: backend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "exam-platform.backend.image" . }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            # Django settings
+            - name: DJANGO_SETTINGS_MODULE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: DJANGO_SETTINGS_MODULE
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: ALLOWED_HOSTS
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: DEBUG
+            # Secret key
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.secretName" . }}
+                  key: SECRET_KEY
+            # PostgreSQL
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.secretName" . }}
+                  key: POSTGRES_PASSWORD
+            # MongoDB
+            - name: MONGODB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_HOST
+            - name: MONGODB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_PORT
+            - name: MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_DATABASE
+            - name: MONGODB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_USER
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.secretName" . }}
+                  key: MONGODB_PASSWORD
+            - name: MONGODB_AUTH_SOURCE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_AUTH_SOURCE
+            # Redis
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.secretName" . }}
+                  key: REDIS_PASSWORD
+            - name: REDIS_URL
+              value: "redis://:$(REDIS_PASSWORD)@{{ .Values.config.redisHost }}:{{ .Values.config.redisPort }}/0"
+            # SSL settings
+            - name: SECURE_SSL_REDIRECT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: SECURE_SSL_REDIRECT
+            - name: SESSION_COOKIE_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: SESSION_COOKIE_SECURE
+            - name: CSRF_COOKIE_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: CSRF_COOKIE_SECURE
+            # Gunicorn settings
+            - name: GUNICORN_WORKERS
+              value: {{ .Values.backend.gunicorn.workers | quote }}
+            - name: GUNICORN_THREADS
+              value: {{ .Values.backend.gunicorn.threads | quote }}
+          livenessProbe:
+            {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.backend.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
