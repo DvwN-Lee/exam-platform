@@ -81,6 +81,7 @@ class TestScores(models.Model):
         indexes = [
             models.Index(fields=["user", "test_paper"]),
             models.Index(fields=["exam", "user"]),
+            models.Index(fields=["exam", "user", "is_submitted"]),
         ]
 
     def __str__(self) -> str:

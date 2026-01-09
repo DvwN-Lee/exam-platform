@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -25,13 +25,25 @@ const questionDegreeLabels: Record<QuestionDegree, string> = {
 
 export function QuestionListPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const [filters, setFilters] = useState<QuestionFilters>({})
   const [searchText, setSearchText] = useState('')
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['questions', filters],
     queryFn: () => questionApi.getMyQuestions(filters),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => questionApi.deleteQuestion(id),
+    onSuccess: () => {
+      toast.success('문제가 삭제되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
+    },
+    onError: () => {
+      toast.error('문제 삭제에 실패했습니다.')
+    },
   })
 
   const handleSearch = () => {
@@ -42,16 +54,9 @@ export function QuestionListPage() {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }))
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     if (!confirm('문제를 삭제하시겠습니까?')) return
-
-    try {
-      await questionApi.deleteQuestion(id)
-      refetch()
-      toast.success('문제가 삭제되었습니다.')
-    } catch {
-      toast.error('문제 삭제에 실패했습니다.')
-    }
+    deleteMutation.mutate(id)
   }
 
   if (isLoading) {

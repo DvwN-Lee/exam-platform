@@ -1,6 +1,35 @@
-import axios, { AxiosInstance } from 'axios'
+import axios, { AxiosInstance, AxiosError } from 'axios'
 
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+
+/**
+ * E2E 테스트 API 사용 가능 여부 확인
+ * E2E_TEST_API_ENABLED 환경변수가 설정되어 있어야 E2E API 사용 가능
+ */
+export async function verifyE2EApiEnabled(): Promise<boolean> {
+  try {
+    const client = createApiClient()
+    // E2E API health check (존재하지 않으면 404 반환)
+    await client.get('/e2e/examinations/', { timeout: 5000 })
+    return true
+  } catch (error) {
+    const axiosError = error as AxiosError
+    // 404는 E2E API가 비활성화된 상태
+    if (axiosError.response?.status === 404) {
+      console.warn(
+        '[E2E] E2E API is not enabled. Set E2E_TEST_API_ENABLED=true in backend environment.'
+      )
+      return false
+    }
+    // 401/403은 API는 존재하지만 인증이 필요한 상태 (정상)
+    if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
+      return true
+    }
+    // 기타 오류는 연결 문제
+    console.error('[E2E] Failed to verify E2E API:', axiosError.message)
+    return false
+  }
+}
 
 /**
  * API 클라이언트 생성
@@ -299,7 +328,7 @@ export async function apiCreateExaminationE2E(token: string, examinationData: {
  */
 export async function apiEnrollStudentsE2E(token: string, examId: number, studentIds: number[]) {
   const client = createApiClient(token)
-  const response = await client.post(`/e2e/examinations/${examId}/enroll-students/`, {
+  const response = await client.post(`/e2e/examinations/${examId}/enroll_students/`, {
     student_ids: studentIds
   })
   return response.data
@@ -311,6 +340,6 @@ export async function apiEnrollStudentsE2E(token: string, examId: number, studen
  */
 export async function apiForceStartExam(token: string, examId: number) {
   const client = createApiClient(token)
-  const response = await client.post(`/e2e/examinations/${examId}/force-start/`)
+  const response = await client.post(`/e2e/examinations/${examId}/force_start/`)
   return response.data
 }

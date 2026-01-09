@@ -306,31 +306,35 @@ export function ExamTakePage() {
               <div className="space-y-4">
                 {currentQuestion.tq_type === 'xz' && (
                   <div className="space-y-2">
-                    {currentQuestion.options.map((option, index) => (
-                      <label
-                        key={option.id}
-                        className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 hover:bg-accent"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={answers
-                            .get(currentQuestion.id)
-                            ?.selected_options?.includes(option.id!) || false}
-                          onChange={() =>
-                            handleOptionChange(
-                              currentQuestion.id,
-                              option.id!,
-                              true
-                            )
-                          }
-                          className="h-4 w-4"
-                        />
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-current font-medium">
-                          {index + 1}
-                        </div>
-                        <span>{option.option}</span>
-                      </label>
-                    ))}
+                    {currentQuestion.options
+                      .filter((option) => option.id != null)
+                      .map((option, index) => (
+                        <label
+                          key={option.id}
+                          className="flex cursor-pointer items-center gap-3 rounded-lg border p-4 hover:bg-accent"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              answers
+                                .get(currentQuestion.id)
+                                ?.selected_options?.includes(option.id as number) ?? false
+                            }
+                            onChange={() =>
+                              handleOptionChange(
+                                currentQuestion.id,
+                                option.id as number,
+                                true
+                              )
+                            }
+                            className="h-4 w-4"
+                          />
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-current font-medium">
+                            {index + 1}
+                          </div>
+                          <span>{option.option}</span>
+                        </label>
+                      ))}
                   </div>
                 )}
 

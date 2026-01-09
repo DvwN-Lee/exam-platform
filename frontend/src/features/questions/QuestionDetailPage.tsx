@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -22,6 +22,7 @@ const questionDegreeLabels = {
 
 export function QuestionDetailPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { id } = useParams({ strict: false })
   const user = useAuthStore((state) => state.user)
 
@@ -36,7 +37,7 @@ export function QuestionDetailPage() {
       questionApi.shareQuestion(Number(id), isShare),
     onSuccess: () => {
       toast.success('공유 설정이 변경되었습니다.')
-      window.location.reload()
+      queryClient.invalidateQueries({ queryKey: ['question', id] })
     },
     onError: () => {
       toast.error('공유 설정 변경에 실패했습니다.')

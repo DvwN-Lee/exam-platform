@@ -23,6 +23,7 @@ class ExaminationInfo(models.Model):
     )
     create_user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name="창설자")
     create_time = models.DateTimeField(default=timezone.now, verbose_name="생성 시간")
+    edit_time = models.DateTimeField(auto_now=True, verbose_name="수정 시간")
 
     class Meta:
         verbose_name = "시험 정보"
