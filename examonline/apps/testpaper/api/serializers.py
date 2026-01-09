@@ -190,7 +190,7 @@ class TestPaperCreateSerializer(serializers.ModelSerializer):
         paper_questions = [
             TestPaperTestQ(
                 test_paper=paper,
-                test_question=q.pop("test_question"),
+                test_question=q["test_question"],
                 score=q.get("score", 5),
                 order=q.get("order", 1),
             )
@@ -272,7 +272,7 @@ class TestPaperUpdateSerializer(serializers.ModelSerializer):
             paper_questions = [
                 TestPaperTestQ(
                     test_paper=instance,
-                    test_question=q.pop("test_question"),
+                    test_question=q["test_question"],
                     score=q.get("score", 5),
                     order=q.get("order", 1),
                 )

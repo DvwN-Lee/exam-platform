@@ -259,21 +259,24 @@ class ExamTakingViewSet(viewsets.ViewSet):
         if not exam_paper:
             return Response({"detail": "시험지가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 시험 시작 기록 (get_or_create로 Race Condition 방지)
+        # 시험 시작 기록 (select_for_update + try-except로 Race Condition 방지)
         with transaction.atomic():
-            test_score, created = TestScores.objects.select_for_update().get_or_create(
-                exam=exam,
-                user=student_info,
-                defaults={
-                    "test_paper": exam_paper.paper,
-                    "start_time": now,
-                    "test_score": 0,
-                    "detail_records": {},
-                },
-            )
-            if not created and not test_score.start_time:
-                test_score.start_time = now
-                test_score.save()
+            try:
+                test_score = TestScores.objects.select_for_update().get(
+                    exam=exam, user=student_info
+                )
+                if not test_score.start_time:
+                    test_score.start_time = now
+                    test_score.save()
+            except TestScores.DoesNotExist:
+                test_score = TestScores.objects.create(
+                    exam=exam,
+                    user=student_info,
+                    test_paper=exam_paper.paper,
+                    start_time=now,
+                    test_score=0,
+                    detail_records={},
+                )
 
         # Frontend 호환 응답 구조
         response_data = {
