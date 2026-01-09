@@ -1,0 +1,40 @@
+Exam Platform has been successfully deployed!
+
+Namespace: {{ include "exam-platform.namespace" . }}
+Release: {{ .Release.Name }}
+
+=============================================================================
+Components:
+=============================================================================
+- Backend (Django): {{ include "exam-platform.backend.fullname" . }}
+  Service: {{ include "exam-platform.backend.fullname" . }}:{{ .Values.backend.service.port }}
+
+- Frontend (React): {{ include "exam-platform.frontend.fullname" . }}
+  Service: {{ include "exam-platform.frontend.fullname" . }}:{{ .Values.frontend.service.port }}
+
+=============================================================================
+Access:
+=============================================================================
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  Application URL: http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- else }}
+Get the application URL by running these commands:
+
+  # Backend
+  kubectl port-forward svc/{{ include "exam-platform.backend.fullname" . }} 8000:{{ .Values.backend.service.port }} -n {{ include "exam-platform.namespace" . }}
+
+  # Frontend
+  kubectl port-forward svc/{{ include "exam-platform.frontend.fullname" . }} 3000:{{ .Values.frontend.service.port }} -n {{ include "exam-platform.namespace" . }}
+
+Then access:
+  - Frontend: http://localhost:3000
+  - Backend API: http://localhost:8000/api/v1/
+{{- end }}
+
+=============================================================================
+Health Check:
+=============================================================================
+  kubectl get pods -n {{ include "exam-platform.namespace" . }}
+  kubectl logs -f deployment/{{ include "exam-platform.backend.fullname" . }} -n {{ include "exam-platform.namespace" . }}
