@@ -1,13 +1,17 @@
 """
 Core API URL Configuration.
 
-E2E 테스트 전용 API Endpoint 포함.
+Health check 및 E2E 테스트 전용 API Endpoint 포함.
 """
 
 from django.conf import settings
 from django.urls import path
 
-urlpatterns = []
+from core.api.views import health_check
+
+urlpatterns = [
+    path("health/", health_check, name="health-check"),
+]
 
 # E2E Mock Time API는 E2E_MOCK_TIME_ENABLED가 True일 때만 등록
 if getattr(settings, "E2E_MOCK_TIME_ENABLED", False):
