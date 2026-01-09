@@ -172,31 +172,32 @@ class TestPaperCreateSerializer(serializers.ModelSerializer):
         questions_data = validated_data.pop("questions", [])
         validated_data["create_user"] = self.context["request"].user
 
+        # total_score 미리 계산하여 passing_score 검증 (저장 전 검증)
+        total_score = sum(q.get("score", 5) for q in questions_data)
+        passing_score = validated_data.get("passing_score", 60)
+
+        if questions_data and passing_score > total_score:
+            raise serializers.ValidationError(
+                {"passing_score": f"합격점은 총점({total_score}) 이하여야 합니다."}
+            )
+
         # 시험지 생성
+        validated_data["total_score"] = total_score
+        validated_data["question_count"] = len(questions_data)
         paper = TestPaperInfo.objects.create(**validated_data)
 
-        # 문제 추가
-        total_score = 0
-        for question_data in questions_data:
-            test_question = question_data.pop("test_question")
-            score = question_data.get("score", 5)
-            order = question_data.get("order", 1)
-
-            TestPaperTestQ.objects.create(
-                test_paper=paper, test_question=test_question, score=score, order=order
+        # 문제 추가 (bulk_create로 성능 최적화)
+        paper_questions = [
+            TestPaperTestQ(
+                test_paper=paper,
+                test_question=q.pop("test_question"),
+                score=q.get("score", 5),
+                order=q.get("order", 1),
             )
-            total_score += score
-
-        # total_score, question_count 업데이트
-        paper.total_score = total_score
-        paper.question_count = len(questions_data)
-        paper.save()
-
-        # passing_score 검증 (문제가 있는 경우에만)
-        if questions_data and paper.passing_score > paper.total_score:
-            raise serializers.ValidationError(
-                {"passing_score": f"합격점은 총점({paper.total_score}) 이하여야 합니다."}
-            )
+            for q in questions_data
+        ]
+        if paper_questions:
+            TestPaperTestQ.objects.bulk_create(paper_questions)
 
         return paper
 
@@ -234,46 +235,51 @@ class TestPaperUpdateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        # select_for_update()로 Race Condition 방지
+        instance = TestPaperInfo.objects.select_for_update().get(pk=instance.pk)
+
         questions_data = validated_data.pop("questions", None)
+
+        # total_score 미리 계산
+        if questions_data is not None:
+            total_score = sum(q.get("score", 5) for q in questions_data)
+            question_count = len(questions_data)
+        else:
+            result = instance.testpapertestq_set.aggregate(total=Sum("score"))
+            total_score = result["total"] or 0
+            question_count = instance.testpapertestq_set.count()
+
+        # passing_score 검증 (저장 전)
+        passing_score = validated_data.get("passing_score", instance.passing_score)
+        if question_count > 0 and passing_score > total_score:
+            raise serializers.ValidationError(
+                {"passing_score": f"합격점은 총점({total_score}) 이하여야 합니다."}
+            )
 
         # Update paper fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
+        instance.total_score = total_score
+        instance.question_count = question_count
         instance.save()
 
         # Update questions if provided
         if questions_data is not None:
-            # 기존 문제 전체 삭제 후 재생성
+            # 기존 문제 삭제 및 새 문제 bulk 생성 (단일 트랜잭션)
             instance.testpapertestq_set.all().delete()
 
-            # 새 문제 추가
-            total_score = 0
-            for question_data in questions_data:
-                test_question = question_data.pop("test_question")
-                score = question_data.get("score", 5)
-                order = question_data.get("order", 1)
-
-                TestPaperTestQ.objects.create(
-                    test_paper=instance, test_question=test_question, score=score, order=order
+            paper_questions = [
+                TestPaperTestQ(
+                    test_paper=instance,
+                    test_question=q.pop("test_question"),
+                    score=q.get("score", 5),
+                    order=q.get("order", 1),
                 )
-                total_score += score
-
-            # total_score, question_count 업데이트
-            instance.total_score = total_score
-            instance.question_count = len(questions_data)
-        else:
-            # 문제 변경 없으면 기존 total_score 재계산
-            result = instance.testpapertestq_set.aggregate(total=Sum("score"))
-            instance.total_score = result["total"] or 0
-            instance.question_count = instance.testpapertestq_set.count()
-
-        instance.save()
-
-        # passing_score 검증 (문제가 있는 경우에만)
-        if instance.question_count > 0 and instance.passing_score > instance.total_score:
-            raise serializers.ValidationError(
-                {"passing_score": f"합격점은 총점({instance.total_score}) 이하여야 합니다."}
-            )
+                for q in questions_data
+            ]
+            if paper_questions:
+                TestPaperTestQ.objects.bulk_create(paper_questions)
 
         return instance
 

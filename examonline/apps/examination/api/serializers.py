@@ -72,7 +72,7 @@ class ExaminationListSerializer(CreatUserSerializerMixin, serializers.ModelSeria
     testpaper = serializers.SerializerMethodField()
     is_public = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source="create_time", read_only=True)
-    updated_at = serializers.DateTimeField(source="create_time", read_only=True)
+    updated_at = serializers.DateTimeField(source="edit_time", read_only=True)
     duration = serializers.SerializerMethodField()
 
     class Meta:
@@ -138,7 +138,7 @@ class ExaminationDetailSerializer(CreatUserSerializerMixin, serializers.ModelSer
     exam_type_display = serializers.CharField(source="get_exam_type_display", read_only=True)
     creat_user = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source="create_time", read_only=True)
-    updated_at = serializers.DateTimeField(source="create_time", read_only=True)
+    updated_at = serializers.DateTimeField(source="edit_time", read_only=True)
     testpaper = serializers.SerializerMethodField()
     is_public = serializers.SerializerMethodField()
     enrolled_students_count = serializers.SerializerMethodField()

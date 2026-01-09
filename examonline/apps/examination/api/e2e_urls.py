@@ -28,12 +28,12 @@ e2e_examination_force_start = E2EExaminationViewSet.as_view(
 urlpatterns = [
     path("examinations/", e2e_examination_list, name="e2e-examination-create"),
     path(
-        "examinations/<int:pk>/enroll-students/",
+        "examinations/<int:pk>/enroll_students/",
         e2e_examination_enroll,
         name="e2e-examination-enroll",
     ),
     path(
-        "examinations/<int:pk>/force-start/",
+        "examinations/<int:pk>/force_start/",
         e2e_examination_force_start,
         name="e2e-examination-force-start",
     ),

@@ -4,7 +4,7 @@ import {
   cleanupTestData,
   setupTestEnvironment,
 } from '../../helpers/data-factory.helper'
-import { apiGetSubjects, apiForceStartExam } from '../../helpers/api.helper'
+import { apiGetSubjects, apiForceStartExam, verifyE2EApiEnabled } from '../../helpers/api.helper'
 import { loginAsStudent } from '../../helpers/auth.helper'
 import {
   expectToBeOnDashboard,
@@ -26,6 +26,15 @@ test.describe('Full Exam Flow Integration Test', () => {
 
   test.beforeAll(async () => {
     console.log('=== Setting up test environment ===')
+
+    // 0. E2E API 사용 가능 여부 확인
+    const e2eApiEnabled = await verifyE2EApiEnabled()
+    if (!e2eApiEnabled) {
+      throw new Error(
+        'E2E API is not enabled. Ensure E2E_TEST_API_ENABLED=true is set in backend environment.'
+      )
+    }
+    console.log('E2E API is enabled')
 
     // 1. Teacher & Student 계정 생성
     const environment = await setupTestEnvironment()

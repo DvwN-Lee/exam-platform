@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -18,6 +18,7 @@ const statusLabels: Record<ExaminationStatus, string> = {
 
 export function ExaminationDetailPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { id } = useParams({ strict: false })
   const user = useAuthStore((state) => state.user)
 
@@ -31,7 +32,7 @@ export function ExaminationDetailPage() {
     mutationFn: () => examinationApi.publishExamination(Number(id)),
     onSuccess: () => {
       toast.success('시험이 게시되었습니다.')
-      window.location.reload()
+      queryClient.invalidateQueries({ queryKey: ['examination', id] })
     },
     onError: () => {
       toast.error('시험 게시에 실패했습니다.')
