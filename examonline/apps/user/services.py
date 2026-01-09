@@ -231,6 +231,7 @@ class StudentDashboardService:
                     {
                         "exam_name": sub.exam.name,
                         "score": sub.test_score,
+                        "total_score": sub.test_paper.total_score,
                         "percentage": percentage,
                         "date": sub.submit_time.strftime("%Y-%m-%d") if sub.submit_time else None,
                     }
