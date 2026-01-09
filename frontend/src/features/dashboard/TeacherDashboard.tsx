@@ -176,20 +176,20 @@ export function TeacherDashboard() {
                   총 응시자
                 </div>
                 <div className="mt-2 text-3xl font-bold">
-                  {dashboard.student_statistics.total_students}
+                  {dashboard.student_statistics?.total_students ?? 0}
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
-                  {dashboard.student_statistics.submissions_trend > 0 && (
+                  {(dashboard.student_statistics?.submissions_trend ?? 0) > 0 && (
                     <span className="text-green-600">
-                      ↑ 이번 달 {dashboard.student_statistics.submissions_trend}명 응시
+                      ↑ 이번 달 {dashboard.student_statistics?.submissions_trend}명 응시
                     </span>
                   )}
-                  {dashboard.student_statistics.submissions_trend < 0 && (
+                  {(dashboard.student_statistics?.submissions_trend ?? 0) < 0 && (
                     <span className="text-red-600">
-                      ↓ 이번 달 {Math.abs(dashboard.student_statistics.submissions_trend)}명 감소
+                      ↓ 이번 달 {Math.abs(dashboard.student_statistics?.submissions_trend ?? 0)}명 감소
                     </span>
                   )}
-                  {dashboard.student_statistics.submissions_trend === 0 && dashboard.student_statistics.total_students === 0 && (
+                  {(dashboard.student_statistics?.submissions_trend ?? 0) === 0 && (dashboard.student_statistics?.total_students ?? 0) === 0 && (
                     <span className="text-muted-foreground">
                       아직 응시자가 없습니다
                     </span>

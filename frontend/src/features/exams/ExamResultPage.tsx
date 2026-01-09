@@ -192,29 +192,33 @@ export function ExamResultPage() {
                     {answer.question.tq_type === 'xz' && (
                       <div className="mt-3 space-y-2">
                         <div className="text-sm font-medium">선택한 답:</div>
-                        {answer.question.options.map((option) => {
-                          const isSelected = answer.selected_options.includes(option.id!)
-                          const isCorrect = option.is_right
+                        {answer.question.options
+                          .filter((option) => option.id != null)
+                          .map((option) => {
+                            const isSelected = answer.selected_options.includes(
+                              option.id as number
+                            )
+                            const isCorrect = option.is_right
 
-                          return (
-                            <div
-                              key={option.id}
-                              className={`rounded border p-2 text-sm ${
-                                isSelected && isCorrect
-                                  ? 'border-green-500 bg-green-100'
-                                  : isSelected
-                                  ? 'border-destructive bg-red-100'
-                                  : isCorrect
-                                  ? 'border-green-500 bg-green-50'
-                                  : 'border-border'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {isSelected && <span>✓</span>}
-                                {isCorrect && <span className="text-green-600">정답</span>}
-                                <span>{option.option}</span>
+                            return (
+                              <div
+                                key={option.id}
+                                className={`rounded border p-2 text-sm ${
+                                  isSelected && isCorrect
+                                    ? 'border-green-500 bg-green-100'
+                                    : isSelected
+                                      ? 'border-destructive bg-red-100'
+                                      : isCorrect
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-border'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {isSelected && <span>✓</span>}
+                                  {isCorrect && <span className="text-green-600">정답</span>}
+                                  <span>{option.option}</span>
+                                </div>
                               </div>
-                            </div>
                           )
                         })}
                       </div>

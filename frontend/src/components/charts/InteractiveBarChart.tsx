@@ -64,8 +64,15 @@ export function InteractiveBarChart({
   }, [])
 
   const handleClick = useCallback(
-    (entry: ChartDataItem, index: number) => {
-      if (onBarClick) {
+    (payload: Record<string, unknown>, index: number) => {
+      if (onBarClick && payload) {
+        // Extract ChartDataItem fields from recharts payload (추가 속성 보존)
+        const entry: ChartDataItem = {
+          ...payload,
+          name: String(payload.name ?? ''),
+          value: Number(payload.value ?? 0),
+          color: typeof payload.color === 'string' ? payload.color : undefined,
+        } as ChartDataItem
         onBarClick({ data: entry, index })
       }
     },
@@ -153,7 +160,7 @@ export function InteractiveBarChart({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onClick={(entry, index) =>
-              handleClick(entry as unknown as ChartDataItem, index)
+              handleClick(entry as Record<string, unknown>, index)
             }
             cursor={onBarClick ? 'pointer' : undefined}
           >
