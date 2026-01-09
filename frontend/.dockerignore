@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Testing
+e2e/
+test-results/
+playwright-report/
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Dev files
+docs/
