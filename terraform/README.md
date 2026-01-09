@@ -204,7 +204,7 @@ kubectl get pods -A
 
 3. **Deletion Protection**이 활성화된 리소스는 직접 삭제 불가합니다.
 
-4. **State 파일**은 민감 정보를 포함할 수 있으므로 S3 버킷 접근을 제한하세요.
+4. **State 파일**은 민감 정보를 포함할 수 있으므로 S3 Bucket 접근을 제한하세요.
 
 ## 문제 해결
 
