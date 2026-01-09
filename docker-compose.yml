@@ -1,0 +1,118 @@
+services:
+  # ===== Database Services =====
+  postgres:
+    image: postgres:18-alpine
+    container_name: examonline-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-examonline}
+      POSTGRES_USER: ${POSTGRES_USER:-examuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-exampass}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-examuser} -d ${POSTGRES_DB:-examonline}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:8
+    container_name: examonline-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-examonline_logs}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+    container_name: examonline-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  # ===== Application Services =====
+  backend:
+    build:
+      context: ./examonline
+      dockerfile: Dockerfile
+    container_name: examonline-backend
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.production
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      - POSTGRES_DB=${POSTGRES_DB:-examonline}
+      - POSTGRES_USER=${POSTGRES_USER:-examuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-exampass}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-examonline_logs}
+      - REDIS_URL=redis://redis:6379/0
+      # Docker 환경에서는 SSL 비활성화
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+    container_name: examonline-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: examonline_postgres_data
+  mongodb_data:
+    name: examonline_mongodb_data
+  redis_data:
+    name: examonline_redis_data
