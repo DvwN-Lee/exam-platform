@@ -36,7 +36,6 @@ db.sqlite3-journal
 venv/
 ENV/
 env/
-uv.lock
 
 # Environment variables
 .env

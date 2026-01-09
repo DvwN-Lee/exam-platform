@@ -22,10 +22,10 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
     raise ValueError("ALLOWED_HOSTS environment variable must be set in production")
 
-# Security settings
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security settings (환경 변수로 제어 가능)
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() == "true"
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() == "true"
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").lower() == "true"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
@@ -45,32 +45,46 @@ DATABASES = {
         "CONN_MAX_AGE": 600,
         "OPTIONS": {
             "connect_timeout": 10,
-            "sslmode": "require",
         },
     }
 }
 
+# PostgreSQL SSL 설정 (Docker 환경에서는 disable, Cloud 환경에서는 require)
+POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE")
+if POSTGRES_SSLMODE:
+    DATABASES["default"]["OPTIONS"]["sslmode"] = POSTGRES_SSLMODE
+
 # MongoDB configuration
+MONGODB_SSL_ENABLED = os.getenv("MONGODB_SSL", "False").lower() == "true"
 MONGODB = {
     "host": os.getenv("MONGODB_HOST"),
     "port": int(os.getenv("MONGODB_PORT", 27017)),
     "database": os.getenv("MONGODB_DATABASE"),
     "username": os.getenv("MONGODB_USER"),
     "password": os.getenv("MONGODB_PASSWORD"),
-    "ssl": True,
-    "ssl_cert_reqs": "CERT_REQUIRED",
+    "authSource": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
 }
 
+# MongoDB SSL 설정 (Docker 환경에서는 False, Cloud 환경에서는 True)
+if MONGODB_SSL_ENABLED:
+    MONGODB["ssl"] = True
+    MONGODB["ssl_cert_reqs"] = os.getenv("MONGODB_SSL_CERT_REQS", "CERT_REQUIRED")
+
 # Cache (Redis)
+REDIS_SSL_ENABLED = os.getenv("REDIS_SSL", "False").lower() == "true"
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": os.getenv("REDIS_URL"),
-        "OPTIONS": {
-            "ssl_cert_reqs": "CERT_REQUIRED",
-        },
+        "OPTIONS": {},
     }
 }
+
+# Redis SSL 설정 (Docker 환경에서는 False, Cloud 환경에서는 True)
+if REDIS_SSL_ENABLED:
+    CACHES["default"]["OPTIONS"]["ssl_cert_reqs"] = os.getenv(
+        "REDIS_SSL_CERT_REQS", "CERT_REQUIRED"
+    )
 
 # Logging
 LOGGING = {
