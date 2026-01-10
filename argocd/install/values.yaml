@@ -1,0 +1,147 @@
+# =============================================================================
+# ArgoCD Helm Chart Values
+# =============================================================================
+# Chart: argo/argo-cd
+# Install: helm install argocd argo/argo-cd -n argocd -f values.yaml
+# =============================================================================
+
+global:
+  domain: argocd.exam.example.com
+
+# -----------------------------------------------------------------------------
+# Server Configuration
+# -----------------------------------------------------------------------------
+server:
+  replicas: 2
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - argocd.exam.example.com
+    tls:
+      - secretName: argocd-tls
+        hosts:
+          - argocd.exam.example.com
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# -----------------------------------------------------------------------------
+# Repository Server
+# -----------------------------------------------------------------------------
+repoServer:
+  replicas: 2
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# -----------------------------------------------------------------------------
+# Application Controller
+# -----------------------------------------------------------------------------
+controller:
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# Redis HA
+# -----------------------------------------------------------------------------
+redis-ha:
+  enabled: true
+
+redis:
+  enabled: false
+
+# -----------------------------------------------------------------------------
+# Configs
+# -----------------------------------------------------------------------------
+configs:
+  # Repository credentials
+  repositories:
+    exam-platform:
+      url: https://github.com/DvwN-Lee/exam-platform.git
+      type: git
+
+  # RBAC
+  rbac:
+    policy.csv: |
+      p, role:admin, applications, *, */*, allow
+      p, role:admin, clusters, *, *, allow
+      p, role:admin, repositories, *, *, allow
+      p, role:admin, projects, *, *, allow
+      p, role:developer, applications, get, exam-platform/*, allow
+      p, role:developer, applications, sync, exam-platform/*, allow
+      p, role:developer, logs, get, exam-platform/*, allow
+      g, admin-group, role:admin
+      g, dev-group, role:developer
+
+  cm:
+    statusbadge.enabled: "true"
+    timeout.reconciliation: 180s
+
+# -----------------------------------------------------------------------------
+# Notifications (Slack)
+# -----------------------------------------------------------------------------
+notifications:
+  enabled: true
+  argocdUrl: https://argocd.exam.example.com
+
+  secret:
+    create: false
+    name: argocd-notifications-secret
+
+  notifiers:
+    service.slack: |
+      token: $slack-token
+
+  templates:
+    template.app-deployed: |
+      message: |
+        Application {{.app.metadata.name}} deployed successfully.
+        Sync Status: {{.app.status.sync.status}}
+        Health Status: {{.app.status.health.status}}
+    template.app-sync-failed: |
+      message: |
+        Application {{.app.metadata.name}} sync failed.
+        Error: {{.app.status.operationState.message}}
+    template.app-health-degraded: |
+      message: |
+        Application {{.app.metadata.name}} health is degraded.
+        Health Status: {{.app.status.health.status}}
+
+  triggers:
+    trigger.on-deployed: |
+      - when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+        send: [app-deployed]
+    trigger.on-sync-failed: |
+      - when: app.status.operationState.phase in ['Error', 'Failed']
+        send: [app-sync-failed]
+    trigger.on-health-degraded: |
+      - when: app.status.health.status == 'Degraded'
+        send: [app-health-degraded]

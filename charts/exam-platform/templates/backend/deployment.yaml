@@ -5,6 +5,8 @@ metadata:
   namespace: {{ include "exam-platform.namespace" . }}
   labels:
     {{- include "exam-platform.backend.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   {{- if not .Values.backend.autoscaling.enabled }}
   replicas: {{ .Values.backend.replicaCount }}
