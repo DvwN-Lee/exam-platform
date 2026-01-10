@@ -98,7 +98,7 @@ test.describe('Smoke Tests - Backend API', () => {
 
       // Backend 응답 확인 (200 또는 API Gateway가 반환하는 다른 성공 코드)
       expect([200, 204]).toContain(response.status());
-    } catch (error) {
+    } catch {
       // Backend가 분리된 환경에서는 테스트 스킵
       console.log('Backend health check skipped - backend may be on different host');
     }

@@ -79,7 +79,8 @@ func PortForwardService(t *testing.T, kubectlOpts *k8s.KubectlOptions, serviceNa
 // GetPodLogs는 특정 Pod의 로그를 가져옴
 func GetPodLogs(t *testing.T, kubectlOpts *k8s.KubectlOptions, podName string) string {
 	t.Helper()
-	return k8s.GetPodLogs(t, kubectlOpts, &k8s.Pod{Name: podName}, "")
+	pod := k8s.GetPod(t, kubectlOpts, podName)
+	return k8s.GetPodLogs(t, kubectlOpts, pod, "")
 }
 
 // WaitForPodReady는 Pod가 Ready 상태가 될 때까지 대기

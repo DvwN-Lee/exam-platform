@@ -6,7 +6,6 @@ Exam Taking API Views.
 import logging
 
 from django.db import transaction
-from django.utils import timezone
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
