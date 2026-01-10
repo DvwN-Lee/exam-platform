@@ -1,16 +1,19 @@
 # =============================================================================
 # CD Pipeline - Staging Environment
 # =============================================================================
-# Trigger: release/* branch push
+# Trigger: release/* branch push (after CI success)
 # Target: GKE Staging Cluster
 # Registry: Google Artifact Registry
 
 name: CD - Staging
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches:
       - 'release/**'
+    types:
+      - completed
 
 env:
   GCP_REGION: asia-northeast3
@@ -25,6 +28,8 @@ jobs:
   build-and-deploy:
     name: Build and Deploy to Staging
     runs-on: ubuntu-latest
+    # CI workflow 성공 시에만 실행
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
       contents: read
@@ -33,6 +38,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       # =========================================================================
       # Extract version from branch name
@@ -40,7 +47,7 @@ jobs:
       - name: Extract version
         id: version
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ github.event.workflow_run.head_branch }}
         run: |
           # release/v1.2.3 -> v1.2.3
           VERSION="${REF_NAME#release/}"
@@ -76,7 +83,7 @@ jobs:
         id: tags
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          SHA: ${{ github.sha }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           SHORT_SHA="${SHA:0:7}"
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
