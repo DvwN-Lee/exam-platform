@@ -4,16 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('examination', '0006_add_indexes_and_edit_time'),
-        ('testpaper', '0005_testscores_exam_testscores_is_submitted_and_more'),
-        ('user', '0004_add_indexes_and_edit_time'),
+        ("examination", "0006_add_indexes_and_edit_time"),
+        ("testpaper", "0005_testscores_exam_testscores_is_submitted_and_more"),
+        ("user", "0004_add_indexes_and_edit_time"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='testscores',
-            index=models.Index(fields=['exam', 'user', 'is_submitted'], name='testpaper_t_exam_id_26e13f_idx'),
+            model_name="testscores",
+            index=models.Index(
+                fields=["exam", "user", "is_submitted"], name="testpaper_t_exam_id_26e13f_idx"
+            ),
         ),
     ]
