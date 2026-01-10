@@ -1,0 +1,192 @@
+# =============================================================================
+# CD Pipeline - Dev Environment
+# =============================================================================
+# Trigger: main branch push (after CI success)
+# Target: GKE Dev Cluster
+# Registry: Google Artifact Registry
+
+name: CD - Dev
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types:
+      - completed
+
+env:
+  GCP_REGION: asia-northeast3
+  GAR_LOCATION: asia-northeast3-docker.pkg.dev
+  REPOSITORY: exam-platform
+  BACKEND_IMAGE: backend
+  FRONTEND_IMAGE: frontend
+  GKE_ZONE: asia-northeast3-a
+  NAMESPACE: exam-dev
+
+jobs:
+  deploy:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    # CI workflow 성공 시에만 실행
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # =========================================================================
+      # GCP Authentication
+      # =========================================================================
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
+
+      # =========================================================================
+      # Docker Build & Push
+      # =========================================================================
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set image tags
+        id: tags
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          SHORT_SHA="${SHA:0:7}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "backend_tag=dev-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "frontend_tag=dev-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Backend image
+        uses: docker/build-push-action@v6
+        env:
+          BACKEND_TAG: ${{ steps.tags.outputs.backend_tag }}
+        with:
+          context: ./examonline
+          file: ./examonline/Dockerfile
+          push: true
+          tags: |
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_IMAGE }}:${{ env.BACKEND_TAG }}
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_IMAGE }}:dev-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v6
+        env:
+          FRONTEND_TAG: ${{ steps.tags.outputs.frontend_tag }}
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_IMAGE }}:${{ env.FRONTEND_TAG }}
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_IMAGE }}:dev-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # =========================================================================
+      # GKE Deployment
+      # =========================================================================
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_DEV }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.14.0'
+
+      - name: Deploy with Helm
+        env:
+          BACKEND_TAG: ${{ steps.tags.outputs.backend_tag }}
+          FRONTEND_TAG: ${{ steps.tags.outputs.frontend_tag }}
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          helm upgrade --install exam-platform ./charts/exam-platform \
+            --namespace "$NAMESPACE" \
+            --create-namespace \
+            --values ./charts/exam-platform/values-dev.yaml \
+            --set backend.image.repository="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${BACKEND_IMAGE}" \
+            --set backend.image.tag="${BACKEND_TAG}" \
+            --set frontend.image.repository="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${FRONTEND_IMAGE}" \
+            --set frontend.image.tag="${FRONTEND_TAG}" \
+            --atomic \
+            --timeout 10m \
+            --wait
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/exam-platform-backend -n "$NAMESPACE" --timeout=5m
+          kubectl rollout status deployment/exam-platform-frontend -n "$NAMESPACE" --timeout=5m
+
+      # =========================================================================
+      # Notification
+      # =========================================================================
+      - name: Send Slack notification (Success)
+        if: success()
+        uses: slackapi/slack-github-action@v1.27.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          SHORT_SHA: ${{ steps.tags.outputs.short_sha }}
+          BACKEND_TAG: ${{ steps.tags.outputs.backend_tag }}
+          FRONTEND_TAG: ${{ steps.tags.outputs.frontend_tag }}
+        with:
+          payload: |
+            {
+              "text": "Dev Deployment Success",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Dev Deployment Success*\n\nCommit: `${{ env.SHORT_SHA }}`\nBackend Tag: `${{ env.BACKEND_TAG }}`\nFrontend Tag: `${{ env.FRONTEND_TAG }}`"
+                  }
+                }
+              ]
+            }
+
+      - name: Send Slack notification (Failure)
+        if: failure()
+        uses: slackapi/slack-github-action@v1.27.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+          SHORT_SHA: ${{ steps.tags.outputs.short_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          payload: |
+            {
+              "text": "Dev Deployment Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Dev Deployment Failed*\n\nCommit: `${{ env.SHORT_SHA }}`\nWorkflow: ${{ env.RUN_URL }}"
+                  }
+                }
+              ]
+            }
