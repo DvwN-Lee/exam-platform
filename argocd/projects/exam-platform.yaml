@@ -1,0 +1,109 @@
+# =============================================================================
+# ArgoCD AppProject - Exam Platform
+# =============================================================================
+# Project isolation and RBAC for exam-platform applications
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: exam-platform
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Online Exam Platform Project
+
+  # ---------------------------------------------------------------------------
+  # Source Repositories
+  # ---------------------------------------------------------------------------
+  sourceRepos:
+    - https://github.com/DvwN-Lee/OnlineExam-v2.git
+
+  # ---------------------------------------------------------------------------
+  # Destinations
+  # ---------------------------------------------------------------------------
+  destinations:
+    # Dev environment
+    - namespace: exam-dev
+      server: https://kubernetes.default.svc
+    # Staging environment
+    - namespace: exam-staging
+      server: https://kubernetes.default.svc
+    # Production environment
+    - namespace: exam-prod
+      server: https://kubernetes.default.svc
+
+  # ---------------------------------------------------------------------------
+  # Cluster-scoped Resources
+  # ---------------------------------------------------------------------------
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  # ---------------------------------------------------------------------------
+  # Namespace-scoped Resources
+  # ---------------------------------------------------------------------------
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: policy
+      kind: PodDisruptionBudget
+
+  # ---------------------------------------------------------------------------
+  # Denied Resources
+  # ---------------------------------------------------------------------------
+  namespaceResourceBlacklist:
+    - group: ''
+      kind: ResourceQuota
+    - group: ''
+      kind: LimitRange
+
+  # ---------------------------------------------------------------------------
+  # Roles
+  # ---------------------------------------------------------------------------
+  roles:
+    # Admin role
+    - name: admin
+      description: Full access to exam-platform project
+      policies:
+        - p, proj:exam-platform:admin, applications, *, exam-platform/*, allow
+        - p, proj:exam-platform:admin, repositories, *, exam-platform/*, allow
+      groups:
+        - exam-platform-admins
+
+    # Developer role (sync dev/staging only)
+    - name: developer
+      description: Developer access - can sync dev/staging
+      policies:
+        - p, proj:exam-platform:developer, applications, get, exam-platform/*, allow
+        - p, proj:exam-platform:developer, applications, sync, exam-platform/exam-dev, allow
+        - p, proj:exam-platform:developer, applications, sync, exam-platform/exam-staging, allow
+      groups:
+        - exam-platform-developers
+
+    # Viewer role (read-only)
+    - name: viewer
+      description: Read-only access
+      policies:
+        - p, proj:exam-platform:viewer, applications, get, exam-platform/*, allow
+      groups:
+        - exam-platform-viewers
+
+  # ---------------------------------------------------------------------------
+  # Orphaned Resources
+  # ---------------------------------------------------------------------------
+  orphanedResources:
+    warn: true

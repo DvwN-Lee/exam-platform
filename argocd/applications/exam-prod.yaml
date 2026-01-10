@@ -1,0 +1,82 @@
+# =============================================================================
+# ArgoCD Application - Production Environment
+# =============================================================================
+# Manual sync required - no automated deployment
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exam-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: exam-platform
+    app.kubernetes.io/instance: prod
+    environment: prod
+  annotations:
+    notifications.argoproj.io/subscribe.on-sync-running.slack: exam-prod-deployments
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: exam-prod-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-prod-alerts
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: exam-prod-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: exam-platform
+
+  # ---------------------------------------------------------------------------
+  # Source
+  # ---------------------------------------------------------------------------
+  source:
+    repoURL: https://github.com/DvwN-Lee/OnlineExam-v2.git
+    targetRevision: main
+    path: charts/exam-platform
+    helm:
+      valueFiles:
+        - values-prod.yaml
+      parameters:
+        - name: backend.image.repository
+          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
+        - name: frontend.image.repository
+          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+
+  # ---------------------------------------------------------------------------
+  # Destination
+  # ---------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: exam-prod
+
+  # ---------------------------------------------------------------------------
+  # Sync Policy (Manual - No automated sync)
+  # ---------------------------------------------------------------------------
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+
+  # ---------------------------------------------------------------------------
+  # Ignore Differences (HPA managed fields)
+  # ---------------------------------------------------------------------------
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/minReplicas
+        - /spec/maxReplicas
+
+  # ---------------------------------------------------------------------------
+  # Revision History (More for production rollbacks)
+  # ---------------------------------------------------------------------------
+  revisionHistoryLimit: 20

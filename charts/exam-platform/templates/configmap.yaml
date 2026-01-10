@@ -5,6 +5,8 @@ metadata:
   namespace: {{ include "exam-platform.namespace" . }}
   labels:
     {{- include "exam-platform.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 data:
   # Django settings
   DJANGO_SETTINGS_MODULE: {{ .Values.config.djangoSettingsModule | quote }}
