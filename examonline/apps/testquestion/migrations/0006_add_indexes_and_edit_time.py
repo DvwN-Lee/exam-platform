@@ -7,15 +7,27 @@ import core.api.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('testquestion', '0005_rename_creat_user_testquestioninfo_create_user'),
+        ("testquestion", "0005_rename_creat_user_testquestioninfo_create_user"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='testquestioninfo',
-            name='image',
-            field=models.ImageField(blank=True, max_length=200, null=True, upload_to='test_question/%Y/%m', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif']), core.api.validators.ImageSizeValidator(), core.api.validators.ImageMimeTypeValidator()], verbose_name='시험 문제 사진'),
+            model_name="testquestioninfo",
+            name="image",
+            field=models.ImageField(
+                blank=True,
+                max_length=200,
+                null=True,
+                upload_to="test_question/%Y/%m",
+                validators=[
+                    django.core.validators.FileExtensionValidator(
+                        allowed_extensions=["jpg", "jpeg", "png", "gif"]
+                    ),
+                    core.api.validators.ImageSizeValidator(),
+                    core.api.validators.ImageMimeTypeValidator(),
+                ],
+                verbose_name="시험 문제 사진",
+            ),
         ),
     ]

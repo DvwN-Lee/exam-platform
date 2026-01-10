@@ -338,10 +338,9 @@ class ExamTakingViewSet(viewsets.ViewSet):
                 for q_id, record in test_score.detail_records.items():
                     if isinstance(record, dict):
                         try:
-                            answers.append({
-                                "question_id": int(q_id),
-                                "answer": record.get("answer", "")
-                            })
+                            answers.append(
+                                {"question_id": int(q_id), "answer": record.get("answer", "")}
+                            )
                         except (ValueError, TypeError):
                             continue
 

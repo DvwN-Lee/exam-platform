@@ -7,15 +7,26 @@ import core.api.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('user', '0003_alter_emailverifyrecord_id_and_more'),
+        ("user", "0003_alter_emailverifyrecord_id_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='userprofile',
-            name='image',
-            field=models.ImageField(default='image/default.png', max_length=200, upload_to='image/%Y/%m', validators=[django.core.validators.FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif']), core.api.validators.ImageSizeValidator(), core.api.validators.ImageMimeTypeValidator()], verbose_name='이미지'),
+            model_name="userprofile",
+            name="image",
+            field=models.ImageField(
+                default="image/default.png",
+                max_length=200,
+                upload_to="image/%Y/%m",
+                validators=[
+                    django.core.validators.FileExtensionValidator(
+                        allowed_extensions=["jpg", "jpeg", "png", "gif"]
+                    ),
+                    core.api.validators.ImageSizeValidator(),
+                    core.api.validators.ImageMimeTypeValidator(),
+                ],
+                verbose_name="이미지",
+            ),
         ),
     ]

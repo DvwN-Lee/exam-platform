@@ -49,9 +49,7 @@ class E2EExaminationViewSet(viewsets.ViewSet):
 
         시작 시간을 현재 시간 또는 과거로 설정해도 생성 가능합니다.
         """
-        serializer = E2EExaminationCreateSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = E2EExaminationCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         exam = serializer.save()
 
@@ -98,9 +96,7 @@ class E2EExaminationViewSet(viewsets.ViewSet):
         # 학생 등록
         with transaction.atomic():
             students = StudentsInfo.objects.filter(id__in=student_ids)
-            enrollments = [
-                ExamStudentsInfo(exam=exam, student=student) for student in students
-            ]
+            enrollments = [ExamStudentsInfo(exam=exam, student=student) for student in students]
             ExamStudentsInfo.objects.bulk_create(enrollments)
             exam.student_num = ExamStudentsInfo.objects.filter(exam=exam).count()
             exam.save()
@@ -159,9 +155,7 @@ class E2EExaminationViewSet(viewsets.ViewSet):
         # 시험지 조회
         exam_paper = ExamPaperInfo.objects.filter(exam=exam).first()
         if not exam_paper:
-            return Response(
-                {"detail": "시험지가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"detail": "시험지가 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 시험 시작 기록 (시간 검증 없음)
         now = timezone.now()

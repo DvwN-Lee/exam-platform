@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('examination', '0005_examinationinfo_exam_state_idx_and_more'),
+        ("examination", "0005_examinationinfo_exam_state_idx_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='examinationinfo',
-            name='edit_time',
-            field=models.DateTimeField(auto_now=True, verbose_name='수정 시간'),
+            model_name="examinationinfo",
+            name="edit_time",
+            field=models.DateTimeField(auto_now=True, verbose_name="수정 시간"),
         ),
     ]
