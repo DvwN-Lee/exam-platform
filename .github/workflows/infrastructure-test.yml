@@ -1,0 +1,252 @@
+name: Infrastructure Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'terraform/**'
+      - 'charts/**'
+      - 'tests/terratest/**'
+      - '.github/workflows/infrastructure-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+      - 'charts/**'
+      - 'tests/terratest/**'
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.22'
+  TERRAFORM_VERSION: '1.7.0'
+  HELM_VERSION: '3.14.0'
+  NODE_VERSION: '20'
+
+jobs:
+  terraform-tests:
+    name: Terraform Module Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/terratest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: tests/terratest/go.sum
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run VPC Module Tests
+        run: go test -v -timeout 30m ./terraform/vpc/...
+
+      - name: Run EKS Module Tests
+        run: go test -v -timeout 30m ./terraform/eks/...
+
+      - name: Run RDS Module Tests
+        run: go test -v -timeout 30m ./terraform/rds/...
+
+      - name: Run ElastiCache Module Tests
+        run: go test -v -timeout 30m ./terraform/elasticache/...
+
+      - name: Run S3 Module Tests
+        run: go test -v -timeout 30m ./terraform/s3/...
+
+      - name: Run ECR Module Tests
+        run: go test -v -timeout 30m ./terraform/ecr/...
+
+  helm-lint-tests:
+    name: Helm Chart Lint Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Helm Lint - Default Values
+        run: helm lint charts/exam-platform
+
+      - name: Helm Lint - Dev Values
+        run: helm lint charts/exam-platform -f charts/exam-platform/values-dev.yaml
+
+      - name: Helm Lint - Staging Values
+        run: helm lint charts/exam-platform -f charts/exam-platform/values-staging.yaml
+
+      - name: Helm Lint - Prod Values
+        run: helm lint charts/exam-platform -f charts/exam-platform/values-prod.yaml
+
+  helm-template-tests:
+    name: Helm Template Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tests/terratest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: tests/terratest/go.sum
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run Helm Template Tests
+        run: go test -v -timeout 10m ./helm/... -run 'Template|Lint'
+
+  integration-tests:
+    name: Integration Tests (Kind)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [terraform-tests, helm-lint-tests, helm-template-tests]
+    defaults:
+      run:
+        working-directory: tests/terratest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: tests/terratest/go.sum
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: exam-test
+          wait: 120s
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run Integration Tests
+        env:
+          RUN_INTEGRATION_TESTS: 'true'
+        run: go test -v -timeout 30m ./helm/... -run 'Integration'
+
+      - name: Get Cluster Info on Failure
+        if: failure()
+        run: |
+          kubectl cluster-info
+          kubectl get pods -A
+          kubectl get events -A --sort-by='.lastTimestamp'
+
+  playwright-smoke-tests:
+    name: Playwright Smoke Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: integration-tests
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: exam-e2e
+          wait: 120s
+
+      - name: Deploy Application
+        run: |
+          helm install exam-test ../charts/exam-platform \
+            --set backend.image.repository=nginx \
+            --set backend.image.tag=alpine \
+            --set frontend.image.repository=nginx \
+            --set frontend.image.tag=alpine \
+            --set backend.replicaCount=1 \
+            --set frontend.replicaCount=1 \
+            --wait --timeout 5m
+
+      - name: Port Forward Frontend
+        run: |
+          kubectl port-forward svc/exam-test-frontend 3000:80 &
+          sleep 5
+
+      - name: Run Smoke Tests
+        env:
+          PLAYWRIGHT_BASE_URL: 'http://localhost:3000'
+        run: npx playwright test smoke/ --project=chromium
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-smoke-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [terraform-tests, helm-lint-tests, helm-template-tests]
+    if: always()
+
+    steps:
+      - name: Check Test Results
+        run: |
+          echo "## Infrastructure Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Module Tests | ${{ needs.terraform-tests.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Helm Lint Tests | ${{ needs.helm-lint-tests.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Helm Template Tests | ${{ needs.helm-template-tests.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
