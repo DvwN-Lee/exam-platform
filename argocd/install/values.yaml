@@ -85,7 +85,7 @@ configs:
   # Repository credentials
   repositories:
     exam-platform:
-      url: https://github.com/DvwN-Lee/OnlineExam-v2.git
+      url: https://github.com/DvwN-Lee/exam-platform.git
       type: git
 
   # RBAC
