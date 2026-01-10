@@ -6,6 +6,8 @@ metadata:
   namespace: {{ include "exam-platform.namespace" . }}
   labels:
     {{- include "exam-platform.backend.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

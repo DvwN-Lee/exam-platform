@@ -1,0 +1,69 @@
+# =============================================================================
+# ArgoCD Application - Staging Environment
+# =============================================================================
+# Automated sync with selfHeal and prune enabled
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exam-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: exam-platform
+    app.kubernetes.io/instance: staging
+    environment: staging
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: exam-platform
+
+  # ---------------------------------------------------------------------------
+  # Source
+  # ---------------------------------------------------------------------------
+  source:
+    repoURL: https://github.com/DvwN-Lee/exam-platform.git
+    targetRevision: main
+    path: charts/exam-platform
+    helm:
+      valueFiles:
+        - values-staging.yaml
+      parameters:
+        - name: backend.image.repository
+          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
+        - name: frontend.image.repository
+          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+
+  # ---------------------------------------------------------------------------
+  # Destination
+  # ---------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: exam-staging
+
+  # ---------------------------------------------------------------------------
+  # Sync Policy
+  # ---------------------------------------------------------------------------
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ---------------------------------------------------------------------------
+  # Revision History
+  # ---------------------------------------------------------------------------
+  revisionHistoryLimit: 10
