@@ -31,9 +31,9 @@ test.describe('Smoke Tests - Health Check', () => {
     const loginForm = page.locator('form');
     await expect(loginForm).toBeVisible({ timeout: 10000 });
 
-    // Email/Username 입력 필드 확인
-    const emailInput = page.getByRole('textbox', { name: /email|username/i });
-    await expect(emailInput).toBeVisible();
+    // Username 입력 필드 확인 (한국어 label "아이디" 사용)
+    const usernameInput = page.locator('input[id="username"]');
+    await expect(usernameInput).toBeVisible();
 
     // Password 입력 필드 확인
     const passwordInput = page.locator('input[type="password"]');
