@@ -7,10 +7,12 @@ Health check 및 E2E 테스트 전용 API Endpoint 포함.
 from django.conf import settings
 from django.urls import path
 
-from core.api.views import health_check
+from core.api.views import health_check, liveness_check, readiness_check
 
 urlpatterns = [
     path("health/", health_check, name="health-check"),
+    path("health/live/", liveness_check, name="liveness-check"),
+    path("health/ready/", readiness_check, name="readiness-check"),
 ]
 
 # E2E Mock Time API는 E2E_MOCK_TIME_ENABLED가 True일 때만 등록

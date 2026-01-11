@@ -59,6 +59,8 @@ services:
       context: ./examonline
       dockerfile: Dockerfile
     container_name: examonline-backend
+    volumes:
+      - backend_logs:/app/logs
     environment:
       - DJANGO_SETTINGS_MODULE=config.production
       - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
@@ -129,3 +131,5 @@ volumes:
     name: examonline_mongodb_data
   redis_data:
     name: examonline_redis_data
+  backend_logs:
+    name: examonline_backend_logs
