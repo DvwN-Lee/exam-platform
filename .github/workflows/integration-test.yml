@@ -1,0 +1,266 @@
+# =============================================================================
+# Docker Compose Integration Test
+# =============================================================================
+# Docker Compose로 전체 스택을 실행하고 통합 테스트 수행
+# - Database services: PostgreSQL, MongoDB, Redis
+# - Application services: Backend, Frontend
+# - Health check endpoints 검증
+# - API smoke tests
+
+name: Integration Test
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docker-compose.yml'
+      - 'examonline/Dockerfile'
+      - 'examonline/docker-entrypoint.sh'
+      - 'examonline/pyproject.toml'
+      - 'examonline/uv.lock'
+      - 'examonline/config/**'
+      - 'examonline/core/**'
+      - 'frontend/Dockerfile'
+      - 'frontend/nginx.conf'
+      - '.github/workflows/integration-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.yml'
+      - 'examonline/Dockerfile'
+      - 'examonline/docker-entrypoint.sh'
+      - 'examonline/pyproject.toml'
+      - 'examonline/uv.lock'
+      - 'examonline/config/**'
+      - 'examonline/core/**'
+      - 'frontend/Dockerfile'
+      - 'frontend/nginx.conf'
+      - '.github/workflows/integration-test.yml'
+  workflow_dispatch:
+
+env:
+  COMPOSE_PROJECT_NAME: examonline-test
+
+jobs:
+  integration-test:
+    name: Docker Compose Integration Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify jq installation
+        run: |
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          echo "jq version: $(jq --version)"
+
+      - name: Create .env file
+        run: |
+          cat > .env << 'EOF'
+          SECRET_KEY=test-secret-key-for-ci-integration-testing
+          DEBUG=False
+          ALLOWED_HOSTS=localhost,127.0.0.1,backend
+
+          POSTGRES_DB=examonline
+          POSTGRES_USER=examuser
+          POSTGRES_PASSWORD=testpassword123
+
+          MONGODB_DATABASE=examonline_logs
+          MONGODB_USER=mongouser
+          MONGODB_PASSWORD=testpassword123
+
+          REDIS_PASSWORD=testpassword123
+
+          VITE_API_BASE_URL=http://localhost:8000/api/v1
+
+          GUNICORN_WORKERS=2
+          GUNICORN_THREADS=2
+          EOF
+
+      - name: Build Docker images
+        run: docker compose build --parallel
+        env:
+          DOCKER_BUILDKIT: 1
+          COMPOSE_DOCKER_CLI_BUILD: 1
+
+      - name: Start services
+        run: docker compose up -d --wait --wait-timeout 180
+
+      - name: Check container status
+        run: |
+          echo "=== Container Status ==="
+          docker compose ps
+          echo ""
+          echo "=== Container Health ==="
+          docker inspect --format='{{.Name}}: {{.State.Health.Status}}' $(docker compose ps -q) || true
+
+      - name: Test Backend Liveness
+        run: |
+          echo "Testing Backend Liveness Probe..."
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -w "\n%{http_code}" http://localhost:8000/api/v1/health/live/)
+            body=$(echo "$response" | head -n -1)
+            status=$(echo "$response" | tail -n 1)
+            echo "Attempt $i - Status Code: $status"
+
+            if [ "$status" = "200" ]; then
+              echo "Response: $body"
+              echo "Liveness check passed"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Liveness check failed after $MAX_RETRIES attempts!"
+          exit 1
+
+      - name: Test Backend Readiness
+        run: |
+          echo "Testing Backend Readiness Probe..."
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -w "\n%{http_code}" http://localhost:8000/api/v1/health/ready/)
+            body=$(echo "$response" | head -n -1)
+            status=$(echo "$response" | tail -n 1)
+            echo "Attempt $i - Status Code: $status"
+
+            if [ "$status" = "200" ]; then
+              echo "Response: $body"
+              echo "Readiness check passed"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Readiness check failed after $MAX_RETRIES attempts!"
+          exit 1
+
+      - name: Test Backend Health Check
+        run: |
+          echo "Testing Backend Health Check..."
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s http://localhost:8000/api/v1/health/)
+            echo "Attempt $i - Response: $response"
+
+            # JSON 파싱하여 각 서비스 상태 확인
+            postgresql=$(echo "$response" | jq -r '.checks.postgresql')
+            mongodb=$(echo "$response" | jq -r '.checks.mongodb')
+            redis=$(echo "$response" | jq -r '.checks.redis')
+
+            echo "PostgreSQL: $postgresql"
+            echo "MongoDB: $mongodb"
+            echo "Redis: $redis"
+
+            if [ "$postgresql" = "connected" ] && [ "$mongodb" = "connected" ] && [ "$redis" = "connected" ]; then
+              echo "All database services connected"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts - not all services connected!"
+          exit 1
+
+      - name: Test Frontend Response
+        run: |
+          echo "Testing Frontend Response..."
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80/)
+          echo "Status Code: $status"
+          if [ "$status" != "200" ]; then
+            echo "Frontend check failed!"
+            exit 1
+          fi
+          echo "Frontend check passed"
+
+      - name: Test API Endpoints
+        run: |
+          echo "Testing API Endpoints..."
+
+          # OpenAPI Schema
+          echo "Testing OpenAPI schema endpoint..."
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/v1/schema/)
+          echo "OpenAPI Schema: $status"
+          if [ "$status" != "200" ]; then
+            echo "OpenAPI schema endpoint failed!"
+            exit 1
+          fi
+
+          # Swagger UI
+          echo "Testing Swagger UI..."
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/v1/docs/)
+          echo "Swagger UI: $status"
+          if [ "$status" != "200" ]; then
+            echo "Swagger UI endpoint failed!"
+            exit 1
+          fi
+
+          echo "API endpoints check passed"
+
+      - name: View logs on failure
+        if: failure()
+        run: |
+          echo "=== Backend Logs ==="
+          docker compose logs backend --tail=100
+          echo ""
+          echo "=== Frontend Logs ==="
+          docker compose logs frontend --tail=50
+          echo ""
+          echo "=== Database Logs ==="
+          docker compose logs postgres mongodb redis --tail=30
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v --remove-orphans
+          docker compose rm -f
+
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [integration-test]
+    if: always()
+
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## Docker Compose Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Test | ${{ needs.integration-test.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Liveness Probe (/health/live/)" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Readiness Probe (/health/ready/)" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Health Check (/health/)" >> $GITHUB_STEP_SUMMARY
+          echo "- Database Connections (PostgreSQL, MongoDB, Redis)" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend Response (HTTP 200)" >> $GITHUB_STEP_SUMMARY
+          echo "- API Endpoints (OpenAPI Schema, Swagger UI)" >> $GITHUB_STEP_SUMMARY
