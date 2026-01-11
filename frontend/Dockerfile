@@ -22,6 +22,9 @@ RUN npm run build
 # ===== Runtime Stage =====
 FROM nginx:1.27-alpine AS runtime
 
+# Health check를 위한 curl 설치
+RUN apk add --no-cache curl
+
 # Nginx 설정 복사
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
