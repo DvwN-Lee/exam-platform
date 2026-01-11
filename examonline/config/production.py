@@ -127,5 +127,69 @@ LOGGING = {
     },
 }
 
-# Static and Media files (use CDN/S3 in production)
-# Configure AWS S3 or similar for production deployment
+# Static and Media files
+# S3 Storage 설정 (환경 변수로 활성화)
+USE_S3_STORAGE = os.getenv("USE_S3_STORAGE", "False").lower() == "true"
+
+if USE_S3_STORAGE:
+    # AWS S3 필수 환경 변수 검증
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+
+    _missing_vars = []
+    if not AWS_ACCESS_KEY_ID:
+        _missing_vars.append("AWS_ACCESS_KEY_ID")
+    if not AWS_SECRET_ACCESS_KEY:
+        _missing_vars.append("AWS_SECRET_ACCESS_KEY")
+    if not AWS_STORAGE_BUCKET_NAME:
+        _missing_vars.append("AWS_STORAGE_BUCKET_NAME")
+
+    if _missing_vars:
+        raise ValueError(
+            f"USE_S3_STORAGE=True requires the following environment variables: "
+            f"{', '.join(_missing_vars)}"
+        )
+
+    # AWS S3 설정
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-northeast-2")
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
+    AWS_DEFAULT_ACL = None
+    AWS_S3_OBJECT_PARAMETERS = {
+        "CacheControl": "max-age=86400",
+    }
+    AWS_QUERYSTRING_AUTH = False
+
+    # Storages 설정
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {
+                "location": "media",
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+            "OPTIONS": {
+                "location": "static",
+            },
+        },
+    }
+
+    # S3 URL 설정
+    if AWS_S3_CUSTOM_DOMAIN:
+        STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+    else:
+        STATIC_URL = (
+            f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/static/"
+        )
+        MEDIA_URL = (
+            f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/media/"
+        )
+else:
+    # Local filesystem 기반 static files 서빙 (Nginx volume 공유)
+    STATIC_URL = "/static/"
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
