@@ -132,10 +132,26 @@ LOGGING = {
 USE_S3_STORAGE = os.getenv("USE_S3_STORAGE", "False").lower() == "true"
 
 if USE_S3_STORAGE:
-    # AWS S3 설정
+    # AWS S3 필수 환경 변수 검증
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+
+    _missing_vars = []
+    if not AWS_ACCESS_KEY_ID:
+        _missing_vars.append("AWS_ACCESS_KEY_ID")
+    if not AWS_SECRET_ACCESS_KEY:
+        _missing_vars.append("AWS_SECRET_ACCESS_KEY")
+    if not AWS_STORAGE_BUCKET_NAME:
+        _missing_vars.append("AWS_STORAGE_BUCKET_NAME")
+
+    if _missing_vars:
+        raise ValueError(
+            f"USE_S3_STORAGE=True requires the following environment variables: "
+            f"{', '.join(_missing_vars)}"
+        )
+
+    # AWS S3 설정
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "ap-northeast-2")
     AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
     AWS_DEFAULT_ACL = None
