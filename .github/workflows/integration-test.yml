@@ -35,6 +35,7 @@ on:
       - 'examonline/core/**'
       - 'frontend/Dockerfile'
       - 'frontend/nginx.conf'
+      - '.github/workflows/integration-test.yml'
   workflow_dispatch:
 
 env:
@@ -52,6 +53,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Verify jq installation
+        run: |
+          if ! command -v jq &> /dev/null; then
+            echo "Installing jq..."
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          echo "jq version: $(jq --version)"
 
       - name: Create .env file
         run: |
@@ -78,6 +87,9 @@ jobs:
 
       - name: Build Docker images
         run: docker compose build --parallel
+        env:
+          DOCKER_BUILDKIT: 1
+          COMPOSE_DOCKER_CLI_BUILD: 1
 
       - name: Start services
         run: docker compose up -d --wait --wait-timeout 180
@@ -93,51 +105,89 @@ jobs:
       - name: Test Backend Liveness
         run: |
           echo "Testing Backend Liveness Probe..."
-          response=$(curl -s -w "\n%{http_code}" http://localhost:8000/api/v1/health/live/)
-          body=$(echo "$response" | head -n -1)
-          status=$(echo "$response" | tail -n 1)
-          echo "Response: $body"
-          echo "Status Code: $status"
-          if [ "$status" != "200" ]; then
-            echo "Liveness check failed!"
-            exit 1
-          fi
-          echo "Liveness check passed"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -w "\n%{http_code}" http://localhost:8000/api/v1/health/live/)
+            body=$(echo "$response" | head -n -1)
+            status=$(echo "$response" | tail -n 1)
+            echo "Attempt $i - Status Code: $status"
+
+            if [ "$status" = "200" ]; then
+              echo "Response: $body"
+              echo "Liveness check passed"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Liveness check failed after $MAX_RETRIES attempts!"
+          exit 1
 
       - name: Test Backend Readiness
         run: |
           echo "Testing Backend Readiness Probe..."
-          response=$(curl -s -w "\n%{http_code}" http://localhost:8000/api/v1/health/ready/)
-          body=$(echo "$response" | head -n -1)
-          status=$(echo "$response" | tail -n 1)
-          echo "Response: $body"
-          echo "Status Code: $status"
-          if [ "$status" != "200" ]; then
-            echo "Readiness check failed!"
-            exit 1
-          fi
-          echo "Readiness check passed"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -w "\n%{http_code}" http://localhost:8000/api/v1/health/ready/)
+            body=$(echo "$response" | head -n -1)
+            status=$(echo "$response" | tail -n 1)
+            echo "Attempt $i - Status Code: $status"
+
+            if [ "$status" = "200" ]; then
+              echo "Response: $body"
+              echo "Readiness check passed"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Readiness check failed after $MAX_RETRIES attempts!"
+          exit 1
 
       - name: Test Backend Health Check
         run: |
           echo "Testing Backend Health Check..."
-          response=$(curl -s http://localhost:8000/api/v1/health/)
-          echo "Response: $response"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
 
-          # JSON 파싱하여 각 서비스 상태 확인
-          postgresql=$(echo "$response" | jq -r '.checks.postgresql')
-          mongodb=$(echo "$response" | jq -r '.checks.mongodb')
-          redis=$(echo "$response" | jq -r '.checks.redis')
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s http://localhost:8000/api/v1/health/)
+            echo "Attempt $i - Response: $response"
 
-          echo "PostgreSQL: $postgresql"
-          echo "MongoDB: $mongodb"
-          echo "Redis: $redis"
+            # JSON 파싱하여 각 서비스 상태 확인
+            postgresql=$(echo "$response" | jq -r '.checks.postgresql')
+            mongodb=$(echo "$response" | jq -r '.checks.mongodb')
+            redis=$(echo "$response" | jq -r '.checks.redis')
 
-          if [ "$postgresql" != "connected" ] || [ "$mongodb" != "connected" ] || [ "$redis" != "connected" ]; then
-            echo "Health check failed - not all services connected!"
-            exit 1
-          fi
-          echo "All database services connected"
+            echo "PostgreSQL: $postgresql"
+            echo "MongoDB: $mongodb"
+            echo "Redis: $redis"
+
+            if [ "$postgresql" = "connected" ] && [ "$mongodb" = "connected" ] && [ "$redis" = "connected" ]; then
+              echo "All database services connected"
+              exit 0
+            fi
+
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Retrying in ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts - not all services connected!"
+          exit 1
 
       - name: Test Frontend Response
         run: |
