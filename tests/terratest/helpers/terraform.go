@@ -30,10 +30,12 @@ func RunTerraformValidation(t *testing.T, opts *TerraformPlanOptions) {
 	t.Helper()
 
 	// terraform validate는 -var 플래그를 지원하지 않으므로 Vars 제외
+	// Upgrade: true로 설정하여 병렬 테스트 시 lock 파일 충돌 방지
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir:  opts.TerraformDir,
 		NoColor:       true,
 		BackendConfig: opts.BackendConfig,
+		Upgrade:       true,
 	})
 
 	terraform.Init(t, terraformOptions)
