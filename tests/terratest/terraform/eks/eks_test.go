@@ -15,7 +15,7 @@ func TestEKSModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":         "test",
+			"environment": "dev",
 			"cluster_name":        "test-eks-cluster",
 			"cluster_version":     "1.29",
 			"vpc_id":              "vpc-12345678",
@@ -53,7 +53,7 @@ func TestEKSModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":         "test",
+			"environment": "dev",
 			"cluster_name":        "test-eks-cluster",
 			"cluster_version":     "1.29",
 			"vpc_id":              "vpc-12345678",
@@ -92,7 +92,7 @@ func TestEKSModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":         "test",
+			"environment": "dev",
 			"cluster_name":        "test-eks-cluster",
 			"cluster_version":     "1.29",
 			"vpc_id":              "vpc-12345678",

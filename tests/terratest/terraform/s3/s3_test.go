@@ -15,7 +15,6 @@ func TestS3ModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"bucket_name": "test-exam-assets",
 		},
 	}
@@ -35,7 +34,6 @@ func TestS3ModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"bucket_name": "test-exam-assets",
 		},
 	}
@@ -59,7 +57,6 @@ func TestS3ModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"bucket_name": "test-exam-assets",
 		},
 	}
@@ -75,10 +72,9 @@ func TestS3ModuleVersioning(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":       "prod",
-			"bucket_name":       "prod-exam-assets",
-			"versioning":        true,
-			"force_destroy":     false,
+			"bucket_name":        "prod-exam-assets",
+			"versioning_enabled": true,
+			"force_destroy":      false,
 		},
 	}
 
@@ -97,16 +93,16 @@ func TestS3ModuleLifecycleRules(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":   "staging",
-			"bucket_name":   "staging-exam-assets",
-			"enable_lifecycle": true,
+			"bucket_name": "staging-exam-assets",
 			"lifecycle_rules": []map[string]interface{}{
 				{
 					"id":      "archive-old-objects",
 					"enabled": true,
-					"transition": map[string]interface{}{
-						"days":          90,
-						"storage_class": "GLACIER",
+					"transitions": []map[string]interface{}{
+						{
+							"days":          90,
+							"storage_class": "GLACIER",
+						},
 					},
 				},
 			},
@@ -128,9 +124,7 @@ func TestS3ModuleCORS(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "dev",
 			"bucket_name": "dev-exam-assets",
-			"enable_cors": true,
 			"cors_rules": []map[string]interface{}{
 				{
 					"allowed_headers": []string{"*"},
@@ -157,10 +151,8 @@ func TestS3ModuleEncryption(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":      "prod",
-			"bucket_name":      "prod-exam-assets-encrypted",
-			"enable_encryption": true,
-			"sse_algorithm":    "aws:kms",
+			"bucket_name": "prod-exam-assets-encrypted",
+			"kms_key_arn": "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012",
 		},
 	}
 
