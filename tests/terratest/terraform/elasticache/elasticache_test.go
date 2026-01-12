@@ -15,7 +15,6 @@ func TestElastiCacheModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":              "test",
 			"cluster_id":               "test-redis",
 			"engine":                   "redis",
 			"engine_version":           "7.0",
@@ -50,7 +49,6 @@ func TestElastiCacheModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":              "test",
 			"cluster_id":               "test-redis",
 			"engine":                   "redis",
 			"engine_version":           "7.0",
@@ -82,7 +80,6 @@ func TestElastiCacheModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":              "test",
 			"cluster_id":               "test-redis",
 			"engine":                   "redis",
 			"engine_version":           "7.0",

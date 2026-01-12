@@ -15,7 +15,6 @@ func TestRDSModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":           "test",
 			"identifier":            "test-db",
 			"engine":                "postgres",
 			"engine_version":        "15.4",
@@ -52,7 +51,6 @@ func TestRDSModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":           "test",
 			"identifier":            "test-db",
 			"engine":                "postgres",
 			"engine_version":        "15.4",
@@ -89,7 +87,6 @@ func TestRDSModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":           "test",
 			"identifier":            "test-db",
 			"engine":                "postgres",
 			"engine_version":        "15.4",
