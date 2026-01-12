@@ -226,3 +226,9 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+variable "deletion_protection" {
+  description = "Enable deletion protection for the cluster"
+  type        = bool
+  default     = true
+}

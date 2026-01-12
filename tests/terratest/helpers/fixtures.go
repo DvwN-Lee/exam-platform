@@ -103,5 +103,6 @@ func DefaultGKEVars() map[string]interface{} {
 		"max_node_count":                3,
 		"enable_private_nodes":          true,
 		"enable_private_endpoint":       false,
+		"deletion_protection":           false, // for testing
 	}
 }

@@ -49,6 +49,8 @@ resource "google_container_cluster" "main" {
   name     = "${var.environment}-${var.cluster_name}"
   location = var.location
 
+  deletion_protection = var.deletion_protection
+
   network    = var.network_id
   subnetwork = var.subnet_id
 
