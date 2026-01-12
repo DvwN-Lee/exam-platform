@@ -46,6 +46,7 @@ func RunIdempotencyTest(t *testing.T, opts *TerraformPlanOptions) {
 		Vars:          opts.Vars,
 		NoColor:       true,
 		BackendConfig: opts.BackendConfig,
+		PlanFilePath:  filepath.Join(t.TempDir(), "plan.out"),
 	})
 
 	terraform.Init(t, terraformOptions)
@@ -53,7 +54,8 @@ func RunIdempotencyTest(t *testing.T, opts *TerraformPlanOptions) {
 	// 첫 번째 plan
 	plan1 := terraform.InitAndPlanAndShowWithStruct(t, terraformOptions)
 
-	// 두 번째 plan - 변경 사항이 없어야 함
+	// 두 번째 plan (새 plan 파일 경로 설정)
+	terraformOptions.PlanFilePath = filepath.Join(t.TempDir(), "plan2.out")
 	plan2 := terraform.InitAndPlanAndShowWithStruct(t, terraformOptions)
 
 	// 두 plan의 resource 변경 수가 동일해야 함
