@@ -80,13 +80,11 @@ func TestECRModuleLifecyclePolicy(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "prod",
 			"repository_names": []string{
 				"exam-backend",
 				"exam-frontend",
 			},
-			"enable_lifecycle_policy": true,
-			"image_count_to_keep":     30,
+			"max_image_count": 30,
 		},
 	}
 
@@ -105,7 +103,6 @@ func TestECRModuleImageScanning(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "prod",
 			"repository_names": []string{
 				"exam-backend",
 				"exam-frontend",
@@ -129,7 +126,6 @@ func TestECRModuleImmutableTags(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "prod",
 			"repository_names": []string{
 				"exam-backend",
 			},
@@ -139,7 +135,8 @@ func TestECRModuleImmutableTags(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
-	helpers.ValidateResourceExists(t, plan, "aws_ecr_repository.main")
+	repoCount := helpers.CountResourcesByType(plan, "aws_ecr_repository")
+	assert.GreaterOrEqual(t, repoCount, 1, "Expected at least 1 ECR Repository with immutable tags")
 }
 
 func TestECRModuleEncryption(t *testing.T) {
@@ -150,12 +147,11 @@ func TestECRModuleEncryption(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "prod",
 			"repository_names": []string{
 				"exam-backend",
 				"exam-frontend",
 			},
-			"encryption_type": "KMS",
+			"kms_key_arn": "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012",
 		},
 	}
 
