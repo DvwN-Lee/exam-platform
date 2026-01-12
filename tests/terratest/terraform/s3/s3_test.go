@@ -15,7 +15,6 @@ func TestS3ModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"bucket_name": "test-exam-assets",
 		},
 	}
@@ -35,7 +34,6 @@ func TestS3ModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"bucket_name": "test-exam-assets",
 		},
 	}
@@ -59,7 +57,6 @@ func TestS3ModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"bucket_name": "test-exam-assets",
 		},
 	}
@@ -128,7 +125,6 @@ func TestS3ModuleCORS(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "dev",
 			"bucket_name": "dev-exam-assets",
 			"enable_cors": true,
 			"cors_rules": []map[string]interface{}{

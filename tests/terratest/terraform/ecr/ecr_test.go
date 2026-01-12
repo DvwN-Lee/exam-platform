@@ -15,7 +15,6 @@ func TestECRModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"repository_names": []string{
 				"exam-backend",
 				"exam-frontend",
@@ -38,7 +37,6 @@ func TestECRModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"repository_names": []string{
 				"exam-backend",
 				"exam-frontend",
@@ -64,7 +62,6 @@ func TestECRModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment": "test",
 			"repository_names": []string{
 				"exam-backend",
 				"exam-frontend",
