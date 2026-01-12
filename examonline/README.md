@@ -35,7 +35,7 @@ source .venv/bin/activate
 ### 개발 서버 실행
 
 ```bash
-# DB 컨테이너 시작
+# DB Container 시작
 docker compose -f docker-compose.dev.yml up -d
 
 # 마이그레이션

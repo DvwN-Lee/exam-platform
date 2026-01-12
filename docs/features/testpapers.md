@@ -69,7 +69,7 @@ features/testpapers/
 └─────────────────────┴───────────────────────────────┘
 ```
 
-#### 폼 검증 스키마
+#### 폼 검증 Schema
 
 ```typescript
 const testPaperSchema = z.object({

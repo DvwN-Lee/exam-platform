@@ -73,7 +73,7 @@ const [filters, setFilters] = useState({
 
 문제 생성 및 수정 폼.
 
-#### 폼 검증 스키마
+#### 폼 검증 Schema
 
 ```typescript
 const questionSchema = z.object({
