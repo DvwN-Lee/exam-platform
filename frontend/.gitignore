@@ -23,3 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 ui-mockup/node_modules/
+coverage/
