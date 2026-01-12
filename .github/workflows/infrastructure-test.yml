@@ -50,6 +50,14 @@ jobs:
       - name: Download Go Modules
         run: go mod download
 
+      - name: Setup Mock AWS Provider
+        run: |
+          # Copy mock provider to each module directory for CI testing
+          for module in vpc eks rds elasticache s3 ecr; do
+            cp terraform/mock_provider.tf ../../terraform/modules/$module/mock_provider.tf
+          done
+          echo "Mock AWS provider configured for all modules"
+
       - name: Run VPC Module Tests
         run: go test -v -timeout 30m ./terraform/vpc/...
 

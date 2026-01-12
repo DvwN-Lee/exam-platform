@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"io"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -103,4 +105,51 @@ func ValidateResourceExists(t *testing.T, plan *terraform.PlanStruct, resourceAd
 	t.Helper()
 	_, exists := plan.ResourcePlannedValuesMap[resourceAddr]
 	require.True(t, exists, "Resource '%s' not found in plan", resourceAddr)
+}
+
+// GetMockProviderPath는 mock provider 파일 경로를 반환
+func GetMockProviderPath() string {
+	return filepath.Join(GetProjectRoot(), "tests", "terratest", "terraform", "mock_provider.tf")
+}
+
+// SetupMockProvider는 CI 환경에서 mock AWS provider를 설정
+// moduleDir에 mock_provider.tf 파일을 복사하고, 테스트 종료 시 정리하는 cleanup 함수를 반환
+func SetupMockProvider(t *testing.T, moduleDir string) func() {
+	t.Helper()
+
+	// CI 환경이 아니면 설정하지 않음 (로컬에 AWS credentials가 있을 수 있음)
+	if os.Getenv("CI") != "true" {
+		return func() {} // no-op cleanup
+	}
+
+	srcPath := GetMockProviderPath()
+	dstPath := filepath.Join(moduleDir, "mock_provider.tf")
+
+	// provider override 파일 복사
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		t.Logf("Warning: Could not open provider override file: %v", err)
+		return func() {}
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		t.Logf("Warning: Could not create provider override file: %v", err)
+		return func() {}
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		t.Logf("Warning: Could not copy provider override file: %v", err)
+		return func() {}
+	}
+
+	t.Logf("Mock provider configured at %s", dstPath)
+
+	// cleanup 함수 반환 - 테스트 종료 시 복사된 파일 삭제
+	return func() {
+		os.Remove(dstPath)
+	}
 }
