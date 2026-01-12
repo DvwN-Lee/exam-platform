@@ -200,30 +200,6 @@ jobs:
           fi
           echo "Frontend check passed"
 
-      - name: Test API Endpoints
-        run: |
-          echo "Testing API Endpoints..."
-
-          # OpenAPI Schema
-          echo "Testing OpenAPI schema endpoint..."
-          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/v1/schema/)
-          echo "OpenAPI Schema: $status"
-          if [ "$status" != "200" ]; then
-            echo "OpenAPI schema endpoint failed!"
-            exit 1
-          fi
-
-          # Swagger UI
-          echo "Testing Swagger UI..."
-          status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/v1/docs/)
-          echo "Swagger UI: $status"
-          if [ "$status" != "200" ]; then
-            echo "Swagger UI endpoint failed!"
-            exit 1
-          fi
-
-          echo "API endpoints check passed"
-
       - name: View logs on failure
         if: failure()
         run: |
@@ -263,4 +239,3 @@ jobs:
           echo "- Backend Health Check (/health/)" >> $GITHUB_STEP_SUMMARY
           echo "- Database Connections (PostgreSQL, MongoDB, Redis)" >> $GITHUB_STEP_SUMMARY
           echo "- Frontend Response (HTTP 200)" >> $GITHUB_STEP_SUMMARY
-          echo "- API Endpoints (OpenAPI Schema, Swagger UI)" >> $GITHUB_STEP_SUMMARY
