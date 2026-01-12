@@ -25,13 +25,13 @@ func IsCI() bool {
 }
 
 // RunTerraformValidation runs terraform init and validate (no API calls, works in CI)
+// Note: terraform validate doesn't support -var flags, so we don't pass variables
 func RunTerraformValidation(t *testing.T, opts *TerraformPlanOptions) {
 	t.Helper()
 
+	// terraform validate는 -var 플래그를 지원하지 않으므로 Vars 제외
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
 		TerraformDir:  opts.TerraformDir,
-		VarFiles:      opts.VarsFiles,
-		Vars:          opts.Vars,
 		NoColor:       true,
 		BackendConfig: opts.BackendConfig,
 	})
