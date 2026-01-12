@@ -15,17 +15,10 @@ func TestRDSModulePlanValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"identifier":            "test-db",
-			"engine":                "postgres",
-			"engine_version":        "15.4",
-			"instance_class":        "db.t3.medium",
-			"allocated_storage":     20,
-			"db_name":               "examdb",
-			"db_username":           "examadmin",
-			"vpc_id":                "vpc-12345678",
-			"subnet_ids":            []string{"subnet-1", "subnet-2"},
-			"db_subnet_group_name":  "test-db-subnet-group",
-			"allowed_security_groups": []string{"sg-12345678"},
+			"identifier":               "test-db",
+			"vpc_id":                   "vpc-12345678",
+			"db_subnet_group_name":     "test-db-subnet-group",
+			"allowed_security_group_ids": []string{"sg-12345678"},
 		},
 	}
 
@@ -51,17 +44,10 @@ func TestRDSModuleOutputValidation(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"identifier":            "test-db",
-			"engine":                "postgres",
-			"engine_version":        "15.4",
-			"instance_class":        "db.t3.medium",
-			"allocated_storage":     20,
-			"db_name":               "examdb",
-			"db_username":           "examadmin",
-			"vpc_id":                "vpc-12345678",
-			"subnet_ids":            []string{"subnet-1", "subnet-2"},
-			"db_subnet_group_name":  "test-db-subnet-group",
-			"allowed_security_groups": []string{"sg-12345678"},
+			"identifier":               "test-db",
+			"vpc_id":                   "vpc-12345678",
+			"db_subnet_group_name":     "test-db-subnet-group",
+			"allowed_security_group_ids": []string{"sg-12345678"},
 		},
 	}
 
@@ -87,17 +73,10 @@ func TestRDSModuleIdempotency(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"identifier":            "test-db",
-			"engine":                "postgres",
-			"engine_version":        "15.4",
-			"instance_class":        "db.t3.medium",
-			"allocated_storage":     20,
-			"db_name":               "examdb",
-			"db_username":           "examadmin",
-			"vpc_id":                "vpc-12345678",
-			"subnet_ids":            []string{"subnet-1", "subnet-2"},
-			"db_subnet_group_name":  "test-db-subnet-group",
-			"allowed_security_groups": []string{"sg-12345678"},
+			"identifier":               "test-db",
+			"vpc_id":                   "vpc-12345678",
+			"db_subnet_group_name":     "test-db-subnet-group",
+			"allowed_security_group_ids": []string{"sg-12345678"},
 		},
 	}
 
@@ -112,21 +91,15 @@ func TestRDSModuleEncryptionEnabled(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":           "prod",
-			"identifier":            "prod-db",
-			"engine":                "postgres",
-			"engine_version":        "15.4",
-			"instance_class":        "db.r6g.large",
-			"allocated_storage":     100,
-			"max_allocated_storage": 500,
-			"db_name":               "examdb",
-			"db_username":           "examadmin",
-			"vpc_id":                "vpc-12345678",
-			"subnet_ids":            []string{"subnet-1", "subnet-2", "subnet-3"},
-			"db_subnet_group_name":  "prod-db-subnet-group",
-			"allowed_security_groups": []string{"sg-12345678"},
-			"storage_encrypted":     true,
-			"multi_az":              true,
+			"identifier":               "prod-db",
+			"vpc_id":                   "vpc-12345678",
+			"db_subnet_group_name":     "prod-db-subnet-group",
+			"allowed_security_group_ids": []string{"sg-12345678"},
+			"instance_class":           "db.r6g.large",
+			"allocated_storage":        100,
+			"max_allocated_storage":    500,
+			"storage_encrypted":        true,
+			"multi_az":                 true,
 		},
 	}
 
@@ -144,20 +117,14 @@ func TestRDSModuleMultiAZ(t *testing.T) {
 	opts := &helpers.TerraformPlanOptions{
 		TerraformDir: moduleDir,
 		Vars: map[string]interface{}{
-			"environment":           "staging",
-			"identifier":            "staging-db",
-			"engine":                "postgres",
-			"engine_version":        "15.4",
-			"instance_class":        "db.t3.large",
-			"allocated_storage":     50,
-			"db_name":               "examdb",
-			"db_username":           "examadmin",
-			"vpc_id":                "vpc-12345678",
-			"subnet_ids":            []string{"subnet-1", "subnet-2"},
-			"db_subnet_group_name":  "staging-db-subnet-group",
-			"allowed_security_groups": []string{"sg-12345678"},
-			"multi_az":              true,
-			"backup_retention_period": 7,
+			"identifier":               "staging-db",
+			"vpc_id":                   "vpc-12345678",
+			"db_subnet_group_name":     "staging-db-subnet-group",
+			"allowed_security_group_ids": []string{"sg-12345678"},
+			"instance_class":           "db.t3.large",
+			"allocated_storage":        50,
+			"multi_az":                 true,
+			"backup_retention_period":  7,
 		},
 	}
 
