@@ -38,7 +38,7 @@ features/exams/
 
 ### ExamTakePage
 
-시험 응시 인터페이스.
+시험 응시 Interface.
 
 #### UI 구성
 

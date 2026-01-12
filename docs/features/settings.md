@@ -8,7 +8,7 @@
 
 ```
 features/settings/
-├── SettingsPage.tsx       # 설정 메인 (탭 인터페이스)
+├── SettingsPage.tsx       # 설정 메인 (탭 Interface)
 ├── ProfileSettings.tsx    # 프로필 설정
 ├── PasswordSettings.tsx   # 비밀번호 설정
 └── SubjectSettings.tsx    # 과목 설정 (교사 전용)
@@ -18,7 +18,7 @@ features/settings/
 
 ### SettingsPage
 
-탭 기반 설정 인터페이스.
+탭 기반 설정 Interface.
 
 #### 탭 구성
 

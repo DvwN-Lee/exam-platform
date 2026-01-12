@@ -22,7 +22,7 @@ frontend/src/
 └── components/animation/
     ├── index.ts              # 통합 export
     ├── MotionWrapper.tsx     # 페이지 전환 wrapper
-    ├── StaggerContainer.tsx  # Stagger 컨테이너
+    ├── StaggerContainer.tsx  # Stagger Container
     ├── StaggerItem.tsx       # Stagger 아이템
     ├── AnimatedCard.tsx      # 호버/탭 카드
     ├── FadeIn.tsx            # 단순 페이드인

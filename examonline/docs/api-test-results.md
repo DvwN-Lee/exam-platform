@@ -225,7 +225,7 @@ GET /api/v1/questions/
 ## 기술적 이슈 및 해결
 
 ### Issue 1: Docker Compose 서비스
-- **문제**: 다른 프로젝트 컨테이너와 포트 충돌
+- **문제**: 다른 프로젝트 Container와 포트 충돌
 - **해결**:
   - examonline: PostgreSQL 5433, MongoDB 27017, Redis 6379
   - lvup: PostgreSQL 5432, Port 8000

@@ -106,7 +106,7 @@
 **강점:**
 - TypeScript 적극 활용
 - 차트 데이터 타입 정의 (`chart.ts`)
-- Zod 스키마로 폼 검증
+- Zod Schema로 폼 검증
 
 **문제점:**
 

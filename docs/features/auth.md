@@ -26,7 +26,7 @@ features/auth/
 - 소셜 로그인 버튼 (Google, Kakao)
 - 회원가입 페이지 이동
 
-#### 폼 검증 스키마
+#### 폼 검증 Schema
 
 ```typescript
 const loginSchema = z.object({
@@ -53,7 +53,7 @@ const [selectedRole, setSelectedRole] = useState<'student' | 'teacher'>('student
 - 교사 전용: 담당 과목 선택
 - 약관 동의
 
-#### 폼 검증 스키마
+#### 폼 검증 Schema
 
 ```typescript
 const registerSchema = z.object({
