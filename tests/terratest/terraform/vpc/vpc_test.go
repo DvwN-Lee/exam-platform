@@ -11,18 +11,9 @@ import (
 func TestVPCModulePlanValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("vpc")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"vpc_cidr":           "10.0.0.0/16",
-			"az_count":           2,
-			"cluster_name":       "test-cluster",
-			"enable_nat_gateway": true,
-			"single_nat_gateway": true,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("vpc"),
+		Vars:         helpers.DefaultVPCVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -38,18 +29,9 @@ func TestVPCModulePlanValidation(t *testing.T) {
 func TestVPCModuleOutputValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("vpc")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"vpc_cidr":           "10.0.0.0/16",
-			"az_count":           2,
-			"cluster_name":       "dev-cluster",
-			"enable_nat_gateway": false,
-			"single_nat_gateway": true,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("vpc"),
+		Vars:         helpers.DefaultVPCVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -70,18 +52,9 @@ func TestVPCModuleOutputValidation(t *testing.T) {
 func TestVPCModuleIdempotency(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("vpc")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"vpc_cidr":           "10.0.0.0/16",
-			"az_count":           2,
-			"cluster_name":       "test-cluster",
-			"enable_nat_gateway": true,
-			"single_nat_gateway": true,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("vpc"),
+		Vars:         helpers.DefaultVPCVars(),
 	}
 
 	helpers.RunIdempotencyTest(t, opts)
@@ -90,18 +63,15 @@ func TestVPCModuleIdempotency(t *testing.T) {
 func TestVPCModuleWithThreeAZs(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("vpc")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultVPCVars(), map[string]interface{}{
 			"environment":        "prod",
 			"vpc_cidr":           "10.2.0.0/16",
 			"az_count":           3,
 			"cluster_name":       "prod-cluster",
-			"enable_nat_gateway": true,
 			"single_nat_gateway": false,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -118,17 +88,13 @@ func TestVPCModuleWithThreeAZs(t *testing.T) {
 func TestVPCModuleNATGatewayDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("vpc")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultVPCVars(), map[string]interface{}{
 			"environment":        "dev",
-			"vpc_cidr":           "10.0.0.0/16",
-			"az_count":           2,
 			"cluster_name":       "dev-cluster",
 			"enable_nat_gateway": false,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -141,18 +107,9 @@ func TestVPCModuleNATGatewayDisabled(t *testing.T) {
 func TestVPCModuleInternetGateway(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("vpc")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"vpc_cidr":           "10.0.0.0/16",
-			"az_count":           2,
-			"cluster_name":       "test-cluster",
-			"enable_nat_gateway": true,
-			"single_nat_gateway": true,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("vpc"),
+		Vars:         helpers.DefaultVPCVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

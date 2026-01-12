@@ -10,16 +10,9 @@ import (
 func TestRDSModulePlanValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("rds")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"identifier":               "test-db",
-			"vpc_id":                   "vpc-12345678",
-			"db_subnet_group_name":     "test-db-subnet-group",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-		},
+		TerraformDir: helpers.GetTerraformModulePath("rds"),
+		Vars:         helpers.DefaultRDSVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -39,16 +32,9 @@ func TestRDSModulePlanValidation(t *testing.T) {
 func TestRDSModuleOutputValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("rds")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"identifier":               "test-db",
-			"vpc_id":                   "vpc-12345678",
-			"db_subnet_group_name":     "test-db-subnet-group",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-		},
+		TerraformDir: helpers.GetTerraformModulePath("rds"),
+		Vars:         helpers.DefaultRDSVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -68,16 +54,9 @@ func TestRDSModuleOutputValidation(t *testing.T) {
 func TestRDSModuleIdempotency(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("rds")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"identifier":               "test-db",
-			"vpc_id":                   "vpc-12345678",
-			"db_subnet_group_name":     "test-db-subnet-group",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-		},
+		TerraformDir: helpers.GetTerraformModulePath("rds"),
+		Vars:         helpers.DefaultRDSVars(),
 	}
 
 	helpers.RunIdempotencyTest(t, opts)
@@ -86,21 +65,14 @@ func TestRDSModuleIdempotency(t *testing.T) {
 func TestRDSModuleEncryptionEnabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("rds")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"identifier":               "prod-db",
-			"vpc_id":                   "vpc-12345678",
-			"db_subnet_group_name":     "prod-db-subnet-group",
+		TerraformDir: helpers.GetTerraformModulePath("rds"),
+		Vars: helpers.MergeVars(helpers.DefaultRDSVars(), map[string]interface{}{
+			"identifier":                 "prod-db",
 			"allowed_security_group_ids": []string{"sg-12345678"},
-			"instance_class":           "db.r6g.large",
-			"allocated_storage":        100,
-			"max_allocated_storage":    500,
-			"storage_encrypted":        true,
-			"multi_az":                 true,
-		},
+			"storage_encrypted":          true,
+			"multi_az":                   true,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -112,20 +84,14 @@ func TestRDSModuleEncryptionEnabled(t *testing.T) {
 func TestRDSModuleMultiAZ(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("rds")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"identifier":               "staging-db",
-			"vpc_id":                   "vpc-12345678",
-			"db_subnet_group_name":     "staging-db-subnet-group",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-			"instance_class":           "db.t3.large",
-			"allocated_storage":        50,
-			"multi_az":                 true,
-			"backup_retention_period":  7,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("rds"),
+		Vars: helpers.MergeVars(helpers.DefaultRDSVars(), map[string]interface{}{
+			"identifier":              "staging-db",
+			"db_subnet_group_name":    "staging-db-subnet-group",
+			"multi_az":                true,
+			"backup_retention_period": 7,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

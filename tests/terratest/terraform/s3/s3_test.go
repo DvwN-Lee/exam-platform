@@ -10,13 +10,9 @@ import (
 func TestS3ModulePlanValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"bucket_name": "test-exam-assets",
-		},
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars:         helpers.DefaultS3Vars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -29,13 +25,9 @@ func TestS3ModulePlanValidation(t *testing.T) {
 func TestS3ModuleOutputValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"bucket_name": "test-exam-assets",
-		},
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars:         helpers.DefaultS3Vars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -52,13 +44,9 @@ func TestS3ModuleOutputValidation(t *testing.T) {
 func TestS3ModuleIdempotency(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"bucket_name": "test-exam-assets",
-		},
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars:         helpers.DefaultS3Vars(),
 	}
 
 	helpers.RunIdempotencyTest(t, opts)
@@ -67,15 +55,13 @@ func TestS3ModuleIdempotency(t *testing.T) {
 func TestS3ModuleVersioning(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars: helpers.MergeVars(helpers.DefaultS3Vars(), map[string]interface{}{
 			"bucket_name":        "prod-exam-assets",
 			"versioning_enabled": true,
 			"force_destroy":      false,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -88,11 +74,9 @@ func TestS3ModuleVersioning(t *testing.T) {
 func TestS3ModuleLifecycleRules(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars: helpers.MergeVars(helpers.DefaultS3Vars(), map[string]interface{}{
 			"bucket_name": "staging-exam-assets",
 			"lifecycle_rules": []map[string]interface{}{
 				{
@@ -106,7 +90,7 @@ func TestS3ModuleLifecycleRules(t *testing.T) {
 					},
 				},
 			},
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -119,11 +103,9 @@ func TestS3ModuleLifecycleRules(t *testing.T) {
 func TestS3ModuleCORS(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars: helpers.MergeVars(helpers.DefaultS3Vars(), map[string]interface{}{
 			"bucket_name": "dev-exam-assets",
 			"cors_rules": []map[string]interface{}{
 				{
@@ -133,7 +115,7 @@ func TestS3ModuleCORS(t *testing.T) {
 					"max_age_seconds": 3600,
 				},
 			},
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -146,14 +128,12 @@ func TestS3ModuleCORS(t *testing.T) {
 func TestS3ModuleEncryption(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("s3")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars: helpers.MergeVars(helpers.DefaultS3Vars(), map[string]interface{}{
 			"bucket_name": "prod-exam-assets-encrypted",
 			"kms_key_arn": "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012",
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -161,4 +141,22 @@ func TestS3ModuleEncryption(t *testing.T) {
 	// Server-Side Encryption 설정 확인
 	sseCount := helpers.CountResourcesByType(plan, "aws_s3_bucket_server_side_encryption_configuration")
 	assert.GreaterOrEqual(t, sseCount, 1, "Expected server-side encryption configuration")
+}
+
+func TestS3ModulePublicAccessBlock(t *testing.T) {
+	t.Parallel()
+
+	opts := &helpers.TerraformPlanOptions{
+		TerraformDir: helpers.GetTerraformModulePath("s3"),
+		Vars: helpers.MergeVars(helpers.DefaultS3Vars(), map[string]interface{}{
+			"bucket_name":         "secure-exam-assets",
+			"block_public_access": true,
+		}),
+	}
+
+	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// Public Access Block 설정 확인
+	publicAccessBlockCount := helpers.CountResourcesByType(plan, "aws_s3_bucket_public_access_block")
+	assert.GreaterOrEqual(t, publicAccessBlockCount, 1, "Expected public access block configuration")
 }

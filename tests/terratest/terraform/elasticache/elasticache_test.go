@@ -10,16 +10,9 @@ import (
 func TestElastiCacheModulePlanValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("elasticache")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"cluster_id":                 "test-redis",
-			"vpc_id":                     "vpc-12345678",
-			"subnet_group_name":          "test-cache-subnet",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-		},
+		TerraformDir: helpers.GetTerraformModulePath("elasticache"),
+		Vars:         helpers.DefaultElastiCacheVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -36,16 +29,9 @@ func TestElastiCacheModulePlanValidation(t *testing.T) {
 func TestElastiCacheModuleOutputValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("elasticache")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"cluster_id":                 "test-redis",
-			"vpc_id":                     "vpc-12345678",
-			"subnet_group_name":          "test-cache-subnet",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-		},
+		TerraformDir: helpers.GetTerraformModulePath("elasticache"),
+		Vars:         helpers.DefaultElastiCacheVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -62,16 +48,9 @@ func TestElastiCacheModuleOutputValidation(t *testing.T) {
 func TestElastiCacheModuleIdempotency(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("elasticache")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"cluster_id":                 "test-redis",
-			"vpc_id":                     "vpc-12345678",
-			"subnet_group_name":          "test-cache-subnet",
-			"allowed_security_group_ids": []string{"sg-12345678"},
-		},
+		TerraformDir: helpers.GetTerraformModulePath("elasticache"),
+		Vars:         helpers.DefaultElastiCacheVars(),
 	}
 
 	helpers.RunIdempotencyTest(t, opts)
@@ -80,22 +59,18 @@ func TestElastiCacheModuleIdempotency(t *testing.T) {
 func TestElastiCacheModuleReplicationGroup(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("elasticache")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("elasticache"),
+		Vars: helpers.MergeVars(helpers.DefaultElastiCacheVars(), map[string]interface{}{
 			"cluster_id":                 "prod-redis",
-			"vpc_id":                     "vpc-12345678",
 			"subnet_group_name":          "prod-cache-subnet",
-			"allowed_security_group_ids": []string{"sg-12345678"},
 			"node_type":                  "cache.r6g.large",
 			"num_cache_clusters":         2,
 			"automatic_failover_enabled": true,
 			"multi_az_enabled":           true,
 			"at_rest_encryption_enabled": true,
 			"transit_encryption_enabled": true,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -108,17 +83,13 @@ func TestElastiCacheModuleReplicationGroup(t *testing.T) {
 func TestElastiCacheModuleAuthToken(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("elasticache")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("elasticache"),
+		Vars: helpers.MergeVars(helpers.DefaultElastiCacheVars(), map[string]interface{}{
 			"cluster_id":                 "staging-redis",
-			"vpc_id":                     "vpc-12345678",
 			"subnet_group_name":          "staging-cache-subnet",
-			"allowed_security_group_ids": []string{"sg-12345678"},
 			"transit_encryption_enabled": true,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

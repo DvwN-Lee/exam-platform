@@ -10,22 +10,9 @@ import (
 func TestEKSModulePlanValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("eks")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"cluster_name":        "test-eks-cluster",
-			"cluster_version":     "1.29",
-			"vpc_id":              "vpc-12345678",
-			"subnet_ids":          []string{"subnet-1", "subnet-2"},
-			"node_subnet_ids":     []string{"subnet-1", "subnet-2"},
-			"node_instance_types": []string{"t3.medium"},
-			"node_desired_size":   2,
-			"node_min_size":       1,
-			"node_max_size":       3,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("eks"),
+		Vars:         helpers.DefaultEKSVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -48,22 +35,9 @@ func TestEKSModulePlanValidation(t *testing.T) {
 func TestEKSModuleOutputValidation(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("eks")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"cluster_name":        "test-eks-cluster",
-			"cluster_version":     "1.29",
-			"vpc_id":              "vpc-12345678",
-			"subnet_ids":          []string{"subnet-1", "subnet-2"},
-			"node_subnet_ids":     []string{"subnet-1", "subnet-2"},
-			"node_instance_types": []string{"t3.medium"},
-			"node_desired_size":   2,
-			"node_min_size":       1,
-			"node_max_size":       3,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("eks"),
+		Vars:         helpers.DefaultEKSVars(),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -87,22 +61,9 @@ func TestEKSModuleOutputValidation(t *testing.T) {
 func TestEKSModuleIdempotency(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("eks")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
-			"environment": "dev",
-			"cluster_name":        "test-eks-cluster",
-			"cluster_version":     "1.29",
-			"vpc_id":              "vpc-12345678",
-			"subnet_ids":          []string{"subnet-1", "subnet-2"},
-			"node_subnet_ids":     []string{"subnet-1", "subnet-2"},
-			"node_instance_types": []string{"t3.medium"},
-			"node_desired_size":   2,
-			"node_min_size":       1,
-			"node_max_size":       3,
-		},
+		TerraformDir: helpers.GetTerraformModulePath("eks"),
+		Vars:         helpers.DefaultEKSVars(),
 	}
 
 	helpers.RunIdempotencyTest(t, opts)
@@ -111,23 +72,15 @@ func TestEKSModuleIdempotency(t *testing.T) {
 func TestEKSModuleSpotInstances(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("eks")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("eks"),
+		Vars: helpers.MergeVars(helpers.DefaultEKSVars(), map[string]interface{}{
 			"environment":         "dev",
 			"cluster_name":        "dev-eks-cluster",
-			"cluster_version":     "1.29",
-			"vpc_id":              "vpc-12345678",
-			"subnet_ids":          []string{"subnet-1", "subnet-2"},
-			"node_subnet_ids":     []string{"subnet-1", "subnet-2"},
 			"node_instance_types": []string{"t3.medium", "t3.large"},
 			"capacity_type":       "SPOT",
-			"node_desired_size":   2,
-			"node_min_size":       1,
 			"node_max_size":       5,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -139,15 +92,11 @@ func TestEKSModuleSpotInstances(t *testing.T) {
 func TestEKSModulePublicAccessDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("eks")
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars: map[string]interface{}{
+		TerraformDir: helpers.GetTerraformModulePath("eks"),
+		Vars: helpers.MergeVars(helpers.DefaultEKSVars(), map[string]interface{}{
 			"environment":            "prod",
 			"cluster_name":           "prod-eks-cluster",
-			"cluster_version":        "1.29",
-			"vpc_id":                 "vpc-12345678",
 			"subnet_ids":             []string{"subnet-1", "subnet-2", "subnet-3"},
 			"node_subnet_ids":        []string{"subnet-1", "subnet-2", "subnet-3"},
 			"node_instance_types":    []string{"t3.xlarge"},
@@ -155,7 +104,7 @@ func TestEKSModulePublicAccessDisabled(t *testing.T) {
 			"node_desired_size":      3,
 			"node_min_size":          3,
 			"node_max_size":          10,
-		},
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
