@@ -19,6 +19,12 @@ func TestGCPVPCModulePlanValidation(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	// VPC Network 존재 확인
 	networkCount := helpers.CountResourcesByType(plan, "google_compute_network")
 	assert.Equal(t, 1, networkCount, "Expected 1 VPC Network")
@@ -89,6 +95,12 @@ func TestGCPVPCModuleWithNATEnabled(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	// Cloud Router 존재 확인
 	routerCount := helpers.CountResourcesByType(plan, "google_compute_router")
 	assert.Equal(t, 1, routerCount, "Expected 1 Cloud Router when NAT enabled")
@@ -121,6 +133,12 @@ func TestGCPVPCModuleWithNATDisabled(t *testing.T) {
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
 
 	// Cloud Router/NAT 없음 확인
 	routerCount := helpers.CountResourcesByType(plan, "google_compute_router")
@@ -169,6 +187,12 @@ func TestGCPVPCModuleWithIAPSSHDisabled(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	// IAP SSH firewall이 비활성화되면 firewall 규칙 수가 줄어듦
 	// internal + health_check = 2개
 	firewallCount := helpers.CountResourcesByType(plan, "google_compute_firewall")
@@ -192,6 +216,12 @@ func TestGCPVPCModuleWithCustomCIDRs(t *testing.T) {
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
 
 	// 기본 리소스 존재 확인
 	networkCount := helpers.CountResourcesByType(plan, "google_compute_network")

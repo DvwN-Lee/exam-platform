@@ -19,6 +19,12 @@ func TestGKEModulePlanValidation(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	// GKE Cluster 존재 확인
 	clusterCount := helpers.CountResourcesByType(plan, "google_container_cluster")
 	assert.Equal(t, 1, clusterCount, "Expected 1 GKE Cluster")
@@ -86,6 +92,11 @@ func TestGKEModuleWithPrivateCluster(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	clusterCount := helpers.CountResourcesByType(plan, "google_container_cluster")
 	assert.Equal(t, 1, clusterCount, "Expected 1 GKE Cluster with private configuration")
 }
@@ -106,6 +117,11 @@ func TestGKEModuleWithAutoscaling(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	nodePoolCount := helpers.CountResourcesByType(plan, "google_container_node_pool")
 	assert.Equal(t, 1, nodePoolCount, "Expected 1 Node Pool with autoscaling")
 }
@@ -125,6 +141,11 @@ func TestGKEModuleWithCustomMachineType(t *testing.T) {
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
 
 	clusterCount := helpers.CountResourcesByType(plan, "google_container_cluster")
 	assert.Equal(t, 1, clusterCount, "Expected 1 GKE Cluster with custom machine type")

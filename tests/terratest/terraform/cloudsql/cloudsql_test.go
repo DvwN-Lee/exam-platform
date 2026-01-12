@@ -19,6 +19,12 @@ func TestCloudSQLModulePlanValidation(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	// Cloud SQL Instance 존재 확인
 	instanceCount := helpers.CountResourcesByType(plan, "google_sql_database_instance")
 	assert.Equal(t, 1, instanceCount, "Expected 1 Cloud SQL Instance")
@@ -89,6 +95,12 @@ func TestCloudSQLModuleWithHighAvailability(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	instanceCount := helpers.CountResourcesByType(plan, "google_sql_database_instance")
 	assert.Equal(t, 1, instanceCount, "Expected 1 Cloud SQL Instance with HA")
 }
@@ -107,6 +119,12 @@ func TestCloudSQLModuleWithBackupDisabled(t *testing.T) {
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
 
 	instanceCount := helpers.CountResourcesByType(plan, "google_sql_database_instance")
 	assert.Equal(t, 1, instanceCount, "Expected 1 Cloud SQL Instance without backup")

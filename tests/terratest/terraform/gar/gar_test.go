@@ -19,6 +19,12 @@ func TestGARModulePlanValidation(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	// Artifact Registry Repository 존재 확인
 	repoCount := helpers.CountResourcesByType(plan, "google_artifact_registry_repository")
 	assert.Equal(t, 1, repoCount, "Expected 1 Artifact Registry Repository")
@@ -76,6 +82,12 @@ func TestGARModuleWithImmutableTags(t *testing.T) {
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
 
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
 	repoCount := helpers.CountResourcesByType(plan, "google_artifact_registry_repository")
 	assert.Equal(t, 1, repoCount, "Expected 1 Artifact Registry Repository with immutable tags")
 }
@@ -95,6 +107,12 @@ func TestGARModuleWithCleanupPolicy(t *testing.T) {
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
 
 	repoCount := helpers.CountResourcesByType(plan, "google_artifact_registry_repository")
 	assert.Equal(t, 1, repoCount, "Expected 1 Artifact Registry Repository with cleanup policy")
