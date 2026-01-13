@@ -3,6 +3,7 @@ package helm_test
 import (
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func TestHelmDeploymentIntegration(t *testing.T) {
 	t.Parallel()
 
 	chartPath := helpers.GetHelmChartPath()
-	namespaceName := fmt.Sprintf("exam-test-%s", random.UniqueId())
+	namespaceName := strings.ToLower(fmt.Sprintf("exam-test-%s", random.UniqueId()))
 
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
@@ -69,7 +70,7 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 	t.Parallel()
 
 	chartPath := helpers.GetHelmChartPath()
-	namespaceName := fmt.Sprintf("exam-upgrade-%s", random.UniqueId())
+	namespaceName := strings.ToLower(fmt.Sprintf("exam-upgrade-%s", random.UniqueId()))
 
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
@@ -115,7 +116,7 @@ func TestHelmRollbackIntegration(t *testing.T) {
 	t.Parallel()
 
 	chartPath := helpers.GetHelmChartPath()
-	namespaceName := fmt.Sprintf("exam-rollback-%s", random.UniqueId())
+	namespaceName := strings.ToLower(fmt.Sprintf("exam-rollback-%s", random.UniqueId()))
 
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
@@ -159,7 +160,7 @@ func TestHelmHealthCheckIntegration(t *testing.T) {
 	t.Parallel()
 
 	chartPath := helpers.GetHelmChartPath()
-	namespaceName := fmt.Sprintf("exam-health-%s", random.UniqueId())
+	namespaceName := strings.ToLower(fmt.Sprintf("exam-health-%s", random.UniqueId()))
 
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
@@ -207,7 +208,7 @@ func TestHelmScalingIntegration(t *testing.T) {
 	t.Parallel()
 
 	chartPath := helpers.GetHelmChartPath()
-	namespaceName := fmt.Sprintf("exam-scale-%s", random.UniqueId())
+	namespaceName := strings.ToLower(fmt.Sprintf("exam-scale-%s", random.UniqueId()))
 
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
@@ -258,7 +259,7 @@ func TestPlaywrightSmokeAfterDeployment(t *testing.T) {
 
 	chartPath := helpers.GetHelmChartPath()
 	frontendPath := helpers.GetFrontendPath()
-	namespaceName := fmt.Sprintf("exam-e2e-%s", random.UniqueId())
+	namespaceName := strings.ToLower(fmt.Sprintf("exam-e2e-%s", random.UniqueId()))
 
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
