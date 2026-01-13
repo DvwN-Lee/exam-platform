@@ -31,10 +31,14 @@ spec:
             - name: http
               containerPort: 80
               protocol: TCP
+          {{- if .Values.frontend.livenessProbe.enabled }}
           livenessProbe:
-            {{- toYaml .Values.frontend.livenessProbe | nindent 12 }}
+            {{- omit .Values.frontend.livenessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.frontend.readinessProbe.enabled }}
           readinessProbe:
-            {{- toYaml .Values.frontend.readinessProbe | nindent 12 }}
+            {{- omit .Values.frontend.readinessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
