@@ -31,6 +31,9 @@ spec:
             - name: http
               containerPort: 80
               protocol: TCP
+          env:
+            - name: BACKEND_SERVICE_URL
+              value: "http://{{ include "exam-platform.backend.fullname" . }}:{{ .Values.backend.service.port }}"
           {{- if .Values.frontend.livenessProbe.enabled }}
           livenessProbe:
             {{- omit .Values.frontend.livenessProbe "enabled" | toYaml | nindent 12 }}
