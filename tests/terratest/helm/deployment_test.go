@@ -32,7 +32,7 @@ func TestHelmDeploymentIntegration(t *testing.T) {
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
-	// Helm 옵션 설정
+	// Helm 옵션 설정 (namespace 생성 비활성화 - 테스트용 namespace 사용)
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
@@ -42,6 +42,8 @@ func TestHelmDeploymentIntegration(t *testing.T) {
 			"frontend.image.tag":        "alpine",
 			"backend.replicaCount":      "1",
 			"frontend.replicaCount":     "1",
+			"namespace.create":          "false",
+			"namespace.name":            namespaceName,
 		},
 	}
 
@@ -50,15 +52,18 @@ func TestHelmDeploymentIntegration(t *testing.T) {
 	helm.Install(t, helmOptions, chartPath, releaseName)
 	defer helm.Delete(t, helmOptions, releaseName, true)
 
+	// fullname = releaseName-exam-platform (chart name 포함)
+	fullname := releaseName + "-exam-platform"
+
 	// Backend Deployment Ready 대기
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 
 	// Frontend Deployment Ready 대기
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-frontend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-frontend", 5*time.Minute)
 
 	// Service Endpoint 확인
-	helpers.WaitForServiceEndpoint(t, kubectlOptions, releaseName+"-backend", 2*time.Minute)
-	helpers.WaitForServiceEndpoint(t, kubectlOptions, releaseName+"-frontend", 2*time.Minute)
+	helpers.WaitForServiceEndpoint(t, kubectlOptions, fullname+"-backend", 2*time.Minute)
+	helpers.WaitForServiceEndpoint(t, kubectlOptions, fullname+"-frontend", 2*time.Minute)
 }
 
 // TestHelmUpgradeIntegration은 Helm upgrade 시나리오를 테스트
@@ -77,7 +82,7 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
-	// 초기 설치
+	// 초기 설치 (namespace 생성 비활성화 - 테스트용 namespace 사용)
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
@@ -87,6 +92,8 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 			"frontend.image.tag":        "1.24-alpine",
 			"backend.replicaCount":      "1",
 			"frontend.replicaCount":     "1",
+			"namespace.create":          "false",
+			"namespace.name":            namespaceName,
 		},
 	}
 
@@ -94,8 +101,11 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 	helm.Install(t, helmOptions, chartPath, releaseName)
 	defer helm.Delete(t, helmOptions, releaseName, true)
 
+	// fullname = releaseName-exam-platform (chart name 포함)
+	fullname := releaseName + "-exam-platform"
+
 	// 초기 배포 Ready 대기
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 
 	// Upgrade 수행
 	helmOptions.SetValues["backend.image.tag"] = "1.25-alpine"
@@ -103,8 +113,8 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 	helm.Upgrade(t, helmOptions, chartPath, releaseName)
 
 	// Upgrade 후 Ready 대기
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-frontend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-frontend", 5*time.Minute)
 }
 
 // TestHelmRollbackIntegration은 Helm rollback 시나리오를 테스트
@@ -123,6 +133,7 @@ func TestHelmRollbackIntegration(t *testing.T) {
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
+	// namespace 생성 비활성화 - 테스트용 namespace 사용
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
@@ -132,6 +143,8 @@ func TestHelmRollbackIntegration(t *testing.T) {
 			"frontend.image.tag":        "1.24-alpine",
 			"backend.replicaCount":      "1",
 			"frontend.replicaCount":     "1",
+			"namespace.create":          "false",
+			"namespace.name":            namespaceName,
 		},
 	}
 
@@ -139,16 +152,19 @@ func TestHelmRollbackIntegration(t *testing.T) {
 	helm.Install(t, helmOptions, chartPath, releaseName)
 	defer helm.Delete(t, helmOptions, releaseName, true)
 
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	// fullname = releaseName-exam-platform (chart name 포함)
+	fullname := releaseName + "-exam-platform"
+
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 
 	// Upgrade
 	helmOptions.SetValues["backend.image.tag"] = "1.25-alpine"
 	helm.Upgrade(t, helmOptions, chartPath, releaseName)
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 
 	// Rollback to revision 1
 	helm.Rollback(t, helmOptions, releaseName, "1")
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 }
 
 // TestHelmHealthCheckIntegration은 배포 후 Health Check을 수행
@@ -167,6 +183,7 @@ func TestHelmHealthCheckIntegration(t *testing.T) {
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
+	// namespace 생성 비활성화 - 테스트용 namespace 사용
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
@@ -176,6 +193,8 @@ func TestHelmHealthCheckIntegration(t *testing.T) {
 			"frontend.image.tag":        "alpine",
 			"backend.replicaCount":      "1",
 			"frontend.replicaCount":     "1",
+			"namespace.create":          "false",
+			"namespace.name":            namespaceName,
 		},
 	}
 
@@ -183,17 +202,20 @@ func TestHelmHealthCheckIntegration(t *testing.T) {
 	helm.Install(t, helmOptions, chartPath, releaseName)
 	defer helm.Delete(t, helmOptions, releaseName, true)
 
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-frontend", 5*time.Minute)
+	// fullname = releaseName-exam-platform (chart name 포함)
+	fullname := releaseName + "-exam-platform"
+
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-frontend", 5*time.Minute)
 
 	// Port Forward로 Backend Health 확인
-	backendURL, backendCleanup := helpers.PortForwardService(t, kubectlOptions, releaseName+"-backend", 8080, 8000)
+	backendURL, backendCleanup := helpers.PortForwardService(t, kubectlOptions, fullname+"-backend", 8080, 8000)
 	defer backendCleanup()
 
 	helpers.CheckHealthEndpoint(t, backendURL+"/health", 200, 30*time.Second)
 
 	// Port Forward로 Frontend Health 확인
-	frontendURL, frontendCleanup := helpers.PortForwardService(t, kubectlOptions, releaseName+"-frontend", 3000, 80)
+	frontendURL, frontendCleanup := helpers.PortForwardService(t, kubectlOptions, fullname+"-frontend", 3000, 80)
 	defer frontendCleanup()
 
 	helpers.CheckHealthEndpoint(t, frontendURL+"/", 200, 30*time.Second)
@@ -215,6 +237,7 @@ func TestHelmScalingIntegration(t *testing.T) {
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
+	// namespace 생성 비활성화 - 테스트용 namespace 사용
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
@@ -224,6 +247,8 @@ func TestHelmScalingIntegration(t *testing.T) {
 			"frontend.image.tag":        "alpine",
 			"backend.replicaCount":      "1",
 			"frontend.replicaCount":     "1",
+			"namespace.create":          "false",
+			"namespace.name":            namespaceName,
 		},
 	}
 
@@ -231,17 +256,20 @@ func TestHelmScalingIntegration(t *testing.T) {
 	helm.Install(t, helmOptions, chartPath, releaseName)
 	defer helm.Delete(t, helmOptions, releaseName, true)
 
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	// fullname = releaseName-exam-platform (chart name 포함)
+	fullname := releaseName + "-exam-platform"
+
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 
 	// Scale up
 	helmOptions.SetValues["backend.replicaCount"] = "3"
 	helm.Upgrade(t, helmOptions, chartPath, releaseName)
 
 	// Scale up 후 Ready 대기
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
 
 	// Deployment의 Replica 수 확인
-	deployment := k8s.GetDeployment(t, kubectlOptions, releaseName+"-backend")
+	deployment := k8s.GetDeployment(t, kubectlOptions, fullname+"-backend")
 	require.Equal(t, int32(3), *deployment.Spec.Replicas)
 }
 
@@ -266,11 +294,14 @@ func TestPlaywrightSmokeAfterDeployment(t *testing.T) {
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
+	// namespace 생성 비활성화 - 테스트용 namespace 사용
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
 			"backend.replicaCount":  "1",
 			"frontend.replicaCount": "1",
+			"namespace.create":      "false",
+			"namespace.name":        namespaceName,
 		},
 	}
 
@@ -278,11 +309,14 @@ func TestPlaywrightSmokeAfterDeployment(t *testing.T) {
 	helm.Install(t, helmOptions, chartPath, releaseName)
 	defer helm.Delete(t, helmOptions, releaseName, true)
 
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-backend", 5*time.Minute)
-	helpers.WaitForDeploymentReady(t, kubectlOptions, releaseName+"-frontend", 5*time.Minute)
+	// fullname = releaseName-exam-platform (chart name 포함)
+	fullname := releaseName + "-exam-platform"
+
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-backend", 5*time.Minute)
+	helpers.WaitForDeploymentReady(t, kubectlOptions, fullname+"-frontend", 5*time.Minute)
 
 	// Port Forward로 Frontend 접근
-	frontendURL, cleanup := helpers.PortForwardService(t, kubectlOptions, releaseName+"-frontend", 3000, 80)
+	frontendURL, cleanup := helpers.PortForwardService(t, kubectlOptions, fullname+"-frontend", 3000, 80)
 	defer cleanup()
 
 	// Playwright Smoke 테스트 실행
