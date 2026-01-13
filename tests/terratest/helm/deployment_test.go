@@ -33,17 +33,22 @@ func TestHelmDeploymentIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// Helm 옵션 설정 (namespace 생성 비활성화 - 테스트용 namespace 사용)
+	// nginx 이미지 사용 시 Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":  "nginx",
-			"backend.image.tag":         "alpine",
-			"frontend.image.repository": "nginx",
-			"frontend.image.tag":        "alpine",
-			"backend.replicaCount":      "1",
-			"frontend.replicaCount":     "1",
-			"namespace.create":          "false",
-			"namespace.name":            namespaceName,
+			"backend.image.repository":         "nginx",
+			"backend.image.tag":                "alpine",
+			"frontend.image.repository":        "nginx",
+			"frontend.image.tag":               "alpine",
+			"backend.replicaCount":             "1",
+			"frontend.replicaCount":            "1",
+			"namespace.create":                 "false",
+			"namespace.name":                   namespaceName,
+			"backend.livenessProbe.enabled":    "false",
+			"backend.readinessProbe.enabled":   "false",
+			"frontend.livenessProbe.enabled":   "false",
+			"frontend.readinessProbe.enabled":  "false",
 		},
 	}
 
@@ -83,17 +88,22 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// 초기 설치 (namespace 생성 비활성화 - 테스트용 namespace 사용)
+	// nginx 이미지 사용 시 Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":  "nginx",
-			"backend.image.tag":         "1.24-alpine",
-			"frontend.image.repository": "nginx",
-			"frontend.image.tag":        "1.24-alpine",
-			"backend.replicaCount":      "1",
-			"frontend.replicaCount":     "1",
-			"namespace.create":          "false",
-			"namespace.name":            namespaceName,
+			"backend.image.repository":         "nginx",
+			"backend.image.tag":                "1.24-alpine",
+			"frontend.image.repository":        "nginx",
+			"frontend.image.tag":               "1.24-alpine",
+			"backend.replicaCount":             "1",
+			"frontend.replicaCount":            "1",
+			"namespace.create":                 "false",
+			"namespace.name":                   namespaceName,
+			"backend.livenessProbe.enabled":    "false",
+			"backend.readinessProbe.enabled":   "false",
+			"frontend.livenessProbe.enabled":   "false",
+			"frontend.readinessProbe.enabled":  "false",
 		},
 	}
 
@@ -134,17 +144,22 @@ func TestHelmRollbackIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
+	// nginx 이미지 사용 시 Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":  "nginx",
-			"backend.image.tag":         "1.24-alpine",
-			"frontend.image.repository": "nginx",
-			"frontend.image.tag":        "1.24-alpine",
-			"backend.replicaCount":      "1",
-			"frontend.replicaCount":     "1",
-			"namespace.create":          "false",
-			"namespace.name":            namespaceName,
+			"backend.image.repository":         "nginx",
+			"backend.image.tag":                "1.24-alpine",
+			"frontend.image.repository":        "nginx",
+			"frontend.image.tag":               "1.24-alpine",
+			"backend.replicaCount":             "1",
+			"frontend.replicaCount":            "1",
+			"namespace.create":                 "false",
+			"namespace.name":                   namespaceName,
+			"backend.livenessProbe.enabled":    "false",
+			"backend.readinessProbe.enabled":   "false",
+			"frontend.livenessProbe.enabled":   "false",
+			"frontend.readinessProbe.enabled":  "false",
 		},
 	}
 
@@ -184,17 +199,22 @@ func TestHelmHealthCheckIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
+	// nginx 이미지 사용 시 Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":  "nginx",
-			"backend.image.tag":         "alpine",
-			"frontend.image.repository": "nginx",
-			"frontend.image.tag":        "alpine",
-			"backend.replicaCount":      "1",
-			"frontend.replicaCount":     "1",
-			"namespace.create":          "false",
-			"namespace.name":            namespaceName,
+			"backend.image.repository":         "nginx",
+			"backend.image.tag":                "alpine",
+			"frontend.image.repository":        "nginx",
+			"frontend.image.tag":               "alpine",
+			"backend.replicaCount":             "1",
+			"frontend.replicaCount":            "1",
+			"namespace.create":                 "false",
+			"namespace.name":                   namespaceName,
+			"backend.livenessProbe.enabled":    "false",
+			"backend.readinessProbe.enabled":   "false",
+			"frontend.livenessProbe.enabled":   "false",
+			"frontend.readinessProbe.enabled":  "false",
 		},
 	}
 
@@ -238,17 +258,22 @@ func TestHelmScalingIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
+	// nginx 이미지 사용 시 Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":  "nginx",
-			"backend.image.tag":         "alpine",
-			"frontend.image.repository": "nginx",
-			"frontend.image.tag":        "alpine",
-			"backend.replicaCount":      "1",
-			"frontend.replicaCount":     "1",
-			"namespace.create":          "false",
-			"namespace.name":            namespaceName,
+			"backend.image.repository":         "nginx",
+			"backend.image.tag":                "alpine",
+			"frontend.image.repository":        "nginx",
+			"frontend.image.tag":               "alpine",
+			"backend.replicaCount":             "1",
+			"frontend.replicaCount":            "1",
+			"namespace.create":                 "false",
+			"namespace.name":                   namespaceName,
+			"backend.livenessProbe.enabled":    "false",
+			"backend.readinessProbe.enabled":   "false",
+			"frontend.livenessProbe.enabled":   "false",
+			"frontend.readinessProbe.enabled":  "false",
 		},
 	}
 
@@ -295,13 +320,22 @@ func TestPlaywrightSmokeAfterDeployment(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
+	// nginx 이미지 사용 시 Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.replicaCount":  "1",
-			"frontend.replicaCount": "1",
-			"namespace.create":      "false",
-			"namespace.name":        namespaceName,
+			"backend.image.repository":         "nginx",
+			"backend.image.tag":                "alpine",
+			"frontend.image.repository":        "nginx",
+			"frontend.image.tag":               "alpine",
+			"backend.replicaCount":             "1",
+			"frontend.replicaCount":            "1",
+			"namespace.create":                 "false",
+			"namespace.name":                   namespaceName,
+			"backend.livenessProbe.enabled":    "false",
+			"backend.readinessProbe.enabled":   "false",
+			"frontend.livenessProbe.enabled":   "false",
+			"frontend.readinessProbe.enabled":  "false",
 		},
 	}
 

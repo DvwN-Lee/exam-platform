@@ -41,6 +41,7 @@ backend:
 
   # Liveness/Readiness Probe
   livenessProbe:
+    enabled: true
     httpGet:
       path: /api/v1/health/
       port: 8000
@@ -50,6 +51,7 @@ backend:
     failureThreshold: 3
 
   readinessProbe:
+    enabled: true
     httpGet:
       path: /api/v1/health/
       port: 8000
@@ -100,6 +102,7 @@ frontend:
       memory: "128Mi"
 
   livenessProbe:
+    enabled: true
     httpGet:
       path: /
       port: 80
@@ -109,6 +112,7 @@ frontend:
     failureThreshold: 3
 
   readinessProbe:
+    enabled: true
     httpGet:
       path: /
       port: 80
