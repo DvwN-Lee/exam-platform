@@ -11,8 +11,10 @@ describe("cn", () => {
   });
 
   it("조건부 클래스를 처리한다", () => {
-    expect(cn("base", true && "active")).toBe("base active");
-    expect(cn("base", false && "active")).toBe("base");
+    const isActive = true;
+    const isInactive = false;
+    expect(cn("base", isActive && "active")).toBe("base active");
+    expect(cn("base", isInactive && "active")).toBe("base");
   });
 
   it("undefined와 null을 무시한다", () => {
