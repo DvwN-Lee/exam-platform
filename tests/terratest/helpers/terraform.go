@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,57 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// copyDir recursively copies a directory
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip .terraform directory and lock files
+		if info.IsDir() && info.Name() == ".terraform" {
+			return filepath.SkipDir
+		}
+		if info.Name() == ".terraform.lock.hcl" {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode())
+		}
+
+		srcFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+
+		dstFile, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		_, err = io.Copy(dstFile, srcFile)
+		return err
+	})
+}
+
+// CopyModuleToTempDir copies the terraform module to a temp directory for isolated testing
+func CopyModuleToTempDir(t *testing.T, moduleDir string) string {
+	t.Helper()
+	tempDir := t.TempDir()
+	err := copyDir(moduleDir, tempDir)
+	require.NoError(t, err, "Failed to copy module to temp directory")
+	return tempDir
+}
 
 // TerraformPlanOptions는 terraform plan 테스트용 옵션 구조체
 type TerraformPlanOptions struct {
@@ -29,13 +81,14 @@ func IsCI() bool {
 func RunTerraformValidation(t *testing.T, opts *TerraformPlanOptions) {
 	t.Helper()
 
+	// 병렬 테스트 격리를 위해 모듈을 임시 디렉토리로 복사
+	workingDir := CopyModuleToTempDir(t, opts.TerraformDir)
+
 	// terraform validate는 -var 플래그를 지원하지 않으므로 Vars 제외
-	// Upgrade: true로 설정하여 병렬 테스트 시 lock 파일 충돌 방지
 	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
-		TerraformDir:  opts.TerraformDir,
+		TerraformDir:  workingDir,
 		NoColor:       true,
 		BackendConfig: opts.BackendConfig,
-		Upgrade:       true,
 	})
 
 	terraform.Init(t, terraformOptions)
