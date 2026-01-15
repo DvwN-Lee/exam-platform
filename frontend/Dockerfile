@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Build-time 환경 변수
-ARG VITE_API_BASE_URL=http://localhost:8000/api/v1
+ARG VITE_API_BASE_URL=/api/v1
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Production build
