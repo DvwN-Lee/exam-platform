@@ -3,7 +3,7 @@ Examination API Views.
 """
 
 from django.db import transaction
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from examination.models import ExaminationInfo, ExamPaperInfo, ExamStudentsInfo
 from rest_framework import filters, status, viewsets
@@ -68,11 +68,14 @@ class ExaminationViewSet(viewsets.ModelViewSet):
             )
         )
 
-        # 학생: 자신이 등록된 시험만
+        # 학생: 등록된 시험 + 공개 시험(진행중/완료 상태)
         if user.user_type == "student":
             try:
                 student_info = user.studentsinfo
-                return base_qs.filter(examstudentsinfo__student=student_info)
+                return base_qs.filter(
+                    Q(examstudentsinfo__student=student_info)
+                    | Q(exam_state__in=["1", "2"])  # 진행중 또는 완료
+                ).distinct()
             except (
                 StudentsInfo.DoesNotExist
             ):  # pragma: no cover - Defensive: studentsinfo should exist for student user_type
