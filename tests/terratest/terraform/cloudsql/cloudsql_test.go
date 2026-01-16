@@ -196,3 +196,28 @@ func TestCloudSQLModuleWithCustomSecretId(t *testing.T) {
 	secretCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret.db_password")
 	assert.Equal(t, 1, secretCount, "Expected 1 Secret Manager Secret with custom ID")
 }
+
+func TestCloudSQLModuleWithSecretManagerDisabled(t *testing.T) {
+	t.Parallel()
+
+	// DefaultCloudSQLVars()는 enable_secret_manager: false가 기본값
+	opts := &helpers.TerraformPlanOptions{
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars:         helpers.DefaultCloudSQLVars(),
+	}
+
+	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
+	// Secret Manager 비활성화 시 리소스가 생성되지 않음을 검증
+	secretCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret.db_password")
+	assert.Equal(t, 0, secretCount, "Expected 0 Secret Manager Secret when disabled")
+
+	secretVersionCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret_version.db_password")
+	assert.Equal(t, 0, secretVersionCount, "Expected 0 Secret Manager Secret Version when disabled")
+}
