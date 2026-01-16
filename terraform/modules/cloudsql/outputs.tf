@@ -48,3 +48,21 @@ output "postgres_connection_string" {
   value       = "postgresql://${google_sql_user.main.name}@${google_sql_database_instance.main.private_ip_address}:5432/${google_sql_database.main.name}"
   sensitive   = true
 }
+
+# -----------------------------------------------------------------------------
+# Secret Manager Outputs
+# -----------------------------------------------------------------------------
+output "secret_manager_secret_id" {
+  description = "Secret Manager secret ID (if enabled)"
+  value       = var.enable_secret_manager ? google_secret_manager_secret.db_password[0].secret_id : null
+}
+
+output "secret_manager_secret_name" {
+  description = "Secret Manager secret resource name (if enabled)"
+  value       = var.enable_secret_manager ? google_secret_manager_secret.db_password[0].name : null
+}
+
+output "secret_manager_secret_version" {
+  description = "Secret Manager secret version (if enabled)"
+  value       = var.enable_secret_manager ? google_secret_manager_secret_version.db_password[0].name : null
+}
