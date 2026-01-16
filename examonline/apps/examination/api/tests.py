@@ -352,7 +352,7 @@ class TestPermissions:
         assert response.status_code == 403
 
     def test_student_can_view_enrolled_exams(self, api_client, student_user, examination):
-        """학생은 자신이 등록된 시험만 조회 가능"""
+        """학생은 자신이 등록된 시험 조회 가능"""
         student_info = student_user.studentsinfo
         ExamStudentsInfo.objects.create(exam=examination, student=student_info)
 
@@ -362,6 +362,48 @@ class TestPermissions:
 
         assert response.status_code == 200
         assert response.data["count"] == 1
+
+    def test_student_can_view_published_exams_without_enrollment(
+        self, api_client, student_user, examination
+    ):
+        """학생은 등록되지 않아도 진행중인 시험 조회 가능"""
+        examination.exam_state = "1"  # 진행중
+        examination.save()
+
+        api_client.force_authenticate(user=student_user)
+
+        response = api_client.get("/api/v1/examinations/")
+
+        assert response.status_code == 200
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["exam_state"] == "1"
+
+    def test_student_can_view_completed_exams_without_enrollment(
+        self, api_client, student_user, examination
+    ):
+        """학생은 등록되지 않아도 완료된 시험 조회 가능"""
+        examination.exam_state = "2"  # 완료
+        examination.save()
+
+        api_client.force_authenticate(user=student_user)
+
+        response = api_client.get("/api/v1/examinations/")
+
+        assert response.status_code == 200
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["exam_state"] == "2"
+
+    def test_student_cannot_view_unpublished_exams_without_enrollment(
+        self, api_client, student_user, examination
+    ):
+        """학생은 등록되지 않은 미공개 시험 조회 불가"""
+        # examination.exam_state = "0" (기본값)
+        api_client.force_authenticate(user=student_user)
+
+        response = api_client.get("/api/v1/examinations/")
+
+        assert response.status_code == 200
+        assert response.data["count"] == 0
 
 
 @pytest.mark.django_db
