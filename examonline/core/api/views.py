@@ -30,9 +30,11 @@ logger = logging.getLogger(__name__)
 HEALTH_CHECK_MONGODB_REQUIRED = os.environ.get(
     "HEALTH_CHECK_MONGODB_REQUIRED", "false"
 ).lower() in ("true", "1", "yes")
-HEALTH_CHECK_REDIS_REQUIRED = os.environ.get(
-    "HEALTH_CHECK_REDIS_REQUIRED", "false"
-).lower() in ("true", "1", "yes")
+HEALTH_CHECK_REDIS_REQUIRED = os.environ.get("HEALTH_CHECK_REDIS_REQUIRED", "false").lower() in (
+    "true",
+    "1",
+    "yes",
+)
 
 
 class MongoDBHealthChecker:
