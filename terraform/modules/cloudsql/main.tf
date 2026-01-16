@@ -110,3 +110,37 @@ resource "google_sql_user" "main" {
   instance = google_sql_database_instance.main.name
   password = random_password.db_password.result
 }
+
+# -----------------------------------------------------------------------------
+# Secret Manager (Optional)
+# -----------------------------------------------------------------------------
+locals {
+  secret_id = var.secret_manager_secret_id != "" ? var.secret_manager_secret_id : "${var.environment}-${var.instance_name}-db-password"
+}
+
+resource "google_secret_manager_secret" "db_password" {
+  count = var.enable_secret_manager ? 1 : 0
+
+  project   = var.project_id
+  secret_id = local.secret_id
+
+  replication {
+    auto {}
+  }
+
+  labels = merge(
+    {
+      environment = var.environment
+      managed_by  = "terraform"
+      database    = var.instance_name
+    },
+    var.labels
+  )
+}
+
+resource "google_secret_manager_secret_version" "db_password" {
+  count = var.enable_secret_manager ? 1 : 0
+
+  secret      = google_secret_manager_secret.db_password[0].id
+  secret_data = random_password.db_password.result
+}
