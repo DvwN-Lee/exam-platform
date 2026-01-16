@@ -225,3 +225,23 @@ variable "secret_manager_secret_id" {
   type        = string
   default     = ""
 }
+
+# -----------------------------------------------------------------------------
+# Workload Identity Integration
+# -----------------------------------------------------------------------------
+variable "enable_workload_identity" {
+  description = "Enable Workload Identity binding for Secret Manager access"
+  type        = bool
+  default     = false
+}
+
+variable "workload_identity_config" {
+  description = "Workload Identity configuration for KSA-GSA binding"
+  type = object({
+    project_id           = string
+    gke_namespace        = string
+    kubernetes_sa_name   = string
+    google_sa_account_id = optional(string, "")
+  })
+  default = null
+}
