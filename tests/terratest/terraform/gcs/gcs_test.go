@@ -71,14 +71,11 @@ func TestGCSModuleIdempotency(t *testing.T) {
 func TestGCSModuleWithVersioningDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcs")
-
-	vars := helpers.DefaultGCSVars()
-	vars["versioning_enabled"] = false
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcs"),
+		Vars: helpers.MergeVars(helpers.DefaultGCSVars(), map[string]interface{}{
+			"versioning_enabled": false,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -96,14 +93,11 @@ func TestGCSModuleWithVersioningDisabled(t *testing.T) {
 func TestGCSModuleWithLifecyclePolicy(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcs")
-
-	vars := helpers.DefaultGCSVars()
-	vars["lifecycle_age_days"] = 90
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcs"),
+		Vars: helpers.MergeVars(helpers.DefaultGCSVars(), map[string]interface{}{
+			"lifecycle_age_days": 90,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -121,14 +115,11 @@ func TestGCSModuleWithLifecyclePolicy(t *testing.T) {
 func TestGCSModuleWithDifferentStorageClass(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcs")
-
-	vars := helpers.DefaultGCSVars()
-	vars["storage_class"] = "NEARLINE"
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcs"),
+		Vars: helpers.MergeVars(helpers.DefaultGCSVars(), map[string]interface{}{
+			"storage_class": "NEARLINE",
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

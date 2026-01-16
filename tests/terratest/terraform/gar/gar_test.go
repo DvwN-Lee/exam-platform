@@ -70,14 +70,11 @@ func TestGARModuleIdempotency(t *testing.T) {
 func TestGARModuleWithImmutableTags(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gar")
-
-	vars := helpers.DefaultGARVars()
-	vars["immutable_tags"] = true
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gar"),
+		Vars: helpers.MergeVars(helpers.DefaultGARVars(), map[string]interface{}{
+			"immutable_tags": true,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -95,15 +92,12 @@ func TestGARModuleWithImmutableTags(t *testing.T) {
 func TestGARModuleWithCleanupPolicy(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gar")
-
-	vars := helpers.DefaultGARVars()
-	vars["cleanup_policy_keep_count"] = 10
-	vars["cleanup_policy_delete_older_than_days"] = 30
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gar"),
+		Vars: helpers.MergeVars(helpers.DefaultGARVars(), map[string]interface{}{
+			"cleanup_policy_keep_count":            10,
+			"cleanup_policy_delete_older_than_days": 30,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

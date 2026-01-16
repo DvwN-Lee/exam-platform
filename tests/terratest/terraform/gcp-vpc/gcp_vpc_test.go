@@ -83,14 +83,11 @@ func TestGCPVPCModuleIdempotency(t *testing.T) {
 func TestGCPVPCModuleWithNATEnabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcp-vpc")
-
-	vars := helpers.DefaultGCPVPCVars()
-	vars["enable_nat"] = true
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcp-vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultGCPVPCVars(), map[string]interface{}{
+			"enable_nat": true,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -122,14 +119,11 @@ func TestGCPVPCModuleWithNATEnabled(t *testing.T) {
 func TestGCPVPCModuleWithNATDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcp-vpc")
-
-	vars := helpers.DefaultGCPVPCVars()
-	vars["enable_nat"] = false
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcp-vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultGCPVPCVars(), map[string]interface{}{
+			"enable_nat": false,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -151,14 +145,11 @@ func TestGCPVPCModuleWithNATDisabled(t *testing.T) {
 func TestGCPVPCModuleWithoutGKESecondaryRanges(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcp-vpc")
-
-	vars := helpers.DefaultGCPVPCVars()
-	vars["enable_gke_secondary_ranges"] = false
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcp-vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultGCPVPCVars(), map[string]interface{}{
+			"enable_gke_secondary_ranges": false,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -175,14 +166,11 @@ func TestGCPVPCModuleWithoutGKESecondaryRanges(t *testing.T) {
 func TestGCPVPCModuleWithIAPSSHDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcp-vpc")
-
-	vars := helpers.DefaultGCPVPCVars()
-	vars["enable_iap_ssh"] = false
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcp-vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultGCPVPCVars(), map[string]interface{}{
+			"enable_iap_ssh": false,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -202,17 +190,14 @@ func TestGCPVPCModuleWithIAPSSHDisabled(t *testing.T) {
 func TestGCPVPCModuleWithCustomCIDRs(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gcp-vpc")
-
-	vars := helpers.DefaultGCPVPCVars()
-	vars["public_subnet_cidr"] = "10.10.1.0/24"
-	vars["private_subnet_cidr"] = "10.10.2.0/24"
-	vars["pods_cidr"] = "10.20.0.0/16"
-	vars["services_cidr"] = "10.30.0.0/20"
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gcp-vpc"),
+		Vars: helpers.MergeVars(helpers.DefaultGCPVPCVars(), map[string]interface{}{
+			"public_subnet_cidr":  "10.10.1.0/24",
+			"private_subnet_cidr": "10.10.2.0/24",
+			"pods_cidr":           "10.20.0.0/16",
+			"services_cidr":       "10.30.0.0/20",
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

@@ -82,15 +82,12 @@ func TestCloudSQLModuleIdempotency(t *testing.T) {
 func TestCloudSQLModuleWithHighAvailability(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("cloudsql")
-
-	vars := helpers.DefaultCloudSQLVars()
-	vars["availability_type"] = "REGIONAL"
-	vars["tier"] = "db-custom-2-4096"
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars: helpers.MergeVars(helpers.DefaultCloudSQLVars(), map[string]interface{}{
+			"availability_type": "REGIONAL",
+			"tier":              "db-custom-2-4096",
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -108,14 +105,11 @@ func TestCloudSQLModuleWithHighAvailability(t *testing.T) {
 func TestCloudSQLModuleWithBackupDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("cloudsql")
-
-	vars := helpers.DefaultCloudSQLVars()
-	vars["backup_enabled"] = false
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars: helpers.MergeVars(helpers.DefaultCloudSQLVars(), map[string]interface{}{
+			"backup_enabled": false,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
