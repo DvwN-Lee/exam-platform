@@ -70,15 +70,12 @@ func TestMemorystoreModuleIdempotency(t *testing.T) {
 func TestMemorystoreModuleWithHighAvailability(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("memorystore")
-
-	vars := helpers.DefaultMemorystoreVars()
-	vars["tier"] = "STANDARD_HA"
-	vars["memory_size_gb"] = 5
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("memorystore"),
+		Vars: helpers.MergeVars(helpers.DefaultMemorystoreVars(), map[string]interface{}{
+			"tier":           "STANDARD_HA",
+			"memory_size_gb": 5,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -96,14 +93,11 @@ func TestMemorystoreModuleWithHighAvailability(t *testing.T) {
 func TestMemorystoreModuleWithAuthDisabled(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("memorystore")
-
-	vars := helpers.DefaultMemorystoreVars()
-	vars["auth_enabled"] = false
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("memorystore"),
+		Vars: helpers.MergeVars(helpers.DefaultMemorystoreVars(), map[string]interface{}{
+			"auth_enabled": false,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)

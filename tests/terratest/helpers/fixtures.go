@@ -106,3 +106,26 @@ func DefaultGKEVars() map[string]interface{} {
 		"deletion_protection":           false, // for testing
 	}
 }
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+// MergeVars merges base variables with overrides.
+// Override values take precedence over base values.
+// Example:
+//
+//	vars := MergeVars(DefaultGKEVars(), map[string]interface{}{
+//	    "min_node_count": 3,
+//	    "max_node_count": 10,
+//	})
+func MergeVars(base, overrides map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range base {
+		result[k] = v
+	}
+	for k, v := range overrides {
+		result[k] = v
+	}
+	return result
+}

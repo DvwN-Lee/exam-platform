@@ -79,15 +79,12 @@ func TestGKEModuleIdempotency(t *testing.T) {
 func TestGKEModuleWithPrivateCluster(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gke")
-
-	vars := helpers.DefaultGKEVars()
-	vars["enable_private_nodes"] = true
-	vars["enable_private_endpoint"] = true
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gke"),
+		Vars: helpers.MergeVars(helpers.DefaultGKEVars(), map[string]interface{}{
+			"enable_private_nodes":    true,
+			"enable_private_endpoint": true,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -104,15 +101,12 @@ func TestGKEModuleWithPrivateCluster(t *testing.T) {
 func TestGKEModuleWithAutoscaling(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gke")
-
-	vars := helpers.DefaultGKEVars()
-	vars["min_node_count"] = 2
-	vars["max_node_count"] = 10
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gke"),
+		Vars: helpers.MergeVars(helpers.DefaultGKEVars(), map[string]interface{}{
+			"min_node_count": 2,
+			"max_node_count": 10,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
@@ -129,15 +123,12 @@ func TestGKEModuleWithAutoscaling(t *testing.T) {
 func TestGKEModuleWithCustomMachineType(t *testing.T) {
 	t.Parallel()
 
-	moduleDir := helpers.GetTerraformModulePath("gke")
-
-	vars := helpers.DefaultGKEVars()
-	vars["node_machine_type"] = "e2-standard-4"
-	vars["node_disk_size_gb"] = 100
-
 	opts := &helpers.TerraformPlanOptions{
-		TerraformDir: moduleDir,
-		Vars:         vars,
+		TerraformDir: helpers.GetTerraformModulePath("gke"),
+		Vars: helpers.MergeVars(helpers.DefaultGKEVars(), map[string]interface{}{
+			"node_machine_type":  "e2-standard-4",
+			"node_disk_size_gb": 100,
+		}),
 	}
 
 	plan := helpers.RunTerraformPlanValidation(t, opts)
