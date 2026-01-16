@@ -66,3 +66,16 @@ output "secret_manager_secret_version" {
   description = "Secret Manager secret version (if enabled)"
   value       = var.enable_secret_manager ? google_secret_manager_secret_version.db_password[0].name : null
 }
+
+# -----------------------------------------------------------------------------
+# Workload Identity Outputs
+# -----------------------------------------------------------------------------
+output "secret_accessor_sa_email" {
+  description = "Google Service Account email for Secret Manager access (if Workload Identity enabled)"
+  value       = local.enable_wi ? google_service_account.secret_accessor[0].email : null
+}
+
+output "workload_identity_annotation" {
+  description = "Annotation value for Kubernetes Service Account (iam.gke.io/gcp-service-account)"
+  value       = local.enable_wi ? google_service_account.secret_accessor[0].email : null
+}

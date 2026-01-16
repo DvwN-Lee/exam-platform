@@ -221,3 +221,123 @@ func TestCloudSQLModuleWithSecretManagerDisabled(t *testing.T) {
 	secretVersionCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret_version.db_password")
 	assert.Equal(t, 0, secretVersionCount, "Expected 0 Secret Manager Secret Version when disabled")
 }
+
+func TestCloudSQLModuleWithWorkloadIdentity(t *testing.T) {
+	t.Parallel()
+
+	opts := &helpers.TerraformPlanOptions{
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars: helpers.MergeVars(helpers.DefaultCloudSQLVars(), map[string]interface{}{
+			"enable_secret_manager":    true,
+			"enable_workload_identity": true,
+			"workload_identity_config": helpers.DefaultWorkloadIdentityConfig(),
+		}),
+	}
+
+	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
+	// GSA 존재 확인
+	gsaCount := helpers.CountResourcesByType(plan, "google_service_account.secret_accessor")
+	assert.Equal(t, 1, gsaCount, "Expected 1 Google Service Account for Secret Accessor")
+
+	// KSA-GSA Binding 존재 확인
+	bindingCount := helpers.CountResourcesByType(plan, "google_service_account_iam_member.workload_identity_binding")
+	assert.Equal(t, 1, bindingCount, "Expected 1 Workload Identity IAM Binding")
+
+	// Secret IAM 존재 확인
+	secretIamCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret_iam_member.secret_accessor")
+	assert.Equal(t, 1, secretIamCount, "Expected 1 Secret Manager IAM Member")
+}
+
+func TestCloudSQLModuleWithWorkloadIdentityDisabled(t *testing.T) {
+	t.Parallel()
+
+	// Secret Manager만 활성화, Workload Identity는 비활성화
+	opts := &helpers.TerraformPlanOptions{
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars: helpers.MergeVars(helpers.DefaultCloudSQLVars(), map[string]interface{}{
+			"enable_secret_manager":    true,
+			"enable_workload_identity": false,
+		}),
+	}
+
+	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
+	// Workload Identity 비활성화 시 IAM 리소스가 생성되지 않음을 검증
+	gsaCount := helpers.CountResourcesByType(plan, "google_service_account.secret_accessor")
+	assert.Equal(t, 0, gsaCount, "Expected 0 Google Service Account when Workload Identity disabled")
+
+	bindingCount := helpers.CountResourcesByType(plan, "google_service_account_iam_member.workload_identity_binding")
+	assert.Equal(t, 0, bindingCount, "Expected 0 Workload Identity IAM Binding when disabled")
+
+	secretIamCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret_iam_member.secret_accessor")
+	assert.Equal(t, 0, secretIamCount, "Expected 0 Secret Manager IAM Member when Workload Identity disabled")
+}
+
+func TestCloudSQLModuleWithWorkloadIdentityOutputs(t *testing.T) {
+	t.Parallel()
+
+	opts := &helpers.TerraformPlanOptions{
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars: helpers.MergeVars(helpers.DefaultCloudSQLVars(), map[string]interface{}{
+			"enable_secret_manager":    true,
+			"enable_workload_identity": true,
+			"workload_identity_config": helpers.DefaultWorkloadIdentityConfig(),
+		}),
+	}
+
+	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// Workload Identity 관련 Output 검증
+	expectedOutputs := []string{
+		"secret_accessor_sa_email",
+		"workload_identity_annotation",
+	}
+
+	helpers.ValidateOutputs(t, plan, expectedOutputs)
+}
+
+func TestCloudSQLModuleWithWorkloadIdentityWithoutSecretManager(t *testing.T) {
+	t.Parallel()
+
+	// Edge case: Secret Manager 비활성화 + Workload Identity 활성화
+	// Secret Manager가 없으면 Workload Identity IAM 리소스도 생성되지 않아야 함
+	opts := &helpers.TerraformPlanOptions{
+		TerraformDir: helpers.GetTerraformModulePath("cloudsql"),
+		Vars: helpers.MergeVars(helpers.DefaultCloudSQLVars(), map[string]interface{}{
+			"enable_secret_manager":    false,
+			"enable_workload_identity": true,
+			"workload_identity_config": helpers.DefaultWorkloadIdentityConfig(),
+		}),
+	}
+
+	plan := helpers.RunTerraformPlanValidation(t, opts)
+
+	// CI 환경에서는 plan이 nil이므로 리소스 검증 skip
+	if plan == nil {
+		t.Log("Skipping resource count validation in CI (validate-only mode)")
+		return
+	}
+
+	// Secret Manager 비활성화 시 Workload Identity IAM 리소스도 생성되지 않음을 검증
+	gsaCount := helpers.CountResourcesByType(plan, "google_service_account.secret_accessor")
+	assert.Equal(t, 0, gsaCount, "Expected 0 Google Service Account when Secret Manager disabled")
+
+	bindingCount := helpers.CountResourcesByType(plan, "google_service_account_iam_member.workload_identity_binding")
+	assert.Equal(t, 0, bindingCount, "Expected 0 Workload Identity IAM Binding when Secret Manager disabled")
+
+	secretIamCount := helpers.CountResourcesByType(plan, "google_secret_manager_secret_iam_member.secret_accessor")
+	assert.Equal(t, 0, secretIamCount, "Expected 0 Secret Manager IAM Member when Secret Manager disabled")
+}
