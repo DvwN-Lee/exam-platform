@@ -56,6 +56,14 @@ export function ExaminationForm({
         }
       : {
           exam_name: '',
+          testpaper_id: 0,
+          // 기본값: 현재 시간 + 1시간 (시작), + 2시간 (종료)
+          start_time: new Date(Date.now() + 60 * 60 * 1000)
+            .toISOString()
+            .slice(0, 16),
+          end_time: new Date(Date.now() + 2 * 60 * 60 * 1000)
+            .toISOString()
+            .slice(0, 16),
           is_public: false,
         },
   })
