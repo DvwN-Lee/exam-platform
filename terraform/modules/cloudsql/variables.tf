@@ -210,3 +210,18 @@ variable "labels" {
   type        = map(string)
   default     = {}
 }
+
+# -----------------------------------------------------------------------------
+# Secret Manager Integration
+# -----------------------------------------------------------------------------
+variable "enable_secret_manager" {
+  description = "Enable storing database password in Secret Manager"
+  type        = bool
+  default     = false
+}
+
+variable "secret_manager_secret_id" {
+  description = "Secret Manager secret ID (auto-generated if not provided)"
+  type        = string
+  default     = ""
+}

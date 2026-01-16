@@ -71,18 +71,19 @@ func DefaultMemorystoreVars() map[string]interface{} {
 // DefaultCloudSQLVars returns default test variables for cloudsql module
 func DefaultCloudSQLVars() map[string]interface{} {
 	return map[string]interface{}{
-		"project_id":          "test-project",
-		"environment":         "dev",
-		"instance_name":       "test-db",
-		"region":              "asia-northeast3",
-		"database_version":    "POSTGRES_16",
-		"tier":                "db-f1-micro",
-		"disk_size":           10,
-		"availability_type":   "ZONAL",
-		"backup_enabled":      true,
-		"database_name":       "examonline",
-		"network_id":          "projects/test-project/global/networks/dev-vpc",
-		"deletion_protection": false, // for testing
+		"project_id":            "test-project",
+		"environment":           "dev",
+		"instance_name":         "test-db",
+		"region":                "asia-northeast3",
+		"database_version":      "POSTGRES_16",
+		"tier":                  "db-f1-micro",
+		"disk_size":             10,
+		"availability_type":     "ZONAL",
+		"backup_enabled":        true,
+		"database_name":         "examonline",
+		"network_id":            "projects/test-project/global/networks/dev-vpc",
+		"deletion_protection":   false, // for testing
+		"enable_secret_manager": false, // Secret Manager disabled by default
 	}
 }
 
