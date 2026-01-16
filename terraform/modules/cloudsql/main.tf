@@ -116,6 +116,14 @@ resource "google_sql_user" "main" {
 # -----------------------------------------------------------------------------
 locals {
   secret_id = var.secret_manager_secret_id != "" ? var.secret_manager_secret_id : "${var.environment}-${var.instance_name}-db-password"
+
+  # Workload Identity locals
+  enable_wi = var.enable_secret_manager && var.enable_workload_identity && var.workload_identity_config != null
+  wi_sa_account_id = local.enable_wi ? (
+    var.workload_identity_config.google_sa_account_id != "" ?
+    var.workload_identity_config.google_sa_account_id :
+    "${var.environment}-${var.instance_name}-secret-accessor"
+  ) : ""
 }
 
 resource "google_secret_manager_secret" "db_password" {
@@ -143,4 +151,36 @@ resource "google_secret_manager_secret_version" "db_password" {
 
   secret      = google_secret_manager_secret.db_password[0].id
   secret_data = random_password.db_password.result
+}
+
+# -----------------------------------------------------------------------------
+# Workload Identity IAM Binding (Optional)
+# -----------------------------------------------------------------------------
+# GSA: Pod에서 Secret Manager 접근을 위한 Google Service Account
+resource "google_service_account" "secret_accessor" {
+  count = local.enable_wi ? 1 : 0
+
+  project      = var.workload_identity_config.project_id
+  account_id   = local.wi_sa_account_id
+  display_name = "Secret Accessor for ${var.environment}-${var.instance_name}"
+  description  = "Service Account for GKE Workload Identity - Secret Manager access"
+}
+
+# KSA-GSA Binding: Kubernetes Service Account와 Google Service Account 연결
+resource "google_service_account_iam_member" "workload_identity_binding" {
+  count = local.enable_wi ? 1 : 0
+
+  service_account_id = google_service_account.secret_accessor[0].name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.workload_identity_config.project_id}.svc.id.goog[${var.workload_identity_config.gke_namespace}/${var.workload_identity_config.kubernetes_sa_name}]"
+}
+
+# Secret 접근 권한: GSA에 Secret Manager Secret Accessor 역할 부여
+resource "google_secret_manager_secret_iam_member" "secret_accessor" {
+  count = local.enable_wi ? 1 : 0
+
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.db_password[0].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.secret_accessor[0].email}"
 }
