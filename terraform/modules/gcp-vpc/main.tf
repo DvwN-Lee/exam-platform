@@ -28,7 +28,7 @@ resource "google_compute_network" "main" {
 # Public Subnet
 # -----------------------------------------------------------------------------
 resource "google_compute_subnetwork" "public" {
-  name          = "${var.environment}-public-subnet"
+  name          = "${var.environment}-${var.network_name}-public"
   project       = var.project_id
   region        = var.region
   network       = google_compute_network.main.id
@@ -47,7 +47,7 @@ resource "google_compute_subnetwork" "public" {
 # Private Subnet
 # -----------------------------------------------------------------------------
 resource "google_compute_subnetwork" "private" {
-  name          = "${var.environment}-private-subnet"
+  name          = "${var.environment}-${var.network_name}-private"
   project       = var.project_id
   region        = var.region
   network       = google_compute_network.main.id
@@ -59,7 +59,7 @@ resource "google_compute_subnetwork" "private" {
   dynamic "secondary_ip_range" {
     for_each = var.enable_gke_secondary_ranges ? [1] : []
     content {
-      range_name    = "${var.environment}-pods"
+      range_name    = "${var.environment}-${var.network_name}-pods"
       ip_cidr_range = var.pods_cidr
     }
   }
@@ -67,7 +67,7 @@ resource "google_compute_subnetwork" "private" {
   dynamic "secondary_ip_range" {
     for_each = var.enable_gke_secondary_ranges ? [1] : []
     content {
-      range_name    = "${var.environment}-services"
+      range_name    = "${var.environment}-${var.network_name}-services"
       ip_cidr_range = var.services_cidr
     }
   }
@@ -84,7 +84,7 @@ resource "google_compute_subnetwork" "private" {
 # -----------------------------------------------------------------------------
 resource "google_compute_router" "main" {
   count   = var.enable_nat ? 1 : 0
-  name    = "${var.environment}-router"
+  name    = "${var.environment}-${var.network_name}-router"
   project = var.project_id
   region  = var.region
   network = google_compute_network.main.id
@@ -99,7 +99,7 @@ resource "google_compute_router" "main" {
 # -----------------------------------------------------------------------------
 resource "google_compute_router_nat" "main" {
   count   = var.enable_nat ? 1 : 0
-  name    = "${var.environment}-nat"
+  name    = "${var.environment}-${var.network_name}-nat"
   project = var.project_id
   region  = var.region
   router  = google_compute_router.main[0].name
@@ -119,7 +119,7 @@ resource "google_compute_router_nat" "main" {
 
 # Allow internal traffic within VPC
 resource "google_compute_firewall" "allow_internal" {
-  name    = "${var.environment}-allow-internal"
+  name    = "${var.environment}-${var.network_name}-allow-internal"
   project = var.project_id
   network = google_compute_network.main.name
 
@@ -144,7 +144,7 @@ resource "google_compute_firewall" "allow_internal" {
 # Allow SSH from IAP
 resource "google_compute_firewall" "allow_iap_ssh" {
   count   = var.enable_iap_ssh ? 1 : 0
-  name    = "${var.environment}-allow-iap-ssh"
+  name    = "${var.environment}-${var.network_name}-allow-iap-ssh"
   project = var.project_id
   network = google_compute_network.main.name
 
@@ -160,7 +160,7 @@ resource "google_compute_firewall" "allow_iap_ssh" {
 
 # Allow health checks from Google
 resource "google_compute_firewall" "allow_health_check" {
-  name    = "${var.environment}-allow-health-check"
+  name    = "${var.environment}-${var.network_name}-allow-health-check"
   project = var.project_id
   network = google_compute_network.main.name
 
