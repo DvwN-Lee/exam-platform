@@ -225,6 +225,13 @@ func IsIntegrationTestEnabled() bool {
 	return os.Getenv("RUN_INTEGRATION_TESTS") == "true"
 }
 
+// IsSkipCleanupEnabled checks if terraform destroy should be skipped
+// Returns true when SKIP_CLEANUP environment variable is set to "true"
+// Use this for debugging to inspect created resources
+func IsSkipCleanupEnabled() bool {
+	return os.Getenv("SKIP_CLEANUP") == "true"
+}
+
 // SkipIfIntegrationTestDisabled skips the test if integration tests are not enabled
 func SkipIfIntegrationTestDisabled(t *testing.T) {
 	t.Helper()
@@ -237,12 +244,6 @@ func SkipIfIntegrationTestDisabled(t *testing.T) {
 type TerraformIntegrationOptions struct {
 	TerraformDir string
 	Vars         map[string]interface{}
-	// RetryableErrors defines errors that should trigger retries
-	RetryableErrors map[string]string
-	// MaxRetries defines maximum number of retries (default: 3)
-	MaxRetries int
-	// TimeBetweenRetries defines wait time between retries (default: 5s)
-	TimeBetweenRetries int
 }
 
 // RunTerraformIntegrationTest executes terraform init, apply, and destroy
@@ -264,6 +265,11 @@ func RunTerraformIntegrationTest(t *testing.T, opts *TerraformIntegrationOptions
 
 	// defer로 cleanup 보장 (테스트 실패 시에도 실행)
 	defer func() {
+		if IsSkipCleanupEnabled() {
+			t.Log("SKIP_CLEANUP is enabled, skipping terraform destroy")
+			t.Logf("Resources remain in: %s", workingDir)
+			return
+		}
 		t.Log("Starting terraform destroy for cleanup...")
 		destroyOutput, err := terraform.DestroyE(t, terraformOptions)
 		if err != nil {
@@ -311,6 +317,11 @@ func RunTerraformIntegrationTestE(t *testing.T, opts *TerraformIntegrationOption
 
 	// defer로 cleanup 보장 (테스트 실패 시에도 실행)
 	defer func() {
+		if IsSkipCleanupEnabled() {
+			t.Log("SKIP_CLEANUP is enabled, skipping terraform destroy")
+			t.Logf("Resources remain in: %s", workingDir)
+			return
+		}
 		t.Log("Starting terraform destroy for cleanup...")
 		destroyOutput, err := terraform.DestroyE(t, terraformOptions)
 		if err != nil {
