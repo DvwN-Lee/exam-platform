@@ -125,6 +125,7 @@ jobs:
           RUN_INTEGRATION_TESTS: 'true'
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REGION: ${{ env.GCP_REGION }}
+          SKIP_CLEANUP: ${{ github.event.inputs.skip_cleanup }}
         run: |
           go test -v -timeout 30m -tags=integration ./terraform/gcs/...
 
@@ -188,6 +189,7 @@ jobs:
           RUN_INTEGRATION_TESTS: 'true'
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REGION: ${{ env.GCP_REGION }}
+          SKIP_CLEANUP: ${{ github.event.inputs.skip_cleanup }}
         run: |
           go test -v -timeout 30m -tags=integration ./terraform/gar/...
 
@@ -251,6 +253,7 @@ jobs:
           RUN_INTEGRATION_TESTS: 'true'
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REGION: ${{ env.GCP_REGION }}
+          SKIP_CLEANUP: ${{ github.event.inputs.skip_cleanup }}
         run: |
           go test -v -timeout 30m -tags=integration ./terraform/gcp-vpc/...
 

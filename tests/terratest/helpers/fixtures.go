@@ -175,8 +175,9 @@ func GetIntegrationTestRegion() string {
 }
 
 // generateTestSuffix creates a unique suffix for test resources
+// Uses UnixNano for nanosecond precision to avoid conflicts in parallel tests
 func generateTestSuffix() string {
-	return fmt.Sprintf("%d", time.Now().Unix())
+	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
 
 // IntegrationTestGCSVars returns test variables for GCS integration tests
