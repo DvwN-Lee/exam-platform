@@ -214,3 +214,137 @@ func ValidateResourceExists(t *testing.T, plan *terraform.PlanStruct, resourceAd
 	_, exists := plan.ResourcePlannedValuesMap[resourceAddr]
 	require.True(t, exists, "Resource '%s' not found in plan", resourceAddr)
 }
+
+// =============================================================================
+// Integration Test Functions
+// =============================================================================
+
+// IsIntegrationTestEnabled checks if integration tests should run
+// Returns true when RUN_INTEGRATION_TESTS environment variable is set to "true"
+func IsIntegrationTestEnabled() bool {
+	return os.Getenv("RUN_INTEGRATION_TESTS") == "true"
+}
+
+// SkipIfIntegrationTestDisabled skips the test if integration tests are not enabled
+func SkipIfIntegrationTestDisabled(t *testing.T) {
+	t.Helper()
+	if !IsIntegrationTestEnabled() {
+		t.Skip("Skipping integration test: RUN_INTEGRATION_TESTS is not set to 'true'")
+	}
+}
+
+// TerraformIntegrationOptions holds options for integration tests
+type TerraformIntegrationOptions struct {
+	TerraformDir string
+	Vars         map[string]interface{}
+	// RetryableErrors defines errors that should trigger retries
+	RetryableErrors map[string]string
+	// MaxRetries defines maximum number of retries (default: 3)
+	MaxRetries int
+	// TimeBetweenRetries defines wait time between retries (default: 5s)
+	TimeBetweenRetries int
+}
+
+// RunTerraformIntegrationTest executes terraform init, apply, and destroy
+// It ensures cleanup happens even on test failure
+func RunTerraformIntegrationTest(t *testing.T, opts *TerraformIntegrationOptions) map[string]interface{} {
+	t.Helper()
+
+	// Integration Test 환경 체크
+	SkipIfIntegrationTestDisabled(t)
+
+	// 병렬 테스트 격리를 위해 모듈을 임시 디렉토리로 복사
+	workingDir := CopyModuleToTempDir(t, opts.TerraformDir)
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: workingDir,
+		Vars:         opts.Vars,
+		NoColor:      true,
+	})
+
+	// defer로 cleanup 보장 (테스트 실패 시에도 실행)
+	defer func() {
+		t.Log("Starting terraform destroy for cleanup...")
+		destroyOutput, err := terraform.DestroyE(t, terraformOptions)
+		if err != nil {
+			t.Logf("Warning: terraform destroy failed: %v", err)
+			t.Logf("Destroy output: %s", destroyOutput)
+		} else {
+			t.Log("Terraform destroy completed successfully")
+		}
+	}()
+
+	// terraform init & apply
+	t.Log("Running terraform init and apply...")
+	terraform.InitAndApply(t, terraformOptions)
+	t.Log("Terraform apply completed successfully")
+
+	// Output 수집
+	outputs := make(map[string]interface{})
+	outputKeys := terraform.OutputAll(t, terraformOptions)
+	for key, value := range outputKeys {
+		outputs[key] = value
+	}
+
+	return outputs
+}
+
+// RunTerraformIntegrationTestE is the error-returning variant of RunTerraformIntegrationTest
+// Returns outputs map and error if any step fails
+func RunTerraformIntegrationTestE(t *testing.T, opts *TerraformIntegrationOptions) (map[string]interface{}, error) {
+	t.Helper()
+
+	// Integration Test 환경 체크
+	if !IsIntegrationTestEnabled() {
+		t.Skip("Skipping integration test: RUN_INTEGRATION_TESTS is not set to 'true'")
+		return nil, nil
+	}
+
+	// 병렬 테스트 격리를 위해 모듈을 임시 디렉토리로 복사
+	workingDir := CopyModuleToTempDir(t, opts.TerraformDir)
+
+	terraformOptions := terraform.WithDefaultRetryableErrors(t, &terraform.Options{
+		TerraformDir: workingDir,
+		Vars:         opts.Vars,
+		NoColor:      true,
+	})
+
+	// defer로 cleanup 보장 (테스트 실패 시에도 실행)
+	defer func() {
+		t.Log("Starting terraform destroy for cleanup...")
+		destroyOutput, err := terraform.DestroyE(t, terraformOptions)
+		if err != nil {
+			t.Logf("Warning: terraform destroy failed: %v", err)
+			t.Logf("Destroy output: %s", destroyOutput)
+		} else {
+			t.Log("Terraform destroy completed successfully")
+		}
+	}()
+
+	// terraform init & apply
+	t.Log("Running terraform init and apply...")
+	if _, err := terraform.InitAndApplyE(t, terraformOptions); err != nil {
+		return nil, err
+	}
+	t.Log("Terraform apply completed successfully")
+
+	// Output 수집
+	outputs := make(map[string]interface{})
+	outputKeys := terraform.OutputAll(t, terraformOptions)
+	for key, value := range outputKeys {
+		outputs[key] = value
+	}
+
+	return outputs, nil
+}
+
+// ValidateIntegrationOutputs validates that expected outputs exist and are not empty
+func ValidateIntegrationOutputs(t *testing.T, outputs map[string]interface{}, expectedOutputs []string) {
+	t.Helper()
+
+	for _, outputName := range expectedOutputs {
+		value, exists := outputs[outputName]
+		require.True(t, exists, "Expected output '%s' not found", outputName)
+		require.NotEmpty(t, value, "Output '%s' is empty", outputName)
+	}
+}

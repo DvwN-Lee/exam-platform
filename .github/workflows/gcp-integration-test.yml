@@ -1,0 +1,314 @@
+# =============================================================================
+# GCP Integration Test Workflow
+# =============================================================================
+# 실제 GCP 리소스를 생성/삭제하는 Integration Test 실행
+# Workload Identity (OIDC) 기반 인증 사용
+# 무료 Tier 모듈만 테스트: gcs, gar, gcp-vpc
+
+name: GCP Integration Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'Test target module'
+        type: choice
+        options:
+          - all
+          - gcs
+          - gar
+          - gcp-vpc
+        default: 'all'
+      skip_cleanup:
+        description: 'Skip terraform destroy (for debugging)'
+        type: boolean
+        default: false
+
+env:
+  GO_VERSION: '1.22'
+  TERRAFORM_VERSION: '1.7.0'
+  GCP_REGION: asia-northeast3
+
+jobs:
+  # ===========================================================================
+  # Pre-flight Checks
+  # ===========================================================================
+  preflight:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    outputs:
+      run_gcs: ${{ steps.check.outputs.run_gcs }}
+      run_gar: ${{ steps.check.outputs.run_gar }}
+      run_vpc: ${{ steps.check.outputs.run_vpc }}
+
+    steps:
+      - name: Determine test targets
+        id: check
+        run: |
+          MODULE="${{ github.event.inputs.module }}"
+          if [ "$MODULE" = "all" ] || [ "$MODULE" = "gcs" ]; then
+            echo "run_gcs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_gcs=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$MODULE" = "all" ] || [ "$MODULE" = "gar" ]; then
+            echo "run_gar=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_gar=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$MODULE" = "all" ] || [ "$MODULE" = "gcp-vpc" ]; then
+            echo "run_vpc=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_vpc=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Display test configuration
+        run: |
+          echo "## Integration Test Configuration" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Setting | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target Module | ${{ github.event.inputs.module }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Skip Cleanup | ${{ github.event.inputs.skip_cleanup }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| GCP Region | ${{ env.GCP_REGION }} |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ===========================================================================
+  # GCS Integration Test
+  # ===========================================================================
+  test-gcs:
+    name: GCS Module Integration Test
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.run_gcs == 'true'
+    defaults:
+      run:
+        working-directory: tests/terratest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: tests/terratest/go.sum
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run GCS Integration Tests
+        env:
+          RUN_INTEGRATION_TESTS: 'true'
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+        run: |
+          go test -v -timeout 30m -tags=integration ./terraform/gcs/...
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## GCS Integration Test Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ===========================================================================
+  # GAR Integration Test
+  # ===========================================================================
+  test-gar:
+    name: GAR Module Integration Test
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.run_gar == 'true'
+    defaults:
+      run:
+        working-directory: tests/terratest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: tests/terratest/go.sum
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run GAR Integration Tests
+        env:
+          RUN_INTEGRATION_TESTS: 'true'
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+        run: |
+          go test -v -timeout 30m -tags=integration ./terraform/gar/...
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## GAR Integration Test Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ===========================================================================
+  # GCP VPC Integration Test
+  # ===========================================================================
+  test-vpc:
+    name: VPC Module Integration Test
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.run_vpc == 'true'
+    defaults:
+      run:
+        working-directory: tests/terratest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: tests/terratest/go.sum
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Download Go Modules
+        run: go mod download
+
+      - name: Run VPC Integration Tests
+        env:
+          RUN_INTEGRATION_TESTS: 'true'
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REGION: ${{ env.GCP_REGION }}
+        run: |
+          go test -v -timeout 30m -tags=integration ./terraform/gcp-vpc/...
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## VPC Integration Test Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+
+  # ===========================================================================
+  # Summary
+  # ===========================================================================
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [preflight, test-gcs, test-gar, test-vpc]
+    if: always()
+
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## GCP Integration Test Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Module | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|--------|" >> "$GITHUB_STEP_SUMMARY"
+
+          GCS_STATUS="${{ needs.test-gcs.result }}"
+          GAR_STATUS="${{ needs.test-gar.result }}"
+          VPC_STATUS="${{ needs.test-vpc.result }}"
+
+          if [ "${{ needs.preflight.outputs.run_gcs }}" = "true" ]; then
+            echo "| GCS | ${GCS_STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| GCS | skipped |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "${{ needs.preflight.outputs.run_gar }}" = "true" ]; then
+            echo "| GAR | ${GAR_STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| GAR | skipped |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "${{ needs.preflight.outputs.run_vpc }}" = "true" ]; then
+            echo "| VPC | ${VPC_STATUS} |" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "| VPC | skipped |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Check for failures
+        run: |
+          GCS_STATUS="${{ needs.test-gcs.result }}"
+          GAR_STATUS="${{ needs.test-gar.result }}"
+          VPC_STATUS="${{ needs.test-vpc.result }}"
+
+          # skipped 상태는 실패로 간주하지 않음
+          if [ "$GCS_STATUS" = "failure" ] || [ "$GAR_STATUS" = "failure" ] || [ "$VPC_STATUS" = "failure" ]; then
+            echo "One or more integration tests failed"
+            exit 1
+          fi
+          echo "All integration tests passed"
