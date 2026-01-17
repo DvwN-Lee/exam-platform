@@ -52,8 +52,8 @@ func TestGCPVPCIntegration_CreateAndDestroy(t *testing.T) {
 	// Network self-link 형식 검증
 	selfLink, ok := outputs["network_self_link"].(string)
 	require.True(t, ok, "network_self_link should be a string")
-	assert.True(t, strings.Contains(selfLink, "compute.googleapis.com"),
-		"Self-link should contain 'compute.googleapis.com'")
+	assert.True(t, strings.Contains(selfLink, "googleapis.com/compute"),
+		"Self-link should contain 'googleapis.com/compute'")
 	assert.True(t, strings.Contains(selfLink, projectID),
 		"Self-link should contain the project ID")
 }

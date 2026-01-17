@@ -59,12 +59,12 @@ output "private_subnet_self_link" {
 
 output "pods_secondary_range_name" {
   description = "GKE pods secondary range name"
-  value       = var.enable_gke_secondary_ranges ? "${var.environment}-pods" : null
+  value       = var.enable_gke_secondary_ranges ? "${var.environment}-${var.network_name}-pods" : null
 }
 
 output "services_secondary_range_name" {
   description = "GKE services secondary range name"
-  value       = var.enable_gke_secondary_ranges ? "${var.environment}-services" : null
+  value       = var.enable_gke_secondary_ranges ? "${var.environment}-${var.network_name}-services" : null
 }
 
 output "router_id" {
