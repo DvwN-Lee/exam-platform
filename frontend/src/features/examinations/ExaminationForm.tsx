@@ -42,12 +42,18 @@ export function ExaminationForm({
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // URL 파라미터에서 ID 추출
-  const params = useParams({ strict: false })
-  const examinationId = propExaminationId || (params.id ? Number(params.id) : undefined)
+  // URL 파라미터에서 ID 추출 (strict: false로 여러 라우트에서 재사용 가능)
+  const params = useParams({ strict: false }) as { id?: string }
+  const parsedId = params.id ? Number(params.id) : undefined
+  const examinationId = propExaminationId || (parsedId && !Number.isNaN(parsedId) ? parsedId : undefined)
 
   // 기존 데이터 fetch (ID가 있는 경우)
-  const { data: fetchedExamination, isLoading: isLoadingExamination } = useQuery({
+  const {
+    data: fetchedExamination,
+    isLoading: isLoadingExamination,
+    isError: isExaminationError,
+    error: examinationError,
+  } = useQuery({
     queryKey: ['examination', examinationId],
     queryFn: () => examinationApi.getExamination(examinationId!),
     enabled: !!examinationId && !propInitialData,
@@ -166,6 +172,21 @@ export function ExaminationForm({
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         로딩 중...
+      </div>
+    )
+  }
+
+  // 에러 상태 처리
+  if (isExaminationError) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <p className="text-destructive">
+          시험 정보를 불러오는데 실패했습니다.
+          {examinationError instanceof Error && `: ${examinationError.message}`}
+        </p>
+        <Button variant="outline" onClick={() => navigate({ to: '/examinations' })}>
+          목록으로 돌아가기
+        </Button>
       </div>
     )
   }
