@@ -48,6 +48,7 @@ export function QuestionDetailPage() {
     mutationFn: () => questionApi.deleteQuestion(Number(id)),
     onSuccess: () => {
       toast.success('문제가 삭제되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
       navigate({ to: '/questions' })
     },
     onError: () => {
