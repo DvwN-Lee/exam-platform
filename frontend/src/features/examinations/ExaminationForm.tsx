@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { examinationApi, testPaperApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
@@ -36,11 +36,24 @@ interface ExaminationFormProps {
 }
 
 export function ExaminationForm({
-  examinationId,
-  initialData,
+  examinationId: propExaminationId,
+  initialData: propInitialData,
 }: ExaminationFormProps) {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // URL 파라미터에서 ID 추출
+  const params = useParams({ strict: false })
+  const examinationId = propExaminationId || (params.id ? Number(params.id) : undefined)
+
+  // 기존 데이터 fetch (ID가 있는 경우)
+  const { data: fetchedExamination, isLoading: isLoadingExamination } = useQuery({
+    queryKey: ['examination', examinationId],
+    queryFn: () => examinationApi.getExamination(examinationId!),
+    enabled: !!examinationId && !propInitialData,
+  })
+
+  const initialData = propInitialData || fetchedExamination
 
   const { data: testPapers } = useQuery({
     queryKey: ['testpapers'],
@@ -50,27 +63,30 @@ export function ExaminationForm({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ExaminationFormData>({
     resolver: zodResolver(examinationSchema),
-    defaultValues: initialData
-      ? {
-          exam_name: initialData.exam_name,
-          testpaper_id: initialData.testpaper.id,
-          start_time: new Date(initialData.start_time)
-            .toISOString()
-            .slice(0, 16),
-          end_time: new Date(initialData.end_time).toISOString().slice(0, 16),
-          is_public: initialData.is_public,
-        }
-      : {
-          exam_name: '',
-          testpaper_id: 0,
-          // 기본값: 현재 시간 + 1시간 (시작), + 2시간 (종료)
-          ...getDefaultDateTimeValues(),
-          is_public: false,
-        },
+    defaultValues: {
+      exam_name: '',
+      testpaper_id: 0,
+      ...getDefaultDateTimeValues(),
+      is_public: false,
+    },
   })
+
+  // 기존 데이터 로드 시 폼 초기화
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        exam_name: initialData.exam_name,
+        testpaper_id: initialData.testpaper.id,
+        start_time: new Date(initialData.start_time).toISOString().slice(0, 16),
+        end_time: new Date(initialData.end_time).toISOString().slice(0, 16),
+        is_public: initialData.is_public,
+      })
+    }
+  }, [initialData, reset])
 
   const createMutation = useMutation({
     mutationFn: examinationApi.createExamination,
@@ -143,6 +159,15 @@ export function ExaminationForm({
     } else {
       createMutation.mutate(backendData)
     }
+  }
+
+  // 로딩 상태 처리
+  if (isLoadingExamination) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        로딩 중...
+      </div>
+    )
   }
 
   return (
