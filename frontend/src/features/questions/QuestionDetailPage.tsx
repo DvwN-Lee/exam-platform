@@ -83,7 +83,10 @@ export function QuestionDetailPage() {
     )
   }
 
-  const isOwner = user?.id === question.creat_user.id
+  const isOwner =
+    user?.id !== undefined &&
+    question.creat_user.id !== undefined &&
+    Number(user.id) === Number(question.creat_user.id)
 
   return (
     <div className="space-y-6">
