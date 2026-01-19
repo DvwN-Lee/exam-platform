@@ -44,6 +44,23 @@ export function QuestionDetailPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => questionApi.deleteQuestion(Number(id)),
+    onSuccess: () => {
+      toast.success('문제가 삭제되었습니다.')
+      navigate({ to: '/questions' })
+    },
+    onError: () => {
+      toast.error('문제 삭제에 실패했습니다.')
+    },
+  })
+
+  const handleDelete = () => {
+    if (window.confirm('정말로 이 문제를 삭제하시겠습니까?')) {
+      deleteMutation.mutate()
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -101,6 +118,13 @@ export function QuestionDetailPage() {
                     onClick={() => shareMutation.mutate(!question.is_share)}
                   >
                     {question.is_share ? '공유 해제' : '공유하기'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? '삭제 중...' : '삭제'}
                   </Button>
                 </>
               )}
