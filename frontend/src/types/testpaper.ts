@@ -97,11 +97,11 @@ export interface CreateExaminationRequest {
 }
 
 export interface UpdateExaminationRequest {
-  exam_name?: string
-  testpaper_id?: number
+  name?: string
+  subject_id?: number
   start_time?: string
-  end_time?: string
-  is_public?: boolean
+  duration?: number
+  exam_type?: 'pt' | 'ts'
 }
 
 export type ExaminationStatus = 'upcoming' | 'ongoing' | 'completed'

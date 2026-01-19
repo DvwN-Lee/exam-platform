@@ -107,7 +107,7 @@ export function ExaminationForm({
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: ExaminationFormData) =>
+    mutationFn: (data: { name?: string; subject_id?: number; start_time?: string; duration?: number; exam_type?: 'pt' | 'ts' }) =>
       examinationApi.updateExamination(examinationId!, data),
     onSuccess: () => {
       toast.success('시험이 수정되었습니다.')
@@ -155,13 +155,15 @@ export function ExaminationForm({
     }
 
     if (examinationId) {
-      // Update는 아직 backend API 형식이 다를 수 있으므로 원래 형식 사용
-      const formattedData = {
-        ...data,
-        start_time: new Date(data.start_time).toISOString(),
-        end_time: new Date(data.end_time).toISOString(),
+      // Backend API 형식에 맞게 데이터 변환
+      const updateData = {
+        name: data.exam_name,
+        subject_id: selectedTestPaper.subject.id,
+        start_time: startTime.toISOString(),
+        duration: durationMinutes,
+        exam_type: 'pt' as const,
       }
-      updateMutation.mutate(formattedData)
+      updateMutation.mutate(updateData)
     } else {
       createMutation.mutate(backendData)
     }
