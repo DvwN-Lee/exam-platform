@@ -5,6 +5,17 @@ import { toast } from 'sonner'
 import { questionApi } from '@/api/question'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
 
@@ -41,6 +52,18 @@ export function QuestionDetailPage() {
     },
     onError: () => {
       toast.error('공유 설정 변경에 실패했습니다.')
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => questionApi.deleteQuestion(Number(id)),
+    onSuccess: () => {
+      toast.success('문제가 삭제되었습니다.')
+      queryClient.invalidateQueries({ queryKey: ['questions'] })
+      navigate({ to: '/questions' })
+    },
+    onError: (error: Error) => {
+      toast.error(`문제 삭제에 실패했습니다: ${error.message}`)
     },
   })
 
@@ -102,6 +125,33 @@ export function QuestionDetailPage() {
                   >
                     {question.is_share ? '공유 해제' : '공유하기'}
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? '삭제 중...' : '삭제'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>문제 삭제</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          정말로 이 문제를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>취소</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteMutation.mutate()}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          삭제
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </>
               )}
             </div>
