@@ -314,11 +314,10 @@ class ExaminationUpdateSerializer(serializers.ModelSerializer):
         if exam.exam_state != "0":
             raise serializers.ValidationError("시험이 시작되었거나 종료된 경우 수정할 수 없습니다.")
 
-        start_time = attrs.get("start_time", exam.start_time)
         duration = attrs.get("duration")
 
-        # 시작 시간 검증
-        if start_time < get_now():
+        # 시작 시간 검증 (명시적으로 제공된 경우에만)
+        if "start_time" in attrs and attrs["start_time"] < get_now():
             raise serializers.ValidationError(
                 {"start_time": "시작 시간은 현재 시간 이후여야 합니다."}
             )
