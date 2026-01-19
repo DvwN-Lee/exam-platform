@@ -187,14 +187,17 @@ func ValidateNoSensitiveHardcoded(t *testing.T, plan *terraform.PlanStruct) {
 }
 
 // CountResourcesByType는 특정 타입의 리소스 개수를 반환
+// 리소스 주소 형식: <resource_type>.<name>[<index>]
+// 정확한 리소스 타입 매칭을 위해 접두사(resourceType + ".")로 비교
 // CI 환경에서는 plan이 nil이므로 0을 반환
 func CountResourcesByType(plan *terraform.PlanStruct, resourceType string) int {
 	if plan == nil {
 		return 0
 	}
 	count := 0
+	prefix := resourceType + "."
 	for resourceAddr := range plan.ResourcePlannedValuesMap {
-		if strings.Contains(resourceAddr, resourceType) {
+		if strings.HasPrefix(resourceAddr, prefix) {
 			count++
 		}
 	}
