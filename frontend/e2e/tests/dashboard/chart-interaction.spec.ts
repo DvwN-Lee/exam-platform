@@ -159,11 +159,16 @@ test.describe('Chart Interaction', () => {
       await test.step('차트 Hover 및 Tooltip 확인', async () => {
         // PieChart 영역 찾기
         const chartContainer = page.locator('h2:has-text("문제 유형 분포")').locator('..')
-        const pieSlice = chartContainer.locator('path').first()
+
+        // 차트 애니메이션 완료 대기 (recharts 기본 애니메이션 800ms + 여유)
+        await page.waitForTimeout(1000)
+
+        // recharts-pie-sector 클래스 사용하여 PieChart 슬라이스 정확히 선택
+        const pieSlice = chartContainer.locator('.recharts-pie-sector path').first()
 
         if (await pieSlice.isVisible().catch(() => false)) {
-          // Hover
-          await pieSlice.hover()
+          // Hover (force 옵션으로 가려진 요소도 처리)
+          await pieSlice.hover({ force: true })
           await page.waitForTimeout(300)
 
           // Tooltip 확인 (recharts-tooltip 클래스 또는 custom tooltip)
@@ -275,12 +280,17 @@ test.describe('Chart Interaction', () => {
 
       await test.step('PieChart 슬라이스 클릭', async () => {
         const chartContainer = page.locator('h2:has-text("문제 유형 분포")').locator('..')
-        const pieSlice = chartContainer.locator('path').first()
+
+        // 차트 애니메이션 완료 대기 (recharts 기본 애니메이션 800ms + 여유)
+        await page.waitForTimeout(1000)
+
+        // recharts-pie-sector 클래스 사용하여 PieChart 슬라이스 정확히 선택
+        const pieSlice = chartContainer.locator('.recharts-pie-sector path').first()
 
         if (await pieSlice.isVisible().catch(() => false)) {
-          // 클릭 이벤트 리스너가 있는 경우 클릭
-          await pieSlice.click()
-          await page.waitForTimeout(500)
+          // 클릭 이벤트 리스너가 있는 경우 클릭 (force 옵션으로 가려진 요소도 처리)
+          await pieSlice.click({ force: true })
+          await page.waitForTimeout(1000)
 
           // URL 변경 확인 (questions 페이지로 이동)
           const currentUrl = page.url()
