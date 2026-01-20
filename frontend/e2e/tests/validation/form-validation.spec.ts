@@ -231,9 +231,16 @@ test.describe('Form Validation', () => {
         await testpaperSelect.selectOption({ index: 1 })
       }
 
-      // 시작 시간 없이 제출
+      // 시작 시간과 종료 시간을 빈 값으로 명시적 설정 (기본값 제거)
+      // ExaminationForm은 기본 시간값을 자동 설정하므로 빈 값으로 덮어씀
+      await page.fill('#start_time', '')
+      await page.fill('#end_time', '')
+
+      // 폼 제출
       await page.click('button:has-text("시험 생성")')
-      await page.waitForTimeout(500)
+
+      // validation 에러 렌더링 대기
+      await page.waitForSelector('.text-destructive', { timeout: 3000 })
 
       // 시간 관련 에러 확인
       const timeErrorCount = await page.locator('.text-destructive').count()
