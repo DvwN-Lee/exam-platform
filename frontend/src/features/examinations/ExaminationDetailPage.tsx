@@ -114,7 +114,7 @@ export function ExaminationDetailPage() {
               </Button>
               {isOwner && (
                 <>
-                  {status === 'completed' && (
+                  {status !== 'upcoming' && (
                     <Button
                       variant="outline"
                       onClick={() => navigate({ to: `/examinations/${id}/results` })}
