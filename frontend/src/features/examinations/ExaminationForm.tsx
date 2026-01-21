@@ -34,12 +34,12 @@ function getDefaultDateTimeValues() {
   }
 }
 
-type BackendFieldError = {
+export type BackendFieldError = {
   [key: string]: string[] | string
 }
 
 // Backend 에러 응답에서 메시지 추출 helper function
-function extractErrorMessage(error: AxiosError<BackendFieldError>): string {
+export function extractErrorMessage(error: AxiosError<BackendFieldError>): string {
   const data = error.response?.data
 
   // Backend 필드별 에러 형식: {"field_name": ["error message"]}
