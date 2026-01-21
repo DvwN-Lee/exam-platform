@@ -114,6 +114,14 @@ export function ExaminationDetailPage() {
               </Button>
               {isOwner && (
                 <>
+                  {status === 'completed' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate({ to: `/examinations/${id}/results` })}
+                    >
+                      결과 조회
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => navigate({ to: `/examinations/${id}/edit` })}

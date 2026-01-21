@@ -14,6 +14,8 @@ import { TestPaperDetailPage } from './features/testpapers/TestPaperDetailPage'
 import { ExaminationListPage } from './features/examinations/ExaminationListPage'
 import { ExaminationForm} from './features/examinations/ExaminationForm'
 import { ExaminationDetailPage } from './features/examinations/ExaminationDetailPage'
+import { ExamResultsListPage as TeacherExamResultsListPage } from './features/examinations/ExamResultsListPage'
+import { StudentResultDetailPage } from './features/examinations/StudentResultDetailPage'
 import { StudentListPage } from './features/students/StudentListPage'
 import { AnalyticsPage } from './features/analytics/AnalyticsPage'
 import { SettingsPage } from './features/settings/SettingsPage'
@@ -213,6 +215,30 @@ const examinationEditRoute = createRoute({
   component: ExaminationForm,
 })
 
+const examinationResultsRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/examinations/$id/results',
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: TeacherExamResultsListPage,
+})
+
+const examinationStudentResultRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/examinations/$id/results/$studentId',
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: StudentResultDetailPage,
+})
+
 const studentsRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
   path: '/students',
@@ -313,6 +339,8 @@ const routeTree = rootRoute.addChildren([
     examinationNewRoute,
     examinationDetailRoute,
     examinationEditRoute,
+    examinationResultsRoute,
+    examinationStudentResultRoute,
     studentsRoute,
     analyticsRoute,
     // Student routes
