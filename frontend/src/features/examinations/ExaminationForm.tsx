@@ -135,7 +135,7 @@ export function ExaminationForm({
       toast.success('시험이 생성되었습니다.')
       navigate({ to: '/examinations' })
     },
-    onError: (error: AxiosError<unknown>) => {
+    onError: (error: AxiosError<BackendFieldError>) => {
       const message = extractErrorMessage(error) || '시험 생성에 실패했습니다.'
       toast.error(message)
       setIsSubmitting(false)
@@ -149,7 +149,7 @@ export function ExaminationForm({
       toast.success('시험이 수정되었습니다.')
       navigate({ to: '/examinations' })
     },
-    onError: (error: AxiosError<unknown>) => {
+    onError: (error: AxiosError<BackendFieldError>) => {
       const message = extractErrorMessage(error) || '시험 수정에 실패했습니다.'
       toast.error(message)
       setIsSubmitting(false)
