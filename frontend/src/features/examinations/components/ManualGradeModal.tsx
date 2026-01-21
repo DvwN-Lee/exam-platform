@@ -38,7 +38,7 @@ export function ManualGradeModal({
       return
     }
     onConfirm(numScore, comment)
-    handleClose()
+    // 상태 초기화는 부모의 mutation 성공 후 onClose를 통해 처리됨
   }
 
   const numScore = parseInt(score, 10)

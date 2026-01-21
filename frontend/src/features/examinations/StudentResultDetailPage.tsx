@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { scoreApi } from '@/api/score'
 import { Button } from '@/components/ui/button'
+import { Skeleton, CardSkeleton } from '@/components/ui/skeleton'
 import { ManualGradeModal } from './components/ManualGradeModal'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
@@ -20,21 +21,26 @@ export function StudentResultDetailPage() {
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionResult | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const { data: scoreDetail, isLoading } = useQuery({
+  const { data: scoreDetail, isLoading, isError } = useQuery({
     queryKey: ['studentScoreDetail', examId, studentIdNum],
     queryFn: () => scoreApi.getStudentScoreDetail(examId, studentIdNum),
     enabled: !!examId && !!studentIdNum,
   })
 
   const gradeMutation = useMutation({
-    mutationFn: (params: { questionId: number; score: number; comment: string }) =>
-      scoreApi.manualGrade(scoreDetail!.id, {
+    mutationFn: (params: { questionId: number; score: number; comment: string }) => {
+      if (!scoreDetail) {
+        return Promise.reject(new Error('Score detail not loaded'))
+      }
+      return scoreApi.manualGrade(scoreDetail.id, {
         question_id: params.questionId,
         score: params.score,
         comment: params.comment,
-      }),
+      })
+    },
     onSuccess: () => {
       toast.success('채점이 완료되었습니다.')
+      setIsModalOpen(false)
       queryClient.invalidateQueries({
         queryKey: ['studentScoreDetail', examId, studentIdNum],
       })
@@ -81,8 +87,21 @@ export function StudentResultDetailPage() {
 
   if (isLoading) {
     return (
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
+        <Skeleton className="h-8 w-1/4" />
+        <Skeleton className="h-6 w-1/3" />
+        <div className="flex justify-center">
+          <Skeleton className="h-40 w-64 rounded-lg" />
+        </div>
+        <CardSkeleton />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <div>Loading...</div>
+        <div className="text-destructive">데이터를 불러오는데 실패했습니다.</div>
       </div>
     )
   }

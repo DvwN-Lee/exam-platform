@@ -4,6 +4,14 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { scoreApi } from '@/api/score'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Skeleton, TableSkeleton } from '@/components/ui/skeleton'
 import { StatisticsCards } from './components/StatisticsCards'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
@@ -20,19 +28,20 @@ export function ExamResultsListPage() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [sort, setSort] = useState<SortType>('score_desc')
 
-  const { data: scoresData, isLoading: scoresLoading } = useQuery({
+  const { data: scoresData, isLoading: scoresLoading, isError: scoresError } = useQuery({
     queryKey: ['examScores', examId],
     queryFn: () => scoreApi.getExamScores(examId),
     enabled: !!examId,
   })
 
-  const { data: statistics, isLoading: statsLoading } = useQuery({
+  const { data: statistics, isLoading: statsLoading, isError: statsError } = useQuery({
     queryKey: ['examStatistics', examId],
     queryFn: () => scoreApi.getExamStatistics(examId),
     enabled: !!examId,
   })
 
   const isLoading = scoresLoading || statsLoading
+  const isError = scoresError || statsError
 
   const filteredScores = (scoresData?.scores ?? [])
     .filter((score: ExamScore) => {
@@ -69,8 +78,22 @@ export function ExamResultsListPage() {
 
   if (isLoading) {
     return (
+      <div className="mx-auto max-w-5xl space-y-6 p-6">
+        <Skeleton className="h-10 w-1/3" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
+        </div>
+        <TableSkeleton rows={5} />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <div>Loading...</div>
+        <div className="text-destructive">데이터를 불러오는데 실패했습니다.</div>
       </div>
     )
   }
@@ -127,26 +150,26 @@ export function ExamResultsListPage() {
                 </Button>
               ))}
             </div>
-            <select
-              className="rounded-md border px-3 py-1.5 text-sm"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortType)}
-            >
-              <option value="score_desc">점수 높은순</option>
-              <option value="score_asc">점수 낮은순</option>
-              <option value="name">이름순</option>
-              <option value="submit_time">제출시간순</option>
-            </select>
+            <Select value={sort} onValueChange={(value) => setSort(value as SortType)}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="score_desc">점수 높은순</SelectItem>
+                <SelectItem value="score_asc">점수 낮은순</SelectItem>
+                <SelectItem value="name">이름순</SelectItem>
+                <SelectItem value="submit_time">제출시간순</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </FadeIn>
 
         <FadeIn delay={0.2}>
           <div className="rounded-lg border bg-card">
-            <div className="grid grid-cols-7 gap-4 border-b px-4 py-3 text-sm font-medium text-muted-foreground">
+            <div className="grid grid-cols-6 gap-4 border-b px-4 py-3 text-sm font-medium text-muted-foreground">
               <div className="col-span-2">학생명</div>
               <div>학번</div>
               <div className="text-center">점수</div>
-              <div className="text-center">정답률</div>
               <div className="text-center">제출시간</div>
               <div className="text-center">상태</div>
             </div>
@@ -164,7 +187,9 @@ export function ExamResultsListPage() {
                 filteredScores.map((score: ExamScore) => (
                   <StaggerItem key={score.id}>
                     <motion.div
-                      className="grid cursor-pointer grid-cols-7 gap-4 px-4 py-3 transition-colors hover:bg-muted/50"
+                      className={`grid grid-cols-6 gap-4 px-4 py-3 transition-colors hover:bg-muted/50 ${
+                        score.is_submitted ? 'cursor-pointer' : ''
+                      }`}
                       initial="rest"
                       whileHover="hover"
                       variants={cardHoverVariants}
@@ -184,20 +209,6 @@ export function ExamResultsListPage() {
                       <div className="text-center">
                         {score.is_submitted ? (
                           <span className="font-medium">{score.test_score}점</span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </div>
-                      <div className="text-center">
-                        {score.is_submitted && statistics ? (
-                          <span>
-                            {statistics.highest_score > 0
-                              ? Math.round(
-                                  (score.test_score / statistics.highest_score) * 100
-                                )
-                              : 0}
-                            %
-                          </span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
