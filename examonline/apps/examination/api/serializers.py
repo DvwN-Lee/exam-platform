@@ -366,7 +366,7 @@ class EnrollStudentsSerializer(serializers.Serializer):
         )
         if len(existing_students) != len(unique_ids):
             missing_ids = set(unique_ids) - set(existing_students)
-            raise serializers.ValidationError(f"존재하지 않는 학생 ID: {missing_ids}")
+            raise serializers.ValidationError(f"존재하지 않는 학생 ID: {missing_ids}.")
 
         return unique_ids
 
