@@ -34,6 +34,35 @@ function getDefaultDateTimeValues() {
   }
 }
 
+export type BackendFieldError = {
+  [key: string]: string[] | string
+}
+
+// Backend 에러 응답에서 메시지 추출 helper function
+export function extractErrorMessage(error: AxiosError<BackendFieldError>): string {
+  const data = error.response?.data
+
+  // Backend 필드별 에러 형식: {"field_name": ["error message"]}
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const messages: string[] = []
+
+    for (const value of Object.values(data)) {
+      if (Array.isArray(value)) {
+        messages.push(...value.filter((msg) => typeof msg === 'string'))
+      } else if (typeof value === 'string') {
+        messages.push(value)
+      }
+    }
+
+    if (messages.length > 0) {
+      return messages.join(', ')
+    }
+  }
+
+  // Fallback
+  return ''
+}
+
 type ExaminationFormData = z.infer<typeof examinationSchema>
 
 interface ExaminationFormProps {
@@ -106,8 +135,8 @@ export function ExaminationForm({
       toast.success('시험이 생성되었습니다.')
       navigate({ to: '/examinations' })
     },
-    onError: (error: AxiosError<{ detail?: string }>) => {
-      const message = error.response?.data?.detail || '시험 생성에 실패했습니다.'
+    onError: (error: AxiosError<BackendFieldError>) => {
+      const message = extractErrorMessage(error) || '시험 생성에 실패했습니다.'
       toast.error(message)
       setIsSubmitting(false)
     },
@@ -120,8 +149,8 @@ export function ExaminationForm({
       toast.success('시험이 수정되었습니다.')
       navigate({ to: '/examinations' })
     },
-    onError: (error: AxiosError<{ detail?: string }>) => {
-      const message = error.response?.data?.detail || '시험 수정에 실패했습니다.'
+    onError: (error: AxiosError<BackendFieldError>) => {
+      const message = extractErrorMessage(error) || '시험 수정에 실패했습니다.'
       toast.error(message)
       setIsSubmitting(false)
     },
