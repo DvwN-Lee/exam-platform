@@ -5,19 +5,25 @@ import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import type { AxiosError } from 'axios'
 import { examinationApi, testPaperApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { Examination } from '@/types/testpaper'
 
-const examinationSchema = z.object({
-  exam_name: z.string().min(1, '시험명을 입력해주세요'),
-  testpaper_id: z.number().min(1, '시험지를 선택해주세요'),
-  start_time: z.string().min(1, '시작 시간을 입력해주세요'),
-  end_time: z.string().min(1, '종료 시간을 입력해주세요'),
-  is_public: z.boolean(),
-})
+const examinationSchema = z
+  .object({
+    exam_name: z.string().min(1, '시험명을 입력해주세요'),
+    testpaper_id: z.number().min(1, '시험지를 선택해주세요'),
+    start_time: z.string().min(1, '시작 시간을 입력해주세요'),
+    end_time: z.string().min(1, '종료 시간을 입력해주세요'),
+    is_public: z.boolean(),
+  })
+  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
+    message: '종료 시간은 시작 시간 이후여야 합니다',
+    path: ['end_time'],
+  })
 
 // 기본 시간값 생성 함수 (컴포넌트 외부에서 정의하여 순수성 유지)
 function getDefaultDateTimeValues() {
@@ -100,8 +106,9 @@ export function ExaminationForm({
       toast.success('시험이 생성되었습니다.')
       navigate({ to: '/examinations' })
     },
-    onError: () => {
-      toast.error('시험 생성에 실패했습니다.')
+    onError: (error: AxiosError<{ detail?: string }>) => {
+      const message = error.response?.data?.detail || '시험 생성에 실패했습니다.'
+      toast.error(message)
       setIsSubmitting(false)
     },
   })
@@ -113,8 +120,9 @@ export function ExaminationForm({
       toast.success('시험이 수정되었습니다.')
       navigate({ to: '/examinations' })
     },
-    onError: () => {
-      toast.error('시험 수정에 실패했습니다.')
+    onError: (error: AxiosError<{ detail?: string }>) => {
+      const message = error.response?.data?.detail || '시험 수정에 실패했습니다.'
+      toast.error(message)
       setIsSubmitting(false)
     },
   })
