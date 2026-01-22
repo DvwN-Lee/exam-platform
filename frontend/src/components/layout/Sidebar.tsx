@@ -13,9 +13,6 @@ import {
   Users,
   ChevronUp,
   LogOut,
-  Sun,
-  Moon,
-  Monitor,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSidebarStore } from '@/stores/sidebarStore'
@@ -26,9 +23,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { themeOptions, type Theme } from '@/components/ui/theme-toggle'
 
 interface NavItem {
   label: string
@@ -53,19 +53,10 @@ const teacherNavItems: NavItem[] = [
   { label: '설정', path: '/settings', icon: Settings },
 ]
 
-type Theme = 'light' | 'dark' | 'system'
-
-interface ThemeOption {
-  value: Theme
-  label: string
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
+const userTypeLabels: Record<string, string> = {
+  student: '학생',
+  teacher: '교수',
 }
-
-const themeOptions: ThemeOption[] = [
-  { value: 'light', label: '라이트', icon: Sun },
-  { value: 'dark', label: '다크', icon: Moon },
-  { value: 'system', label: '시스템', icon: Monitor },
-]
 
 export function Sidebar() {
   const location = useLocation()
@@ -226,6 +217,7 @@ export function Sidebar() {
                     'hover:bg-green-100 dark:hover:bg-green-900/30',
                     'focus:outline-none focus:ring-2 focus:ring-primary/20'
                   )}
+                  aria-label="사용자 메뉴 열기"
                 >
                   <div
                     className={cn(
@@ -248,9 +240,7 @@ export function Sidebar() {
                         {user?.nick_name || '사용자'}
                       </h4>
                       <p className="truncate text-[13px] text-gray-600 dark:text-gray-400">
-                        {user?.user_type === 'teacher'
-                          ? '컴퓨터공학과'
-                          : '컴퓨터공학과'}
+                        {userTypeLabels[user?.user_type || ''] || '사용자'}
                       </p>
                     </div>
                     <ChevronUp
@@ -289,32 +279,31 @@ export function Sidebar() {
 
                 {/* 테마 전환 */}
                 <DropdownMenuLabel>테마</DropdownMenuLabel>
-                <div className="flex gap-1 px-2 py-1.5">
-                  {mounted &&
-                    themeOptions.map((option) => {
+                {mounted && (
+                  <DropdownMenuRadioGroup
+                    value={theme}
+                    onValueChange={(value) => setTheme(value as Theme)}
+                  >
+                    {themeOptions.map((option) => {
                       const Icon = option.icon
-                      const isActiveTheme = theme === option.value
 
                       return (
-                        <button
+                        <DropdownMenuRadioItem
                           key={option.value}
-                          onClick={() => setTheme(option.value)}
-                          className={cn(
-                            'flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
-                            isActiveTheme
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                          )}
-                          aria-pressed={isActiveTheme}
+                          value={option.value}
+                          className="cursor-pointer"
+                          aria-label={`${option.label} 테마로 전환`}
                         >
-                          <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                          <span className="hidden sm:inline">
-                            {option.label}
-                          </span>
-                        </button>
+                          <Icon
+                            className="mr-2 h-4 w-4"
+                            strokeWidth={1.75}
+                          />
+                          {option.label}
+                        </DropdownMenuRadioItem>
                       )
                     })}
-                </div>
+                  </DropdownMenuRadioGroup>
+                )}
 
                 <DropdownMenuSeparator />
 
