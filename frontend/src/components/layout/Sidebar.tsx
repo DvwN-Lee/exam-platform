@@ -1,5 +1,7 @@
-import { Link, useLocation } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
+import { useTheme } from 'next-themes'
 import {
   LayoutDashboard,
   FileCheck,
@@ -9,16 +11,29 @@ import {
   Files,
   ClipboardCheck,
   Users,
+  ChevronUp,
+  LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSidebarStore } from '@/stores/sidebarStore'
 import { cn } from '@/lib/utils'
 import { STAGGER, DURATION, EASING } from '@/lib/animations'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { themeOptions, type Theme } from '@/components/ui/theme-toggle'
 
 interface NavItem {
   label: string
   path: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
 }
 
 const studentNavItems: NavItem[] = [
@@ -38,16 +53,34 @@ const teacherNavItems: NavItem[] = [
   { label: '설정', path: '/settings', icon: Settings },
 ]
 
+const userTypeLabels: Record<string, string> = {
+  student: '학생',
+  teacher: '교수',
+}
+
 export function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
   const { isOpen, isCollapsed, close } = useSidebarStore()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const navItems =
     user?.user_type === 'teacher' ? teacherNavItems : studentNavItems
 
   const isActive = (path: string) => {
     return location.pathname === path
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate({ to: '/login' })
   }
 
   return (
@@ -154,7 +187,10 @@ export function Sidebar() {
                           }}
                         />
                       )}
-                      <Icon className="relative h-5 w-5 shrink-0" />
+                      <Icon
+                        className="relative h-5 w-5 shrink-0"
+                        strokeWidth={1.75}
+                      />
                       <span
                         className={cn(
                           'relative transition-opacity',
@@ -171,33 +207,116 @@ export function Sidebar() {
             </motion.ul>
           </nav>
 
-          {/* User Profile */}
-          <div className="mt-12 rounded-2xl bg-green-50 dark:bg-green-900/20 p-5">
-            <div
-              className={cn(
-                'flex items-center gap-4',
-                'md:justify-center lg:justify-start',
-                isCollapsed && 'lg:justify-center'
-              )}
-            >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-white">
-                {user?.nick_name?.charAt(0) || 'U'}
-              </div>
-              <div
-                className={cn(
-                  'min-w-0 flex-1',
-                  'md:hidden lg:block',
-                  isCollapsed && 'lg:hidden'
-                )}
+          {/* User Profile with Dropdown */}
+          <div className="mt-12">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    'w-full rounded-2xl bg-green-50 dark:bg-green-900/20 p-5 transition-colors',
+                    'hover:bg-green-100 dark:hover:bg-green-900/30',
+                    'focus:outline-none focus:ring-2 focus:ring-primary/20'
+                  )}
+                  aria-label="사용자 메뉴 열기"
+                >
+                  <div
+                    className={cn(
+                      'flex items-center gap-4',
+                      'md:justify-center lg:justify-start',
+                      isCollapsed && 'lg:justify-center'
+                    )}
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-white">
+                      {user?.nick_name?.charAt(0) || 'U'}
+                    </div>
+                    <div
+                      className={cn(
+                        'min-w-0 flex-1 text-left',
+                        'md:hidden lg:block',
+                        isCollapsed && 'lg:hidden'
+                      )}
+                    >
+                      <h4 className="truncate text-[15px] font-semibold text-gray-900 dark:text-gray-100">
+                        {user?.nick_name || '사용자'}
+                      </h4>
+                      <p className="truncate text-[13px] text-gray-600 dark:text-gray-400">
+                        {userTypeLabels[user?.user_type || ''] || '사용자'}
+                      </p>
+                    </div>
+                    <ChevronUp
+                      className={cn(
+                        'h-4 w-4 text-gray-500',
+                        'md:hidden lg:block',
+                        isCollapsed && 'lg:hidden'
+                      )}
+                      strokeWidth={1.75}
+                    />
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                side="top"
+                className="w-[240px]"
+                sideOffset={8}
               >
-                <h4 className="truncate text-[15px] font-semibold text-gray-900 dark:text-gray-100">
-                  {user?.nick_name || '사용자'}
-                </h4>
-                <p className="truncate text-[13px] text-gray-600 dark:text-gray-400">
-                  {user?.user_type === 'teacher' ? '컴퓨터공학과' : '컴퓨터공학과'}
-                </p>
-              </div>
-            </div>
+                <DropdownMenuLabel>내 계정</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {/* 설정 바로가기 */}
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate({ to: '/settings' })
+                    close()
+                  }}
+                  className="cursor-pointer"
+                >
+                  <Settings className="mr-2 h-4 w-4" strokeWidth={1.75} />
+                  설정
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {/* 테마 전환 */}
+                <DropdownMenuLabel>테마</DropdownMenuLabel>
+                {mounted && (
+                  <DropdownMenuRadioGroup
+                    value={theme}
+                    onValueChange={(value) => setTheme(value as Theme)}
+                  >
+                    {themeOptions.map((option) => {
+                      const Icon = option.icon
+
+                      return (
+                        <DropdownMenuRadioItem
+                          key={option.value}
+                          value={option.value}
+                          className="cursor-pointer"
+                          aria-label={`${option.label} 테마로 전환`}
+                        >
+                          <Icon
+                            className="mr-2 h-4 w-4"
+                            strokeWidth={1.75}
+                          />
+                          {option.label}
+                        </DropdownMenuRadioItem>
+                      )
+                    })}
+                  </DropdownMenuRadioGroup>
+                )}
+
+                <DropdownMenuSeparator />
+
+                {/* 로그아웃 */}
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" strokeWidth={1.75} />
+                  로그아웃
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </aside>
