@@ -92,7 +92,7 @@ export function ExamResultsListPage() {
 
   if (isError) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         <div className="text-destructive">데이터를 불러오는데 실패했습니다.</div>
       </div>
     )
@@ -151,7 +151,7 @@ export function ExamResultsListPage() {
               ))}
             </div>
             <Select value={sort} onValueChange={(value) => setSort(value as SortType)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

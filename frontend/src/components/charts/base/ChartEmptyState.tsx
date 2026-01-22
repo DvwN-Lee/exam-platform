@@ -1,5 +1,6 @@
 import { BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DEFAULT_CHART_HEIGHT } from '@/constants'
 
 interface ChartEmptyStateProps {
   message?: string
@@ -10,7 +11,7 @@ interface ChartEmptyStateProps {
 
 export function ChartEmptyState({
   message = '표시할 데이터가 없습니다',
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   className,
   icon: Icon = BarChart3,
 }: ChartEmptyStateProps) {

@@ -7,7 +7,7 @@ export function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         <div>로그인이 필요합니다.</div>
       </div>
     )
