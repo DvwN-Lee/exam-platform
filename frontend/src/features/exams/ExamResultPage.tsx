@@ -153,8 +153,8 @@ export function ExamResultPage() {
                   <div
                     className={`rounded-lg border p-4 ${
                       answer.is_correct
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-destructive bg-red-50'
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                        : 'border-destructive bg-red-50 dark:bg-red-900/20'
                     }`}
                   >
                     <div className="mb-2 flex items-start justify-between">
@@ -205,11 +205,11 @@ export function ExamResultPage() {
                                 key={option.id}
                                 className={`rounded border p-2 text-sm ${
                                   isSelected && isCorrect
-                                    ? 'border-green-500 bg-green-100'
+                                    ? 'border-green-500 bg-green-100 dark:bg-green-900/30'
                                     : isSelected
-                                      ? 'border-destructive bg-red-100'
+                                      ? 'border-destructive bg-red-100 dark:bg-red-900/30'
                                       : isCorrect
-                                        ? 'border-green-500 bg-green-50'
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                                         : 'border-border'
                                 }`}
                               >

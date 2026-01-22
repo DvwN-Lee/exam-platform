@@ -123,9 +123,9 @@ export function PasswordSettings() {
       </FadeIn>
 
       <FadeIn type="slideUp" delay={0.2}>
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <h3 className="font-medium text-blue-900">보안 팁</h3>
-          <ul className="mt-2 space-y-1 text-sm text-blue-700">
+        <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+          <h3 className="font-medium text-blue-900 dark:text-blue-100">보안 팁</h3>
+          <ul className="mt-2 space-y-1 text-sm text-blue-700 dark:text-blue-300">
             <li>• 다른 사이트와 동일한 비밀번호를 사용하지 마세요</li>
             <li>• 개인정보(생일, 전화번호 등)를 비밀번호로 사용하지 마세요</li>
             <li>• 주기적으로 비밀번호를 변경하세요 (3개월마다 권장)</li>
