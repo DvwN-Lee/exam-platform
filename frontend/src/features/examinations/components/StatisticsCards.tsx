@@ -9,22 +9,22 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
     {
       label: '평균 점수',
       value: `${statistics.average_score}점`,
-      color: 'bg-blue-50 text-blue-700',
+      color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
     },
     {
       label: '최고점',
       value: `${statistics.highest_score}점`,
-      color: 'bg-green-50 text-green-700',
+      color: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300',
     },
     {
       label: '최저점',
       value: `${statistics.lowest_score}점`,
-      color: 'bg-red-50 text-red-700',
+      color: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300',
     },
     {
       label: '합격률',
       value: `${statistics.pass_rate}%`,
-      color: 'bg-purple-50 text-purple-700',
+      color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
     },
     {
       label: '제출률',
@@ -33,7 +33,7 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
           ? `${Math.round((statistics.submitted_count / statistics.total_students) * 100)}%`
           : '0%',
       subValue: `${statistics.submitted_count}/${statistics.total_students}명`,
-      color: 'bg-orange-50 text-orange-700',
+      color: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
     },
   ]
 

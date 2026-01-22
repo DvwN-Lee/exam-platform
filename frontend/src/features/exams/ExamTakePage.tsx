@@ -249,7 +249,7 @@ export function ExamTakePage() {
                       index === currentQuestionIndex
                         ? 'border-primary bg-primary text-primary-foreground'
                         : answers.has(q.id)
-                        ? 'border-green-500 bg-green-50 text-green-700'
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
                         : 'border-border hover:bg-accent'
                     }`}
                   >
@@ -263,7 +263,7 @@ export function ExamTakePage() {
                   <span>현재 문제</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded border-2 border-green-500 bg-green-50"></div>
+                  <div className="h-4 w-4 rounded border-2 border-green-500 bg-green-50 dark:bg-green-900/20"></div>
                   <span>답변 완료</span>
                 </div>
                 <div className="flex items-center gap-2">
