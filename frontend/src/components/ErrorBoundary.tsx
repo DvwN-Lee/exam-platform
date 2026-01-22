@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center p-4">
           <div className="max-w-md text-center space-y-4">
-            <AlertTriangle className="h-16 w-16 text-destructive" />
+            <AlertTriangle className="mx-auto h-16 w-16 text-destructive" />
             <h2 className="text-xl font-semibold">문제가 발생했습니다</h2>
             <p className="text-muted-foreground">
               페이지를 표시하는 중 오류가 발생했습니다.
