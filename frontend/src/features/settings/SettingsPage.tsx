@@ -4,9 +4,10 @@ import { FadeIn } from '@/components/animation'
 import { ProfileSettings } from './ProfileSettings'
 import { PasswordSettings } from './PasswordSettings'
 import { SubjectSettings } from './SubjectSettings'
+import { ThemeSettings } from './ThemeSettings'
 
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'subjects'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'subjects' | 'theme'>('profile')
   const user = useAuthStore((state) => state.user)
 
   const tabs = [
@@ -15,6 +16,7 @@ export function SettingsPage() {
     ...(user?.user_type === 'teacher'
       ? [{ id: 'subjects' as const, label: '과목 관리' }]
       : []),
+    { id: 'theme' as const, label: '테마 설정' },
   ]
 
   return (
@@ -53,6 +55,7 @@ export function SettingsPage() {
               {activeTab === 'subjects' && user?.user_type === 'teacher' && (
                 <SubjectSettings />
               )}
+              {activeTab === 'theme' && <ThemeSettings />}
             </div>
           </div>
         </FadeIn>
