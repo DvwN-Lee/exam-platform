@@ -137,7 +137,7 @@ export function Sidebar() {
                         'relative flex items-center gap-3 rounded-xl px-4 py-3.5 font-medium transition-colors',
                         active
                           ? 'text-primary'
-                          : 'text-gray-600 hover:bg-primary/5 hover:text-primary',
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-primary/5 hover:text-primary',
                         'md:justify-center lg:justify-start',
                         isCollapsed && 'lg:justify-center'
                       )}
