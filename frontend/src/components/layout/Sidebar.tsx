@@ -64,7 +64,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen bg-white shadow-sm transition-all duration-300',
+          'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-900 shadow-sm transition-all duration-300',
           // Mobile: 숨김/슬라이드
           isOpen ? 'translate-x-0' : '-translate-x-full',
           'md:translate-x-0',
@@ -172,7 +172,7 @@ export function Sidebar() {
           </nav>
 
           {/* User Profile */}
-          <div className="mt-12 rounded-2xl bg-green-50 p-5">
+          <div className="mt-12 rounded-2xl bg-green-50 dark:bg-green-900/20 p-5">
             <div
               className={cn(
                 'flex items-center gap-4',
@@ -190,10 +190,10 @@ export function Sidebar() {
                   isCollapsed && 'lg:hidden'
                 )}
               >
-                <h4 className="truncate text-[15px] font-semibold text-gray-900">
+                <h4 className="truncate text-[15px] font-semibold text-gray-900 dark:text-gray-100">
                   {user?.nick_name || '사용자'}
                 </h4>
-                <p className="truncate text-[13px] text-gray-600">
+                <p className="truncate text-[13px] text-gray-600 dark:text-gray-400">
                   {user?.user_type === 'teacher' ? '컴퓨터공학과' : '컴퓨터공학과'}
                 </p>
               </div>
