@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FadeIn } from '@/components/animation'
+import { NICKNAME_MIN_LENGTH } from '@/constants'
 
 const profileSchema = z.object({
   email: z.string().email('올바른 이메일 주소를 입력해주세요'),
-  nick_name: z.string().min(2, '닉네임은 2자 이상이어야 합니다'),
+  nick_name: z.string().min(NICKNAME_MIN_LENGTH, `닉네임은 ${NICKNAME_MIN_LENGTH}자 이상이어야 합니다`),
 })
 
 type ProfileForm = z.infer<typeof profileSchema>
@@ -63,7 +64,7 @@ export function ProfilePage() {
 
   if (!profileData) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         <div>로딩 중...</div>
       </div>
     )

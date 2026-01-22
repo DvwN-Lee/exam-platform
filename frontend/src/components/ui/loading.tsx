@@ -33,7 +33,7 @@ export function LoadingPage({
     <div
       className={cn(
         'flex flex-col items-center justify-center gap-4',
-        fullScreen ? 'min-h-[400px]' : 'py-12'
+        fullScreen ? 'min-h-[250px] sm:min-h-[300px] md:min-h-[400px]' : 'py-12'
       )}
     >
       <LoadingSpinner size="lg" />

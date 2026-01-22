@@ -12,6 +12,7 @@ import { ChartContainer } from './base/ChartContainer'
 import { ChartEmptyState } from './base/ChartEmptyState'
 import { useChartTheme } from './hooks/useChartTheme'
 import { CHART_COLORS, CHART_ANIMATION } from '@/constants/theme'
+import { DEFAULT_CHART_HEIGHT } from '@/constants'
 import type { ChartClickEvent, ChartDataItem } from '@/types/chart'
 import { cn } from '@/lib/utils'
 
@@ -32,7 +33,7 @@ interface InteractiveBarChartProps {
 export function InteractiveBarChart({
   data,
   title,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   colors = CHART_COLORS.difficulty,
   orientation = 'vertical',
   showGrid = true,

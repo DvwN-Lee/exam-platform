@@ -16,7 +16,7 @@ export function ExamResultPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         <div>결과를 불러오는 중...</div>
       </div>
     )
@@ -24,7 +24,7 @@ export function ExamResultPage() {
 
   if (!result) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         <div>결과를 찾을 수 없습니다.</div>
       </div>
     )

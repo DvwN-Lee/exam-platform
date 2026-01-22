@@ -14,19 +14,25 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GraduationCap, User, BookOpen } from 'lucide-react'
 import { DURATION, EASING, STAGGER } from '@/lib/animations'
+import {
+  USERNAME_MIN_LENGTH,
+  NICKNAME_MIN_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  NAME_MIN_LENGTH,
+} from '@/constants'
 import type { RegisterRequest } from '@/types/auth'
 
 const registerSchema = z
   .object({
     username: z
       .string()
-      .min(3, '아이디는 3자 이상이어야 합니다')
+      .min(USERNAME_MIN_LENGTH, `아이디는 ${USERNAME_MIN_LENGTH}자 이상이어야 합니다`)
       .regex(/^[a-zA-Z0-9_]+$/, '아이디는 영문, 숫자, 밑줄(_)만 사용 가능합니다'),
     email: z.string().email('올바른 이메일 주소를 입력해주세요'),
-    nick_name: z.string().min(2, '닉네임은 2자 이상이어야 합니다'),
+    nick_name: z.string().min(NICKNAME_MIN_LENGTH, `닉네임은 ${NICKNAME_MIN_LENGTH}자 이상이어야 합니다`),
     password: z
       .string()
-      .min(8, 'Password는 8자 이상이어야 합니다'),
+      .min(PASSWORD_MIN_LENGTH, `Password는 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다`),
     password2: z.string(),
     user_type: z.enum(['student', 'teacher']),
     student_name: z.string().optional(),
@@ -39,20 +45,20 @@ const registerSchema = z
   })
   .refine((data) => {
     if (data.user_type === 'student') {
-      return data.student_name && data.student_name.length >= 2
+      return data.student_name && data.student_name.length >= NAME_MIN_LENGTH
     }
     return true
   }, {
-    message: '학생 이름은 2자 이상이어야 합니다',
+    message: `학생 이름은 ${NAME_MIN_LENGTH}자 이상이어야 합니다`,
     path: ['student_name'],
   })
   .refine((data) => {
     if (data.user_type === 'teacher') {
-      return data.teacher_name && data.teacher_name.length >= 2
+      return data.teacher_name && data.teacher_name.length >= NAME_MIN_LENGTH
     }
     return true
   }, {
-    message: '교사 이름은 2자 이상이어야 합니다',
+    message: `교사 이름은 ${NAME_MIN_LENGTH}자 이상이어야 합니다`,
     path: ['teacher_name'],
   })
   .refine((data) => {

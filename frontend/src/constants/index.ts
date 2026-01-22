@@ -1,3 +1,6 @@
+export * from './chart'
+export * from './exam'
 export * from './examination'
 export * from './question'
 export * from './theme'
+export * from './validation'

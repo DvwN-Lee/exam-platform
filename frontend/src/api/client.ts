@@ -49,6 +49,36 @@ interface BackendErrorResponse {
   }
 }
 
+/** detail 필드를 포함하는 응답 형식 (DRF 기본 에러 형식) */
+interface DetailResponse {
+  detail: string
+  [key: string]: unknown
+}
+
+/**
+ * Type Guard: Backend 에러 응답 여부 확인
+ */
+function isBackendErrorResponse(data: unknown): data is BackendErrorResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'error' in data &&
+    typeof (data as BackendErrorResponse).error === 'object'
+  )
+}
+
+/**
+ * Type Guard: DRF detail 형식 응답 여부 확인
+ */
+function isDetailResponse(data: unknown): data is DetailResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'detail' in data &&
+    typeof (data as DetailResponse).detail === 'string'
+  )
+}
+
 /**
  * 정규화된 에러 응답 형식
  * Frontend에서 일관되게 사용할 수 있는 형식
@@ -63,8 +93,9 @@ export interface NormalizedErrorResponse {
  * Backend 에러 응답을 Frontend 형식으로 변환
  * 영문 에러 메시지를 한글로 자동 변환
  */
-function normalizeErrorResponse(data: BackendErrorResponse): NormalizedErrorResponse {
-  if (data?.error) {
+function normalizeErrorResponse(data: unknown): NormalizedErrorResponse {
+  // Backend 표준 에러 형식 { error: { code, message, details } }
+  if (isBackendErrorResponse(data) && data.error) {
     const { code, message, details } = data.error
     return {
       ...details,
@@ -73,16 +104,18 @@ function normalizeErrorResponse(data: BackendErrorResponse): NormalizedErrorResp
     }
   }
 
-  // 직접 detail이 있는 경우도 변환 (DRF 기본 응답 형식)
-  if (typeof data === 'object' && data !== null && 'detail' in data) {
-    const originalData = data as unknown as { detail: string }
+  // DRF 기본 에러 형식 { detail: string }
+  if (isDetailResponse(data)) {
     return {
-      ...originalData,
-      detail: translateErrorMessage(originalData.detail),
-    } as NormalizedErrorResponse
+      ...data,
+      detail: translateErrorMessage(data.detail),
+    }
   }
 
-  return data as unknown as NormalizedErrorResponse
+  // 알 수 없는 형식의 경우 기본 에러 메시지 반환
+  return {
+    detail: '알 수 없는 오류가 발생했습니다.',
+  }
 }
 
 const apiClient = axios.create({
@@ -149,9 +182,9 @@ apiClient.interceptors.response.use(
 
     // Backend 에러 응답을 정규화하여 Frontend에서 일관되게 처리
     if (error.response?.data) {
-      error.response.data = normalizeErrorResponse(
-        error.response.data
-      ) as unknown as BackendErrorResponse
+      const normalizedData = normalizeErrorResponse(error.response.data)
+      // AxiosError 타입 호환성을 위해 data 속성에 정규화된 응답 할당
+      Object.assign(error.response, { data: normalizedData })
     }
 
     return Promise.reject(error)
