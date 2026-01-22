@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import { Button } from './button'
@@ -18,7 +19,25 @@ const themeOptions: ThemeOption[] = [
 ]
 
 export function ThemeToggle() {
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="flex gap-2">
+        {themeOptions.map((option) => (
+          <div
+            key={option.value}
+            className="h-9 w-[88px] animate-pulse rounded-md bg-muted"
+          />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="flex gap-2">
@@ -32,6 +51,7 @@ export function ThemeToggle() {
             variant={isActive ? 'default' : 'outline'}
             size="sm"
             onClick={() => setTheme(option.value)}
+            aria-pressed={isActive}
             className={cn(
               'flex items-center gap-2',
               isActive && 'pointer-events-none'
