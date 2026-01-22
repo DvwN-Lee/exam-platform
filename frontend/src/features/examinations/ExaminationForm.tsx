@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   DEFAULT_EXAM_START_OFFSET_MS,
-  DEFAULT_EXAM_DURATION_MS,
+  DEFAULT_EXAM_END_OFFSET_MS,
   MILLISECONDS_PER_MINUTE,
 } from '@/constants'
 import type { Examination } from '@/types/testpaper'
@@ -35,7 +35,7 @@ function getDefaultDateTimeValues() {
   const now = Date.now()
   return {
     start_time: new Date(now + DEFAULT_EXAM_START_OFFSET_MS).toISOString().slice(0, 16),
-    end_time: new Date(now + DEFAULT_EXAM_START_OFFSET_MS + DEFAULT_EXAM_DURATION_MS).toISOString().slice(0, 16),
+    end_time: new Date(now + DEFAULT_EXAM_END_OFFSET_MS).toISOString().slice(0, 16),
   }
 }
 
