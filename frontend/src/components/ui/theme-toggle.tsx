@@ -4,15 +4,15 @@ import { Moon, Sun, Monitor } from 'lucide-react'
 import { Button } from './button'
 import { cn } from '@/lib/utils'
 
-type Theme = 'light' | 'dark' | 'system'
+export type Theme = 'light' | 'dark' | 'system'
 
-interface ThemeOption {
+export interface ThemeOption {
   value: Theme
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
 }
 
-const themeOptions: ThemeOption[] = [
+export const themeOptions: ThemeOption[] = [
   { value: 'light', label: '라이트', icon: Sun },
   { value: 'dark', label: '다크', icon: Moon },
   { value: 'system', label: '시스템', icon: Monitor },
