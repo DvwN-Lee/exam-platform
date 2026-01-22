@@ -12,6 +12,7 @@ import { ChartContainer } from './base/ChartContainer'
 import { ChartEmptyState } from './base/ChartEmptyState'
 import { useChartTheme } from './hooks/useChartTheme'
 import { CHART_COLORS, CHART_ANIMATION } from '@/constants/theme'
+import { DEFAULT_CHART_HEIGHT } from '@/constants'
 import type { ScoreTrendDataItem } from '@/types/chart'
 import { cn } from '@/lib/utils'
 import { TrendingUp } from 'lucide-react'
@@ -30,7 +31,7 @@ interface ScoreTrendChartProps {
 export function ScoreTrendChart({
   data,
   title,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   showPercentage = true,
   showAverageLine = true,
   emptyMessage = '아직 응시 기록이 없습니다',

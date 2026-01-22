@@ -10,11 +10,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FadeIn } from '@/components/animation'
+import { PASSWORD_MIN_LENGTH } from '@/constants'
 
 const changePasswordSchema = z
   .object({
     old_password: z.string().min(1, '현재 Password를 입력해주세요'),
-    new_password: z.string().min(8, '새 Password는 8자 이상이어야 합니다'),
+    new_password: z.string().min(PASSWORD_MIN_LENGTH, `새 Password는 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다`),
     new_password2: z.string(),
   })
   .refine((data) => data.new_password === data.new_password2, {

@@ -25,7 +25,7 @@ export function StudentDashboard() {
 
   if (!dashboard) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[250px] sm:min-h-[300px] md:min-h-[400px]">
         <div className="text-center">
           <p className="text-lg font-semibold text-muted-foreground">
             대시보드 데이터를 불러올 수 없습니다.

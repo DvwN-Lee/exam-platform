@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet, redirect } from '@tanstack/react-router'
 import { Toaster } from 'sonner'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { LoginPage } from './features/auth/LoginPage'
 import { RegisterPage } from './features/auth/RegisterPage'
 import { ProfilePage } from './features/profile/ProfilePage'
@@ -29,7 +30,11 @@ import { DashboardLayout } from './components/layout/DashboardLayout'
 import { useAuthStore } from './stores/authStore'
 
 const rootRoute = createRootRoute({
-  component: () => <Outlet />,
+  component: () => (
+    <ErrorBoundary>
+      <Outlet />
+    </ErrorBoundary>
+  ),
 })
 
 // Layout Route for authenticated pages (with DashboardLayout)

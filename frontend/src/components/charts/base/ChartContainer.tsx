@@ -1,5 +1,6 @@
 import { ResponsiveContainer } from 'recharts'
 import { cn } from '@/lib/utils'
+import { DEFAULT_CHART_HEIGHT } from '@/constants'
 
 interface ChartContainerProps {
   children: React.ReactElement
@@ -10,7 +11,7 @@ interface ChartContainerProps {
 
 export function ChartContainer({
   children,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   className,
   responsive = true,
 }: ChartContainerProps) {

@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import apiClient from '@/api/client'
 import { getErrorMessage } from '@/utils/error'
 import { FadeIn } from '@/components/animation'
+import { PASSWORD_MIN_LENGTH } from '@/constants'
 
 interface PasswordData {
   old_password: string
@@ -44,8 +45,8 @@ export function PasswordSettings() {
       return
     }
 
-    if (formData.new_password.length < 8) {
-      toast.warning('비밀번호는 최소 8자 이상이어야 합니다.')
+    if (formData.new_password.length < PASSWORD_MIN_LENGTH) {
+      toast.warning(`비밀번호는 최소 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다.`)
       return
     }
 
@@ -86,12 +87,12 @@ export function PasswordSettings() {
                 setFormData({ ...formData, new_password: e.target.value })
               }
               required
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
               className="mt-1 w-full rounded-md border px-3 py-2"
-              placeholder="새 비밀번호를 입력하세요 (최소 8자)"
+              placeholder={`새 비밀번호를 입력하세요 (최소 ${PASSWORD_MIN_LENGTH}자)`}
             />
             <p className="mt-1 text-xs text-muted-foreground">
-              최소 8자 이상, 영문, 숫자, 특수문자를 포함하는 것을 권장합니다
+              최소 {PASSWORD_MIN_LENGTH}자 이상, 영문, 숫자, 특수문자를 포함하는 것을 권장합니다
             </p>
           </div>
 
@@ -104,7 +105,7 @@ export function PasswordSettings() {
                 setFormData({ ...formData, new_password2: e.target.value })
               }
               required
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
               className="mt-1 w-full rounded-md border px-3 py-2"
               placeholder="새 비밀번호를 다시 입력하세요"
             />

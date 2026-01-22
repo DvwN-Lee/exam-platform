@@ -7,6 +7,7 @@ import { ChartEmptyState } from './base/ChartEmptyState'
 import { useChartTheme } from './hooks/useChartTheme'
 import { useLegendToggle } from './hooks/useLegendToggle'
 import { CHART_COLORS, CHART_ANIMATION } from '@/constants/theme'
+import { DEFAULT_CHART_HEIGHT } from '@/constants'
 import type { ChartClickEvent, PieChartDataItem } from '@/types/chart'
 import { cn } from '@/lib/utils'
 
@@ -66,7 +67,7 @@ const renderActiveShape = (props: PieSectorDataItem) => {
 export function InteractivePieChart({
   data,
   title,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   colors = CHART_COLORS.pie,
   innerRadius = 50,
   outerRadius = 90,

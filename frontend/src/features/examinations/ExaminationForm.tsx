@@ -10,6 +10,11 @@ import { examinationApi, testPaperApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  DEFAULT_EXAM_START_OFFSET_MS,
+  DEFAULT_EXAM_END_OFFSET_MS,
+  MILLISECONDS_PER_MINUTE,
+} from '@/constants'
 import type { Examination } from '@/types/testpaper'
 
 const examinationSchema = z
@@ -29,8 +34,8 @@ const examinationSchema = z
 function getDefaultDateTimeValues() {
   const now = Date.now()
   return {
-    start_time: new Date(now + 60 * 60 * 1000).toISOString().slice(0, 16),
-    end_time: new Date(now + 2 * 60 * 60 * 1000).toISOString().slice(0, 16),
+    start_time: new Date(now + DEFAULT_EXAM_START_OFFSET_MS).toISOString().slice(0, 16),
+    end_time: new Date(now + DEFAULT_EXAM_END_OFFSET_MS).toISOString().slice(0, 16),
   }
 }
 
@@ -174,7 +179,7 @@ export function ExaminationForm({
     const startTime = new Date(data.start_time)
     const endTime = new Date(data.end_time)
     const durationMinutes = Math.floor(
-      (endTime.getTime() - startTime.getTime()) / (1000 * 60)
+      (endTime.getTime() - startTime.getTime()) / MILLISECONDS_PER_MINUTE
     )
 
     // Backend API 형식에 맞게 데이터 변환
@@ -209,7 +214,7 @@ export function ExaminationForm({
   // 로딩 상태 처리
   if (isLoadingExamination) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         로딩 중...
       </div>
     )
@@ -218,7 +223,7 @@ export function ExaminationForm({
   // 에러 상태 처리
   if (isExaminationError) {
     return (
-      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] flex-col items-center justify-center gap-4">
         <p className="text-destructive">
           시험 정보를 불러오는데 실패했습니다.
           {examinationError instanceof Error && `: ${examinationError.message}`}

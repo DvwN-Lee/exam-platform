@@ -6,6 +6,12 @@ import { examApi } from '@/api/exam'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FadeIn } from '@/components/animation'
+import {
+  TIMER_INTERVAL_MS,
+  SECONDS_PER_HOUR,
+  SECONDS_PER_MINUTE,
+  URGENT_TIME_THRESHOLD_SECONDS,
+} from '@/constants'
 import type { ExamAnswer } from '@/types/exam'
 
 export function ExamTakePage() {
@@ -101,7 +107,7 @@ export function ExamTakePage() {
 
     const timer = setInterval(() => {
       setTimeRemaining((prev) => (prev > 0 ? prev - 1 : 0))
-    }, 1000)
+    }, TIMER_INTERVAL_MS)
 
     return () => clearInterval(timer)
   }, [submissionId])
@@ -119,9 +125,9 @@ export function ExamTakePage() {
   }, [timeRemaining, submissionId, handleTimeUp])
 
   const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = seconds % 60
+    const hours = Math.floor(seconds / SECONDS_PER_HOUR)
+    const minutes = Math.floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE)
+    const secs = seconds % SECONDS_PER_MINUTE
     return `${hours.toString().padStart(2, '0')}:${minutes
       .toString()
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
@@ -195,7 +201,7 @@ export function ExamTakePage() {
 
   if (!examInfo || !submissionId) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
         <div>시험을 준비 중입니다...</div>
       </div>
     )
@@ -218,7 +224,7 @@ export function ExamTakePage() {
           <div className="flex items-center gap-4">
             <div
               className={`text-2xl font-bold ${
-                timeRemaining < 300 ? 'text-destructive' : ''
+                timeRemaining < URGENT_TIME_THRESHOLD_SECONDS ? 'text-destructive' : ''
               }`}
             >
               {formatTime(timeRemaining)}
