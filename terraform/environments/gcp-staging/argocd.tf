@@ -88,7 +88,7 @@ resource "kubernetes_manifest" "root_app" {
       project = "default"
 
       source = {
-        repoURL        = "https://github.com/DvwN-Lee/OnlineExam-v2.git"
+        repoURL        = "https://github.com/DvwN-Lee/exam-platform.git"
         targetRevision = "main"
         path           = "argocd"
         directory = {
