@@ -97,7 +97,7 @@ resource "kubernetes_manifest" "root_app" {
         path           = "argocd"
         directory = {
           recurse = true
-          include = "{applications/overlays/**/kustomization.yaml,projects/*.yaml,add-ons/**/application.yaml,add-ons/**/cluster-secret-store.yaml}"
+          include = "{generated/*.yaml,projects/*.yaml}"
         }
       }
 
