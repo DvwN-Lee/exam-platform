@@ -22,7 +22,7 @@ spec:
   # Source - ArgoCD 디렉토리 전체를 스캔
   # ---------------------------------------------------------------------------
   source:
-    repoURL: https://github.com/DvwN-Lee/OnlineExam-v2.git
+    repoURL: https://github.com/DvwN-Lee/exam-platform.git
     targetRevision: main
     path: argocd
     directory:
