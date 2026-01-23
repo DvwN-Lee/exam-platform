@@ -186,7 +186,9 @@ GCP Secret Manager와의 연동 설정:
 spec:
   provider:
     gcpsm:
-      projectID: YOUR_PROJECT_ID  # 환경별로 수정 필요
+      # GCP Project ID (Terraform이 자동 치환)
+      # 실제 값: titanium-k3s-1765951764
+      projectID: <YOUR_PROJECT_ID>
 ```
 
 ## Sync Wave 순서
