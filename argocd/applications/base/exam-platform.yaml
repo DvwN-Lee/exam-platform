@@ -1,18 +1,18 @@
 # =============================================================================
-# ArgoCD Application - Staging Environment
+# ArgoCD Application - Base Template
 # =============================================================================
-# Automated sync with selfHeal and prune enabled
+# Kustomize overlay로 환경별 설정을 오버라이드함.
+# 공통 설정만 정의.
 # =============================================================================
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: exam-staging
+  name: exam-platform
   namespace: argocd
   labels:
     app.kubernetes.io/name: exam-platform
-    app.kubernetes.io/instance: staging
-    environment: staging
+    app.kubernetes.io/managed-by: argocd
   annotations:
     notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
     notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts
@@ -30,19 +30,14 @@ spec:
     path: charts/exam-platform
     helm:
       valueFiles:
-        - values-staging.yaml
-      parameters:
-        - name: backend.image.repository
-          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
-        - name: frontend.image.repository
-          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+        - values.yaml
 
   # ---------------------------------------------------------------------------
-  # Destination
+  # Destination (overlay에서 오버라이드)
   # ---------------------------------------------------------------------------
   destination:
     server: https://kubernetes.default.svc
-    namespace: exam-staging
+    namespace: exam-platform
 
   # ---------------------------------------------------------------------------
   # Sync Policy
