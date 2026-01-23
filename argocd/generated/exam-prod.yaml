@@ -42,7 +42,7 @@ spec:
       valueFiles:
       - values-prod.yaml
     path: charts/exam-platform
-    repoURL: https://github.com/DvwN-Lee/exam-platform.git
+    repoURL: git@github.com:DvwN-Lee/exam-platform.git
     targetRevision: main
   syncPolicy:
     retry:
