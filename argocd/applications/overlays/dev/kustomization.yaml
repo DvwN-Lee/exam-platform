@@ -1,0 +1,44 @@
+# =============================================================================
+# Kustomize Overlay - Dev Environment
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Application
+      name: exam-platform
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: exam-dev
+      - op: replace
+        path: /metadata/labels/app.kubernetes.io~1instance
+        value: dev
+      - op: add
+        path: /metadata/labels/environment
+        value: dev
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
+      - op: replace
+        path: /spec/destination/namespace
+        value: exam-dev
+      - op: replace
+        path: /spec/source/helm/valueFiles
+        value:
+          - values-dev.yaml
+      - op: add
+        path: /spec/source/helm/parameters
+        value:
+          - name: backend.image.repository
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/backend
+          - name: frontend.image.repository
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/frontend
+      - op: replace
+        path: /spec/revisionHistoryLimit
+        value: 5

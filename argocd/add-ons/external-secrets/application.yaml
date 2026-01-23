@@ -1,48 +1,59 @@
 # =============================================================================
-# ArgoCD Application - Staging Environment
+# External Secrets Operator - ArgoCD Application
 # =============================================================================
-# Automated sync with selfHeal and prune enabled
+# ESO Helm Chart를 ArgoCD로 관리.
+# Terraform에서 이관됨 (GitOps 원칙 준수).
 # =============================================================================
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: exam-staging
+  name: external-secrets
   namespace: argocd
   labels:
-    app.kubernetes.io/name: exam-platform
-    app.kubernetes.io/instance: staging
-    environment: staging
+    app.kubernetes.io/name: external-secrets
+    app.kubernetes.io/component: add-on
   annotations:
-    notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
-    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts
+    argocd.argoproj.io/sync-wave: "-1"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: exam-platform
+  project: default
 
   # ---------------------------------------------------------------------------
-  # Source
+  # Source - ESO Helm Chart
   # ---------------------------------------------------------------------------
   source:
-    repoURL: https://github.com/DvwN-Lee/exam-platform.git
-    targetRevision: main
-    path: charts/exam-platform
+    repoURL: https://charts.external-secrets.io
+    targetRevision: 0.9.11
+    chart: external-secrets
     helm:
-      valueFiles:
-        - values-staging.yaml
-      parameters:
-        - name: backend.image.repository
-          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
-        - name: frontend.image.repository
-          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+      releaseName: external-secrets
+      values: |
+        # Service Account Workload Identity 설정
+        serviceAccount:
+          create: true
+          name: external-secrets
+          annotations:
+            iam.gke.io/gcp-service-account: external-secrets-staging@titanium-k3s-1765951764.iam.gserviceaccount.com
+
+        # Controller 설정
+        installCRDs: true
+
+        # Webhook 설정
+        webhook:
+          create: true
+
+        # Cert Controller 설정
+        certController:
+          create: true
 
   # ---------------------------------------------------------------------------
   # Destination
   # ---------------------------------------------------------------------------
   destination:
     server: https://kubernetes.default.svc
-    namespace: exam-staging
+    namespace: external-secrets
 
   # ---------------------------------------------------------------------------
   # Sync Policy
@@ -54,8 +65,7 @@ spec:
       allowEmpty: false
     syncOptions:
       - CreateNamespace=true
-      - PrunePropagationPolicy=foreground
-      - ApplyOutOfSyncOnly=true
+      - ServerSideApply=true
     retry:
       limit: 5
       backoff:
@@ -66,4 +76,4 @@ spec:
   # ---------------------------------------------------------------------------
   # Revision History
   # ---------------------------------------------------------------------------
-  revisionHistoryLimit: 10
+  revisionHistoryLimit: 5
