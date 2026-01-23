@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/instance: dev
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/name: exam-platform
+    environment: dev
+  name: exam-dev
+  namespace: argocd
+spec:
+  destination:
+    namespace: exam-dev
+    server: https://kubernetes.default.svc
+  project: exam-platform
+  revisionHistoryLimit: 5
+  source:
+    helm:
+      parameters:
+      - name: backend.image.repository
+        value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/backend
+      - name: frontend.image.repository
+        value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/frontend
+      valueFiles:
+      - values-dev.yaml
+    path: charts/exam-platform
+    repoURL: https://github.com/DvwN-Lee/exam-platform.git
+    targetRevision: main
+  syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - ApplyOutOfSyncOnly=true
