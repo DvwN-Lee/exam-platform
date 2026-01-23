@@ -42,6 +42,10 @@ server:
 repoServer:
   replicas: 2
 
+  # Secret 변경 시 Pod 재시작을 위한 annotation
+  podAnnotations:
+    config.reloader.io/auto: "true"
+
   resources:
     requests:
       cpu: 100m
