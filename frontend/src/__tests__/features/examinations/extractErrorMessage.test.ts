@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { AxiosError } from 'axios'
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { extractErrorMessage } from '@/features/examinations/ExaminationForm'
 import type { BackendFieldError } from '@/features/examinations/ExaminationForm'
 
@@ -20,7 +20,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -36,7 +36,7 @@ describe('extractErrorMessage', () => {
         status: 403,
         statusText: 'Forbidden',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -52,7 +52,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -71,7 +71,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -90,7 +90,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -108,7 +108,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -130,11 +130,11 @@ describe('extractErrorMessage', () => {
     it('response.data가 없으면 빈 문자열을 반환해야 한다', () => {
       const error = new AxiosError<BackendFieldError>('Request failed')
       error.response = {
-        data: undefined as any,
+        data: undefined as unknown as BackendFieldError,
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -148,7 +148,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -158,11 +158,11 @@ describe('extractErrorMessage', () => {
     it('data가 null이면 빈 문자열을 반환해야 한다', () => {
       const error = new AxiosError<BackendFieldError>('Request failed')
       error.response = {
-        data: null as any,
+        data: null as unknown as BackendFieldError,
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -172,11 +172,11 @@ describe('extractErrorMessage', () => {
     it('data가 배열이면 빈 문자열을 반환해야 한다', () => {
       const error = new AxiosError<BackendFieldError>('Request failed')
       error.response = {
-        data: ['에러 메시지'] as any,
+        data: ['에러 메시지'] as unknown as BackendFieldError,
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -186,11 +186,11 @@ describe('extractErrorMessage', () => {
     it('data가 문자열이면 빈 문자열을 반환해야 한다', () => {
       const error = new AxiosError<BackendFieldError>('Request failed')
       error.response = {
-        data: '에러 메시지' as any,
+        data: '에러 메시지' as unknown as BackendFieldError,
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -201,12 +201,12 @@ describe('extractErrorMessage', () => {
       const error = new AxiosError<BackendFieldError>('Request failed')
       error.response = {
         data: {
-          field: ['유효한 메시지', 123, null, undefined, { key: 'value' }] as any,
+          field: ['유효한 메시지', 123, null, undefined, { key: 'value' }] as unknown as string[],
         },
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -222,7 +222,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -233,12 +233,12 @@ describe('extractErrorMessage', () => {
       const error = new AxiosError<BackendFieldError>('Request failed')
       error.response = {
         data: {
-          field: [123, null, undefined] as any,
+          field: [123, null, undefined] as unknown as string[],
         },
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -250,15 +250,15 @@ describe('extractErrorMessage', () => {
       error.response = {
         data: {
           field1: '유효한 메시지',
-          field2: 123 as any,
-          field3: { nested: 'object' } as any,
-          field4: null as any,
-          field5: undefined as any,
+          field2: 123 as unknown as string,
+          field3: { nested: 'object' } as unknown as string,
+          field4: null as unknown as string,
+          field5: undefined as unknown as string,
         },
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -276,7 +276,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -292,7 +292,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
@@ -308,7 +308,7 @@ describe('extractErrorMessage', () => {
         status: 400,
         statusText: 'Bad Request',
         headers: {},
-        config: {} as any,
+        config: {} as unknown as InternalAxiosRequestConfig,
       }
 
       const result = extractErrorMessage(error)
