@@ -27,6 +27,7 @@ patches:
       - op: replace
         path: /metadata/annotations
         value:
+          argocd.argoproj.io/sync-wave: "1"
           notifications.argoproj.io/subscribe.on-sync-running.slack: exam-prod-deployments
           notifications.argoproj.io/subscribe.on-sync-succeeded.slack: exam-prod-deployments
           notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-prod-alerts
@@ -42,9 +43,9 @@ patches:
         path: /spec/source/helm/parameters
         value:
           - name: backend.image.repository
-            value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/backend
           - name: frontend.image.repository
-            value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/frontend
       - op: remove
         path: /spec/syncPolicy/automated
       - op: replace

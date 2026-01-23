@@ -12,7 +12,9 @@ metadata:
   namespace: argocd
   labels:
     app.kubernetes.io/name: exam-platform
+    app.kubernetes.io/instance: base
     app.kubernetes.io/managed-by: argocd
+    environment: base
   annotations:
     notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
     notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts

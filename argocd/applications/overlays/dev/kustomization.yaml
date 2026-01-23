@@ -22,6 +22,9 @@ patches:
       - op: add
         path: /metadata/labels/environment
         value: dev
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
       - op: replace
         path: /spec/destination/namespace
         value: exam-dev
@@ -33,9 +36,9 @@ patches:
         path: /spec/source/helm/parameters
         value:
           - name: backend.image.repository
-            value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/backend
           - name: frontend.image.repository
-            value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-1765951764/exam-platform/frontend
       - op: replace
         path: /spec/revisionHistoryLimit
         value: 5

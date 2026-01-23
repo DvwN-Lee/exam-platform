@@ -13,6 +13,8 @@ metadata:
   labels:
     app.kubernetes.io/name: external-secrets
     app.kubernetes.io/component: add-on
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -33,7 +35,7 @@ spec:
           create: true
           name: external-secrets
           annotations:
-            iam.gke.io/gcp-service-account: external-secrets-staging@PROJECT_ID.iam.gserviceaccount.com
+            iam.gke.io/gcp-service-account: external-secrets-staging@titanium-k3s-1765951764.iam.gserviceaccount.com
 
         # Controller 설정
         installCRDs: true
