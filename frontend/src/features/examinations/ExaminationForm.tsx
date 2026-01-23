@@ -44,6 +44,7 @@ export type BackendFieldError = {
 }
 
 // Backend 에러 응답에서 메시지 추출 helper function
+// eslint-disable-next-line react-refresh/only-export-components -- Unit Test에서 사용하는 함수
 export function extractErrorMessage(error: AxiosError<BackendFieldError>): string {
   const data = error.response?.data
 

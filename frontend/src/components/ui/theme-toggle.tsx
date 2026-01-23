@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Moon, Sun, Monitor } from 'lucide-react'
 import { Button } from './button'
+import { useMounted } from '@/hooks/useMounted'
 import { cn } from '@/lib/utils'
 
 export type Theme = 'light' | 'dark' | 'system'
@@ -12,6 +12,7 @@ export interface ThemeOption {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- Sidebar에서 재사용하는 상수
 export const themeOptions: ThemeOption[] = [
   { value: 'light', label: '라이트', icon: Sun },
   { value: 'dark', label: '다크', icon: Moon },
@@ -19,12 +20,8 @@ export const themeOptions: ThemeOption[] = [
 ]
 
 export function ThemeToggle() {
-  const [mounted, setMounted] = useState(false)
+  const mounted = useMounted()
   const { theme, setTheme } = useTheme()
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   if (!mounted) {
     return (

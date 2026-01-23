@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useSidebarStore } from '@/stores/sidebarStore'
+import { useMounted } from '@/hooks/useMounted'
 import { cn } from '@/lib/utils'
 import { STAGGER, DURATION, EASING } from '@/lib/animations'
 import {
@@ -65,11 +65,7 @@ export function Sidebar() {
   const logout = useAuthStore((state) => state.logout)
   const { isOpen, isCollapsed, close } = useSidebarStore()
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useMounted()
 
   const navItems =
     user?.user_type === 'teacher' ? teacherNavItems : studentNavItems
