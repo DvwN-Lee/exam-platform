@@ -1,21 +1,60 @@
-# ArgoCD GitOps
+# ArgoCD GitOps (App of Apps Pattern)
 
-ArgoCD 기반 GitOps 배포 구성입니다.
+ArgoCD 기반 GitOps 배포 구성입니다. App of Apps 패턴을 적용하여 Terraform과 ArgoCD의 책임을 분리했습니다.
+
+## 아키텍처
+
+```
+Terraform (인프라 Bootstrap)
+├── 인프라 (VPC, GKE, Cloud SQL, Redis, GCS, GAR)
+├── Secret Manager
+├── IAM / Workload Identity
+├── ArgoCD 설치 (Helm)
+└── Root App (유일한 Application)
+
+ArgoCD (GitOps - Root App이 관리)
+├── applications/overlays/* (환경별 Application)
+├── projects/* (AppProject)
+└── add-ons/* (ESO 등 Add-on)
+```
 
 ## Directory 구조
 
 ```
 argocd/
-├── install/
-│   └── values.yaml              # ArgoCD Helm 설치 values
-├── projects/
-│   └── exam-platform.yaml       # AppProject 정의
+├── bootstrap/
+│   └── root-app.yaml               # Root Application (Terraform이 적용)
 ├── applications/
-│   ├── exam-dev.yaml            # Dev Application
-│   ├── exam-staging.yaml        # Staging Application
-│   └── exam-prod.yaml           # Prod Application
+│   ├── base/
+│   │   ├── exam-platform.yaml      # 공통 Application Template
+│   │   └── kustomization.yaml
+│   └── overlays/
+│       ├── dev/
+│       │   └── kustomization.yaml  # Dev 환경 오버라이드
+│       ├── staging/
+│       │   └── kustomization.yaml  # Staging 환경 오버라이드
+│       └── prod/
+│           └── kustomization.yaml  # Prod 환경 오버라이드
+├── projects/
+│   └── exam-platform.yaml          # AppProject 정의
+├── add-ons/
+│   ├── external-secrets/
+│   │   ├── application.yaml        # ESO Helm Chart Application
+│   │   ├── cluster-secret-store.yaml
+│   │   └── kustomization.yaml
+│   └── kustomization.yaml
+├── install/
+│   └── values.yaml                 # ArgoCD Helm 설치 values
 └── README.md
 ```
+
+## 책임 분리
+
+| 구분 | Terraform | ArgoCD (GitOps) |
+|------|-----------|-----------------|
+| 담당 | 인프라 프로비저닝 | Application 배포 |
+| 범위 | VPC, GKE, Cloud SQL, Redis, GCS, GAR, Secret Manager, IAM | Applications, Projects, ESO Add-on |
+| 변경 시점 | 인프라 변경 시 | `git push` 시 자동 |
 
 ## ArgoCD 설치
 
@@ -26,6 +65,15 @@ argocd/
 - kubectl
 
 ### 설치
+
+Terraform을 통해 자동 설치됩니다.
+
+```bash
+cd terraform/environments/gcp-staging
+terraform apply
+```
+
+수동 설치가 필요한 경우:
 
 ```bash
 # 1. ArgoCD namespace 생성
@@ -67,28 +115,19 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 argocd login localhost:8080
 ```
 
-## Application 배포
+## Application 관리
 
-### AppProject 생성
+### App of Apps Pattern
 
-```bash
-kubectl apply -f argocd/projects/exam-platform.yaml
-```
+Root App이 나머지 모든 Application을 자동으로 관리합니다. 새 Application이나 환경을 추가하려면:
 
-### Application 생성
+1. `argocd/applications/overlays/`에 새 디렉토리 생성
+2. `kustomization.yaml` 작성
+3. Git commit/push
 
-```bash
-# Dev 환경
-kubectl apply -f argocd/applications/exam-dev.yaml
+Root App이 변경을 감지하고 자동으로 새 Application을 생성합니다.
 
-# Staging 환경
-kubectl apply -f argocd/applications/exam-staging.yaml
-
-# Production 환경
-kubectl apply -f argocd/applications/exam-prod.yaml
-```
-
-## 환경별 설정
+### 환경별 설정
 
 | 환경 | Namespace | Sync Policy | Self-Heal |
 |------|-----------|-------------|-----------|
@@ -96,23 +135,14 @@ kubectl apply -f argocd/applications/exam-prod.yaml
 | Staging | exam-staging | Automated | Yes |
 | Prod | exam-prod | Manual | No |
 
-## Sync Wave 순서
-
-| Wave | Resources |
-|------|-----------|
-| -1 | Namespace |
-| 0 | ConfigMap, Secret, ServiceAccount |
-| 1 | Backend Deployment, Service |
-| 2 | Frontend Deployment, Service |
-| 3 | Ingress, HPA |
-
-## Application 관리
-
 ### 상태 확인
 
 ```bash
 # 전체 Application 목록
 argocd app list
+
+# Root App 상태 (모든 하위 Application 포함)
+argocd app get root-app
 
 # 특정 Application 상태
 argocd app get exam-dev
@@ -136,6 +166,38 @@ argocd app sync exam-prod
 # Hard refresh (Git에서 최신 상태 가져오기)
 argocd app get exam-dev --hard-refresh
 ```
+
+## Add-ons 관리
+
+### External Secrets Operator
+
+ESO는 ArgoCD Application으로 관리됩니다. 설정 변경 시:
+
+1. `argocd/add-ons/external-secrets/application.yaml` 수정
+2. Git commit/push
+3. ArgoCD가 자동으로 변경 적용
+
+### ClusterSecretStore
+
+GCP Secret Manager와의 연동 설정:
+
+```yaml
+# argocd/add-ons/external-secrets/cluster-secret-store.yaml
+spec:
+  provider:
+    gcpsm:
+      projectID: YOUR_PROJECT_ID  # 환경별로 수정 필요
+```
+
+## Sync Wave 순서
+
+| Wave | Resources |
+|------|-----------|
+| -1 | Namespace |
+| 0 | ConfigMap, Secret, ServiceAccount |
+| 1 | Backend Deployment, Service |
+| 2 | Frontend Deployment, Service |
+| 3 | Ingress, HPA |
 
 ## Rollback
 
@@ -204,6 +266,19 @@ kubectl logs -n exam-dev -l app.kubernetes.io/name=exam-platform-backend
 kubectl describe pod -n exam-dev -l app.kubernetes.io/name=exam-platform-backend
 ```
 
+### ESO 문제
+
+```bash
+# ClusterSecretStore 상태 확인
+kubectl get clustersecretstore
+
+# ExternalSecret 상태 확인
+kubectl get externalsecrets -A
+
+# ESO Controller 로그 확인
+kubectl logs -n external-secrets -l app.kubernetes.io/name=external-secrets
+```
+
 ## RBAC
 
 ### Role 구조
@@ -244,3 +319,39 @@ kubectl create secret generic argocd-notifications-secret \
 | on-deployed | 배포 성공 시 |
 | on-sync-failed | Sync 실패 시 |
 | on-health-degraded | Health 저하 시 |
+
+## Migration Guide
+
+기존 Terraform 관리 리소스에서 App of Apps 패턴으로 마이그레이션:
+
+### Step 1: Terraform State에서 기존 리소스 제거
+
+```bash
+cd terraform/environments/gcp-staging
+
+# Application 리소스 제거 (클러스터에서는 유지됨)
+terraform state rm kubernetes_manifest.argocd_project
+terraform state rm kubernetes_manifest.argocd_app_staging
+
+# ESO 리소스 제거 (ArgoCD가 재생성)
+terraform state rm kubernetes_namespace.external_secrets
+terraform state rm helm_release.external_secrets
+terraform state rm kubernetes_manifest.cluster_secret_store
+```
+
+### Step 2: Terraform Apply
+
+```bash
+terraform plan   # Root App 생성만 표시되어야 함
+terraform apply
+```
+
+### Step 3: ArgoCD Adoption 확인
+
+```bash
+# Root App이 기존 Application을 입양했는지 확인
+kubectl get applications -n argocd
+
+# 모든 Application이 Synced 상태인지 확인
+kubectl get applications -n argocd -o wide
+```

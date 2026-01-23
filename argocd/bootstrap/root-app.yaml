@@ -1,48 +1,40 @@
 # =============================================================================
-# ArgoCD Application - Dev Environment
+# Root Application (App of Apps Pattern)
 # =============================================================================
-# Automated sync with selfHeal and prune enabled
+# Terraform이 유일하게 관리하는 ArgoCD Application.
+# 이 Application이 나머지 모든 Application, Project, Add-on을 관리함.
 # =============================================================================
 
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: exam-dev
+  name: root-app
   namespace: argocd
   labels:
-    app.kubernetes.io/name: exam-platform
-    app.kubernetes.io/instance: dev
-    environment: dev
-  annotations:
-    notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
-    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts
+    app.kubernetes.io/name: root-app
+    app.kubernetes.io/component: bootstrap
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: exam-platform
+  project: default
 
   # ---------------------------------------------------------------------------
-  # Source
+  # Source - ArgoCD 디렉토리 전체를 스캔
   # ---------------------------------------------------------------------------
   source:
-    repoURL: https://github.com/DvwN-Lee/exam-platform.git
+    repoURL: https://github.com/DvwN-Lee/OnlineExam-v2.git
     targetRevision: main
-    path: charts/exam-platform
-    helm:
-      valueFiles:
-        - values-dev.yaml
-      parameters:
-        - name: backend.image.repository
-          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/backend
-        - name: frontend.image.repository
-          value: asia-northeast3-docker.pkg.dev/PROJECT_ID/exam-platform/frontend
+    path: argocd
+    directory:
+      recurse: true
+      include: "{applications/overlays/**/kustomization.yaml,projects/*.yaml,add-ons/**/application.yaml,add-ons/**/cluster-secret-store.yaml}"
 
   # ---------------------------------------------------------------------------
   # Destination
   # ---------------------------------------------------------------------------
   destination:
     server: https://kubernetes.default.svc
-    namespace: exam-dev
+    namespace: argocd
 
   # ---------------------------------------------------------------------------
   # Sync Policy
@@ -53,9 +45,8 @@ spec:
       selfHeal: true
       allowEmpty: false
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=false
       - PrunePropagationPolicy=foreground
-      - ApplyOutOfSyncOnly=true
     retry:
       limit: 5
       backoff:

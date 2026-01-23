@@ -1,0 +1,9 @@
+# =============================================================================
+# Kustomize Base - Exam Platform Application
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - exam-platform.yaml

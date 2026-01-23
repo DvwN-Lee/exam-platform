@@ -1,73 +1,21 @@
 # =============================================================================
-# External Secrets Operator Installation via Helm
+# External Secrets Operator - DEPRECATED
+# =============================================================================
+# ESO 설치는 ArgoCD로 이관되었습니다.
+# 관련 파일: argocd/add-ons/external-secrets/
+#
+# Terraform이 관리하는 리소스 (workload-identity.tf):
+# - google_service_account.external_secrets
+# - google_project_iam_member.external_secrets_accessor
+# - google_service_account_iam_member.workload_identity_binding
+#
+# ArgoCD가 관리하는 리소스:
+# - Kubernetes Namespace (external-secrets)
+# - Helm Release (external-secrets)
+# - ClusterSecretStore (gcp-secret-manager)
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# External Secrets Namespace
-# -----------------------------------------------------------------------------
-resource "kubernetes_namespace" "external_secrets" {
-  metadata {
-    name = "external-secrets"
-  }
-
-  depends_on = [module.gke]
-}
-
-# -----------------------------------------------------------------------------
-# External Secrets Operator Helm Release
-# -----------------------------------------------------------------------------
-resource "helm_release" "external_secrets" {
-  name       = "external-secrets"
-  repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-  version    = "0.9.11"
-  namespace  = kubernetes_namespace.external_secrets.metadata[0].name
-
-  set {
-    name  = "serviceAccount.annotations.iam\\.gke\\.io/gcp-service-account"
-    value = google_service_account.external_secrets.email
-  }
-
-  # Helm Release 설정
-  wait             = true
-  timeout          = 600 # 10분
-  create_namespace = false
-
-  depends_on = [
-    kubernetes_namespace.external_secrets,
-    google_service_account.external_secrets,
-    google_service_account_iam_member.workload_identity_binding
-  ]
-}
-
-# -----------------------------------------------------------------------------
-# ClusterSecretStore for Google Secret Manager
-# -----------------------------------------------------------------------------
-resource "kubernetes_manifest" "cluster_secret_store" {
-  manifest = {
-    apiVersion = "external-secrets.io/v1beta1"
-    kind       = "ClusterSecretStore"
-    metadata = {
-      name = "gcp-secret-manager"
-    }
-    spec = {
-      provider = {
-        gcpsm = {
-          projectID = var.project_id
-          auth = {
-            workloadIdentity = {
-              clusterLocation = var.region
-              clusterName     = module.gke.cluster_name
-              serviceAccountRef = {
-                name      = "external-secrets"
-                namespace = kubernetes_namespace.external_secrets.metadata[0].name
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  depends_on = [helm_release.external_secrets]
-}
+# 기존 리소스 (ArgoCD로 이관됨):
+# - kubernetes_namespace.external_secrets -> CreateNamespace=true (ArgoCD syncOption)
+# - helm_release.external_secrets -> argocd/add-ons/external-secrets/application.yaml
+# - kubernetes_manifest.cluster_secret_store -> argocd/add-ons/external-secrets/cluster-secret-store.yaml
