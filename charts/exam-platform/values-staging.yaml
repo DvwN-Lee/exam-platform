@@ -79,10 +79,11 @@ config:
   allowedHosts: "staging.exam.example.com"
   debug: "False"
 
-  # Staging database endpoints (Managed Service)
-  postgresHost: "postgres-staging.database.svc.cluster.local"
-  mongodbHost: "mongodb-staging.database.svc.cluster.local"
-  redisHost: "redis-staging.cache.svc.cluster.local"
+  # Database endpoints are provided via ExternalSecrets
+  # See external-secret.yaml template
+  postgresHost: ""  # Provided by db-credentials secret
+  mongodbHost: ""   # Not used in current implementation
+  redisHost: ""     # Provided by redis-credentials secret
 
   secureSSLRedirect: "False"
   sessionCookieSecure: "False"
@@ -92,10 +93,36 @@ config:
 # Secrets
 # -----------------------------------------------------------------------------
 secrets:
-  # In staging, still use Helm-managed secrets
-  # Consider using external secrets for better security
-  create: true
-  secretKey: "staging-secret-key-change-me"
-  postgresPassword: "staging-password"
-  mongodbPassword: "staging-password"
-  redisPassword: "staging-password"
+  # External Secrets Operator manages secrets from Google Secret Manager
+  create: false
+  secretKey: ""
+  postgresPassword: ""
+  mongodbPassword: ""
+  redisPassword: ""
+
+# -----------------------------------------------------------------------------
+# External Secrets
+# -----------------------------------------------------------------------------
+externalSecrets:
+  enabled: true
+  refreshInterval: "1h"
+  secretStoreRef: "gcp-secret-manager"
+
+  secrets:
+    # Database
+    dbHost: "examonline-staging-db-host"
+    dbPort: "examonline-staging-db-port"
+    dbName: "examonline-staging-db-name"
+    dbUser: "examonline-staging-db-user"
+    dbPassword: "examonline-staging-db-password"
+
+    # Redis
+    redisHost: "examonline-staging-redis-host"
+    redisPort: "examonline-staging-redis-port"
+
+    # Application
+    djangoSecretKey: "examonline-staging-django-secret-key"
+    jwtSecretKey: "examonline-staging-jwt-secret-key"
+
+    # GCS
+    gcsBucketName: "examonline-staging-gcs-bucket-name"
