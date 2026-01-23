@@ -21,6 +21,7 @@ spec:
   # ---------------------------------------------------------------------------
   sourceRepos:
     - https://github.com/DvwN-Lee/exam-platform.git
+    - git@github.com:DvwN-Lee/exam-platform.git
 
   # ---------------------------------------------------------------------------
   # Destinations
