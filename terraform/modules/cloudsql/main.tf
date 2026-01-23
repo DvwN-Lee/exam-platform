@@ -52,7 +52,7 @@ resource "google_sql_database_instance" "main" {
     ip_configuration {
       ipv4_enabled    = var.enable_public_ip
       private_network = var.network_id
-      require_ssl     = var.require_ssl
+      ssl_mode        = var.ssl_mode
     }
 
     backup_configuration {
