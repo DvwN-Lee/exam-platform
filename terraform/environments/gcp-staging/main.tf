@@ -72,11 +72,15 @@ module "gke" {
   max_node_count      = var.max_node_count
   deletion_protection = false # Staging
 
-  # Master Authorized Networks - VPC Internal 접근만 허용
+  # Master Authorized Networks - VPC Internal + 개발자 IP 허용
   master_authorized_networks = [
     {
       cidr_block   = var.private_subnet_cidr
       display_name = "VPC Private Subnet"
+    },
+    {
+      cidr_block   = "221.153.70.15/32"
+      display_name = "Developer Local"
     }
   ]
 }
