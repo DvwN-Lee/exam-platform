@@ -168,3 +168,12 @@ variable "staging_domain" {
   type        = string
   default     = "staging.exam-platform.local"
 }
+
+# -----------------------------------------------------------------------------
+# ArgoCD
+# -----------------------------------------------------------------------------
+variable "argocd_repo_ssh_key" {
+  description = "SSH private key for ArgoCD repository access"
+  type        = string
+  sensitive   = true
+}
