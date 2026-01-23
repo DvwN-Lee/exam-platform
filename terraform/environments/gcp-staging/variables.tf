@@ -109,6 +109,12 @@ variable "database_name" {
   default     = "examonline"
 }
 
+variable "db_user" {
+  description = "Database user name"
+  type        = string
+  default     = "examonline"
+}
+
 # -----------------------------------------------------------------------------
 # Memorystore (Redis)
 # -----------------------------------------------------------------------------

@@ -54,7 +54,7 @@ resource "google_secret_manager_secret" "db_user" {
 
 resource "google_secret_manager_secret_version" "db_user" {
   secret      = google_secret_manager_secret.db_user.id
-  secret_data = "examonline"
+  secret_data = var.db_user
 }
 
 resource "google_secret_manager_secret" "db_password" {

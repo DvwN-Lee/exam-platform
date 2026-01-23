@@ -72,11 +72,11 @@ module "gke" {
   max_node_count      = var.max_node_count
   deletion_protection = false # Staging
 
-  # Master Authorized Networks - Staging 환경에서는 모든 IP 허용
+  # Master Authorized Networks - VPC Internal 접근만 허용
   master_authorized_networks = [
     {
-      cidr_block   = "0.0.0.0/0"
-      display_name = "Allow All (Staging Only)"
+      cidr_block   = var.private_subnet_cidr
+      display_name = "VPC Private Subnet"
     }
   ]
 }
@@ -96,7 +96,7 @@ module "cloudsql" {
   network_id          = module.vpc.network_id
   database_name       = var.database_name
   deletion_protection = false # Staging
-  ssl_mode            = "ALLOW_UNENCRYPTED_AND_ENCRYPTED" # Staging - private network only
+  ssl_mode            = "ENCRYPTED_ONLY" # SSL 암호화 필수
 }
 
 # -----------------------------------------------------------------------------
