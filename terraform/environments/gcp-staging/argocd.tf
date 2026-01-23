@@ -70,6 +70,10 @@ resource "random_password" "argocd_admin_password" {
 # Root App이 이를 자동으로 동기화함.
 # -----------------------------------------------------------------------------
 resource "kubernetes_manifest" "root_app" {
+  field_manager {
+    force_conflicts = true
+  }
+
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
     kind       = "Application"
@@ -88,7 +92,7 @@ resource "kubernetes_manifest" "root_app" {
       project = "default"
 
       source = {
-        repoURL        = "https://github.com/DvwN-Lee/exam-platform.git"
+        repoURL        = "git@github.com:DvwN-Lee/exam-platform.git"
         targetRevision = "main"
         path           = "argocd"
         directory = {
@@ -125,6 +129,29 @@ resource "kubernetes_manifest" "root_app" {
       revisionHistoryLimit = 5
     }
   }
+
+  depends_on = [helm_release.argocd]
+}
+
+# -----------------------------------------------------------------------------
+# ArgoCD Repository Credentials (SSH Deploy Key)
+# -----------------------------------------------------------------------------
+resource "kubernetes_secret" "argocd_repo_creds" {
+  metadata {
+    name      = "repo-exam-platform"
+    namespace = kubernetes_namespace.argocd.metadata[0].name
+    labels = {
+      "argocd.argoproj.io/secret-type" = "repository"
+    }
+  }
+
+  data = {
+    type          = "git"
+    url           = "git@github.com:DvwN-Lee/exam-platform.git"
+    sshPrivateKey = var.argocd_repo_ssh_key
+  }
+
+  type = "Opaque"
 
   depends_on = [helm_release.argocd]
 }
