@@ -204,6 +204,25 @@ secrets:
   externalSecretName: ""
 
 # -----------------------------------------------------------------------------
+# External Secrets (ESO Integration)
+# -----------------------------------------------------------------------------
+externalSecrets:
+  # Enable ESO integration (requires ESO and ClusterSecretStore)
+  enabled: false
+  # Secret refresh interval
+  refreshInterval: "1h"
+  # ClusterSecretStore reference
+  secretStoreRef: "gcp-secret-manager"
+  # Secret mappings for GCP Secret Manager
+  secrets:
+    dbPassword:
+      key: "exam-db-password"
+    djangoSecretKey:
+      key: "exam-django-secret-key"
+    redisPassword:
+      key: "exam-redis-password"
+
+# -----------------------------------------------------------------------------
 # Service Account
 # -----------------------------------------------------------------------------
 serviceAccount:
