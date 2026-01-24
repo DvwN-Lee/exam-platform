@@ -18,7 +18,7 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: exam-prod
+    namespace: exam-platform-prod
     server: https://kubernetes.default.svc
   ignoreDifferences:
   - group: apps
