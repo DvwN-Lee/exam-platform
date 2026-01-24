@@ -187,7 +187,7 @@ spec:
   provider:
     gcpsm:
       # GCP Project ID (Terraform이 자동 치환)
-      # 실제 값: titanium-k3s-1765951764
+      # 실제 값: titanium-k3s-20260123
       projectID: <YOUR_PROJECT_ID>
 ```
 
