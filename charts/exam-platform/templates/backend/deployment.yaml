@@ -187,6 +187,10 @@ spec:
               value: {{ .Values.backend.gunicorn.workers | quote }}
             - name: GUNICORN_THREADS
               value: {{ .Values.backend.gunicorn.threads | quote }}
+          {{- if .Values.backend.startupProbe.enabled }}
+          startupProbe:
+            {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           {{- if .Values.backend.livenessProbe.enabled }}
           livenessProbe:
             {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
