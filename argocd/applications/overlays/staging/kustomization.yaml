@@ -27,7 +27,7 @@ patches:
         value: "1"
       - op: replace
         path: /spec/destination/namespace
-        value: exam-staging
+        value: exam-platform-staging
       - op: replace
         path: /spec/source/helm/valueFiles
         value:
@@ -36,9 +36,9 @@ patches:
         path: /spec/source/helm/parameters
         value:
           - name: backend.image.repository
-            value: asia-northeast3-docker.pkg.dev/titanium-k3s-20260123/exam-platform/backend
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-20260123/staging-exam-platform/backend
           - name: frontend.image.repository
-            value: asia-northeast3-docker.pkg.dev/titanium-k3s-20260123/exam-platform/frontend
+            value: asia-northeast3-docker.pkg.dev/titanium-k3s-20260123/staging-exam-platform/frontend
       - op: replace
         path: /spec/revisionHistoryLimit
         value: 10
