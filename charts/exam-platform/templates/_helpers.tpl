@@ -171,3 +171,36 @@ Redis URL construction
 {{- define "exam-platform.redisUrl" -}}
 {{- printf "redis://:%s@%s:%s/0" "$(REDIS_PASSWORD)" .Values.config.redisHost .Values.config.redisPort }}
 {{- end }}
+
+{{/*
+Database credentials secret name
+*/}}
+{{- define "exam-platform.dbSecretName" -}}
+{{- if .Values.secrets.create }}
+{{- printf "%s-secret" (include "exam-platform.fullname" .) }}
+{{- else }}
+{{- printf "%s-db" (include "exam-platform.fullname" .) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Redis credentials secret name
+*/}}
+{{- define "exam-platform.redisSecretName" -}}
+{{- if .Values.secrets.create }}
+{{- printf "%s-secret" (include "exam-platform.fullname" .) }}
+{{- else }}
+{{- printf "%s-redis" (include "exam-platform.fullname" .) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Application secrets name
+*/}}
+{{- define "exam-platform.appSecretName" -}}
+{{- if .Values.secrets.create }}
+{{- printf "%s-secret" (include "exam-platform.fullname" .) }}
+{{- else }}
+{{- printf "%s-app" (include "exam-platform.fullname" .) }}
+{{- end }}
+{{- end }}

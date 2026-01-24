@@ -119,6 +119,7 @@ externalSecrets:
     # Redis
     redisHost: "examonline-staging-redis-host"
     redisPort: "examonline-staging-redis-port"
+    redisPassword: "examonline-staging-redis-password"
 
     # Application
     djangoSecretKey: "examonline-staging-django-secret-key"
