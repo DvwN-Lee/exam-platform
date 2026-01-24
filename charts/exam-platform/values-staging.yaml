@@ -32,6 +32,7 @@ backend:
     enabled: false
 
   livenessProbe:
+    enabled: true
     httpGet:
       path: /api/v1/health/live/
       port: 8000
@@ -41,6 +42,7 @@ backend:
     failureThreshold: 6
 
   readinessProbe:
+    enabled: true
     httpGet:
       path: /api/v1/health/ready/
       port: 8000
