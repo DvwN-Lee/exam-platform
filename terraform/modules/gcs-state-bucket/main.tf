@@ -1,5 +1,5 @@
 resource "google_storage_bucket" "state" {
-  name          = "${var.project_id}-tf-state-${var.environment}"
+  name          = coalesce(var.bucket_name, "${var.project_id}-tf-state-${var.environment}")
   project       = var.project_id
   location      = var.location
   force_destroy = false # State 손실 방지
