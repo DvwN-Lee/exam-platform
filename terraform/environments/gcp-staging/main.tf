@@ -99,8 +99,12 @@ module "cloudsql" {
   tier                = var.db_tier
   network_id          = module.vpc.network_id
   database_name       = var.database_name
-  deletion_protection = false # Staging
-  ssl_mode            = "ENCRYPTED_ONLY" # SSL 암호화 필수
+  database_user       = var.db_user # Secret Manager와 동일한 값 사용
+  deletion_protection = false       # Staging
+  ssl_mode            = "ENCRYPTED_ONLY"
+
+  # VPC Private Service Connection이 완료된 후 생성
+  depends_on = [module.vpc]
 }
 
 # -----------------------------------------------------------------------------
