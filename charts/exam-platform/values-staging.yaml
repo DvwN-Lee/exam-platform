@@ -76,7 +76,7 @@ ingress:
 # Config
 # -----------------------------------------------------------------------------
 config:
-  allowedHosts: "localhost,staging.exam.example.com"
+  allowedHosts: "*"
   debug: "False"
 
   # Database endpoints are provided via ExternalSecrets
