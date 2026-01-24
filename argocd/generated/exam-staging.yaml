@@ -16,7 +16,7 @@ metadata:
   namespace: argocd
 spec:
   destination:
-    namespace: exam-staging
+    namespace: exam-platform-staging
     server: https://kubernetes.default.svc
   project: exam-platform
   revisionHistoryLimit: 10
