@@ -61,11 +61,15 @@ class MongoDBHealthChecker:
         if not mongo_config:
             return None
 
+        host = mongo_config.get("host")
+        if not host:
+            return None
+
         if self._client is None:
             with self._lock:
                 if self._client is None:
                     self._client = MongoClient(
-                        host=mongo_config.get("host"),
+                        host=host,
                         port=mongo_config.get("port"),
                         username=mongo_config.get("username"),
                         password=mongo_config.get("password"),
