@@ -31,6 +31,24 @@ backend:
   autoscaling:
     enabled: false
 
+  livenessProbe:
+    httpGet:
+      path: /api/v1/health/live/
+      port: 8000
+    initialDelaySeconds: 120
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+  readinessProbe:
+    httpGet:
+      path: /api/v1/health/ready/
+      port: 8000
+    initialDelaySeconds: 60
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 10
+
 # -----------------------------------------------------------------------------
 # Frontend
 # -----------------------------------------------------------------------------
