@@ -60,6 +60,18 @@ backend:
     timeoutSeconds: 3
     failureThreshold: 3
 
+  # Startup Probe (slow-starting containers)
+  # /api/v1/health/ready/: DB 연결 확인 포함 (migration 완료 후 정상 응답)
+  startupProbe:
+    enabled: false
+    httpGet:
+      path: /api/v1/health/ready/
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
   # Gunicorn settings
   gunicorn:
     workers: 2
