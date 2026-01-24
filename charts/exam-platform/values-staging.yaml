@@ -36,20 +36,32 @@ backend:
     httpGet:
       path: /api/v1/health/live/
       port: 8000
-    initialDelaySeconds: 120
+    initialDelaySeconds: 0  # startupProbe가 성공한 후 즉시 시작
     periodSeconds: 10
     timeoutSeconds: 5
-    failureThreshold: 6
+    failureThreshold: 3
 
   readinessProbe:
     enabled: true
     httpGet:
       path: /api/v1/health/ready/
       port: 8000
-    initialDelaySeconds: 60
+    initialDelaySeconds: 5
     periodSeconds: 5
     timeoutSeconds: 5
-    failureThreshold: 10
+    failureThreshold: 3
+
+  # Startup Probe: migration, collectstatic 완료 대기
+  # /api/v1/health/ready/: DB 연결 확인 포함 (migration 완료 후 정상 응답)
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/ready/
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30  # 최대 310초 (10 + 10*30) 대기
 
 # -----------------------------------------------------------------------------
 # Frontend
