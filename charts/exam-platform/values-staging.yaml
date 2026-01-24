@@ -57,20 +57,20 @@ backend:
     timeoutSeconds: 5
     failureThreshold: 3
 
-  # Startup Probe: migration, collectstatic 완료 대기
-  # /api/v1/health/ready/: DB 연결 확인 포함 (migration 완료 후 정상 응답)
+  # Startup Probe: 컨테이너 기동 완료 확인
+  # /api/v1/health/live/: DB 연결 확인 없이 서버 상태만 확인 (빠른 응답)
   startupProbe:
     enabled: true
     httpGet:
-      path: /api/v1/health/ready/
+      path: /api/v1/health/live/
       port: 8000
       httpHeaders:
         - name: Host
           value: "staging.exam.example.com"
     initialDelaySeconds: 10
-    periodSeconds: 10
-    timeoutSeconds: 20  # MongoDB/Redis health check 대기 시간 고려
-    failureThreshold: 30  # 최대 310초 (10 + 10*30) 대기
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 60  # 최대 310초 (10 + 5*60) 대기
 
 # -----------------------------------------------------------------------------
 # Frontend
