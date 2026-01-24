@@ -36,7 +36,10 @@ backend:
     httpGet:
       path: /api/v1/health/live/
       port: 8000
-    initialDelaySeconds: 0  # startupProbe가 성공한 후 즉시 시작
+      httpHeaders:
+        - name: Host
+          value: "staging.exam.example.com"
+    initialDelaySeconds: 0  # startupProbe 성공 후 즉시 시작
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3
@@ -46,6 +49,9 @@ backend:
     httpGet:
       path: /api/v1/health/ready/
       port: 8000
+      httpHeaders:
+        - name: Host
+          value: "staging.exam.example.com"
     initialDelaySeconds: 5
     periodSeconds: 5
     timeoutSeconds: 5
@@ -58,6 +64,9 @@ backend:
     httpGet:
       path: /api/v1/health/ready/
       port: 8000
+      httpHeaders:
+        - name: Host
+          value: "staging.exam.example.com"
     initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 5
@@ -108,7 +117,8 @@ ingress:
 # Config
 # -----------------------------------------------------------------------------
 config:
-  allowedHosts: "*"
+  # localhost: Health Check Pod IP 요청 및 로컬 디버깅용 유지
+  allowedHosts: "staging.exam.example.com,localhost"
   debug: "False"
 
   # Database endpoints are provided via ExternalSecrets
