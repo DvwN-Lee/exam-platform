@@ -41,7 +41,7 @@ backend:
           value: "staging.exam.example.com"
     initialDelaySeconds: 0  # startupProbe 성공 후 즉시 시작
     periodSeconds: 10
-    timeoutSeconds: 5
+    timeoutSeconds: 10  # worker blocking 가능성 고려
     failureThreshold: 3
 
   readinessProbe:
@@ -53,8 +53,8 @@ backend:
         - name: Host
           value: "staging.exam.example.com"
     initialDelaySeconds: 5
-    periodSeconds: 5
-    timeoutSeconds: 5
+    periodSeconds: 10  # 5초 → 10초 (MongoDB check 시간 고려)
+    timeoutSeconds: 15  # MongoDB/Redis health check 대기
     failureThreshold: 3
 
   # Startup Probe: 컨테이너 기동 완료 확인
