@@ -44,10 +44,9 @@ backend:
     timeoutSeconds: 15  # worker blocking 가능성 고려
     failureThreshold: 3
 
-  # readinessProbe 임시 비활성화: MongoDB health check가 worker를 blocking하여 전체 서버 응답 불가
-  # TODO: Backend 코드에서 MongoDB host 빈 값일 때 skip 로직 추가 후 재활성화
+  # readinessProbe: MongoDB host 빈 값 시 skip 로직 적용됨 (commit 4d27b81)
   readinessProbe:
-    enabled: false
+    enabled: true
     httpGet:
       path: /api/v1/health/ready/
       port: 8000
