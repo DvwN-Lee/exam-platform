@@ -25,6 +25,18 @@ FROM nginx:1.27-alpine AS runtime
 # Health check를 위한 curl 설치
 RUN apk add --no-cache curl
 
+# nginx 캐시/런타임 디렉토리 권한 설정 (non-root 실행 지원)
+# Kubernetes podSecurityContext.runAsUser 설정 시 permission denied 방지
+RUN mkdir -p /var/cache/nginx/client_temp \
+             /var/cache/nginx/proxy_temp \
+             /var/cache/nginx/fastcgi_temp \
+             /var/cache/nginx/uwsgi_temp \
+             /var/cache/nginx/scgi_temp \
+             /var/run/nginx \
+             /var/log/nginx && \
+    chown -R nginx:nginx /var/cache/nginx /var/run/nginx /var/log/nginx && \
+    chmod -R 755 /var/cache/nginx /var/run/nginx /var/log/nginx
+
 # Nginx 설정 템플릿 복사
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
@@ -37,6 +49,9 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 
 # 환경 변수 기본값 설정
 ENV BACKEND_SERVICE_URL=http://localhost:8000
+
+# non-root user로 실행
+USER nginx
 
 EXPOSE 80
 
