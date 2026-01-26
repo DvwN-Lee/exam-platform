@@ -132,6 +132,7 @@ config:
 
   # Redis TLS: GCP Memorystore transitEncryptionMode=SERVER_AUTHENTICATION
   redisSSL: "True"
+  redisSSLCertReqs: "none"  # GCP Memorystore 내부 네트워크에서 인증서 검증 불필요
 
   secureSSLRedirect: "False"
   sessionCookieSecure: "False"
