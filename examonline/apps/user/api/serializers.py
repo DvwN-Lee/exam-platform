@@ -74,7 +74,11 @@ class TeacherInfoSerializer(serializers.ModelSerializer):
 
     subject = SubjectSerializer(read_only=True)
     subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=SubjectInfo.objects.all(), source="subject", write_only=True
+        queryset=SubjectInfo.objects.all(),
+        source="subject",
+        write_only=True,
+        required=False,
+        allow_null=True
     )
 
     class Meta:
@@ -175,8 +179,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         elif user_type == "teacher":
             if not attrs.get("teacher_name"):
                 raise serializers.ValidationError({"teacher_name": "교사 이름은 필수입니다."})
-            if not attrs.get("subject_id"):
-                raise serializers.ValidationError({"subject_id": "과목은 필수입니다."})
+            # subject_id는 선택사항으로 변경 (설정 페이지에서 변경 가능)
 
         return attrs
 

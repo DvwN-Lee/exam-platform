@@ -5,12 +5,22 @@ import apiClient from '@/api/client'
 import { getErrorMessage } from '@/utils/error'
 import { useAuthStore } from '@/stores/authStore'
 import { FadeIn } from '@/components/animation'
+import { questionApi } from '@/api/question'
 
 interface ProfileData {
   nick_name: string
   email: string
   mobile?: string
   gender?: 'male' | 'female'
+  teacher_info?: {
+    teacher_name?: string
+    work_years?: number
+    teacher_school?: string
+    subject?: {
+      id: number
+      subject_name: string
+    }
+  }
 }
 
 export function ProfileSettings() {
@@ -18,11 +28,12 @@ export function ProfileSettings() {
   const setUser = useAuthStore((state) => state.setUser)
   const [isEditing, setIsEditing] = useState(false)
 
-  const [formData, setFormData] = useState<ProfileData>({
+  const [formData, setFormData] = useState<ProfileData & { subject_id?: number }>({
     nick_name: user?.nick_name || '',
     email: user?.email || '',
     mobile: '',
     gender: 'female',
+    subject_id: undefined,
   })
 
   // 프로필 조회
@@ -32,6 +43,13 @@ export function ProfileSettings() {
       const response = await apiClient.get('/users/me/')
       return response.data
     },
+  })
+
+  // 과목 목록 조회 (교사인 경우만)
+  const { data: subjects } = useQuery({
+    queryKey: ['subjects'],
+    queryFn: questionApi.getSubjects,
+    enabled: user?.user_type === 'teacher',
   })
 
   // 프로필 데이터가 로드되면 form 초기화
@@ -44,14 +62,29 @@ export function ProfileSettings() {
         email: profileData.email,
         mobile: profileData.mobile || '',
         gender: profileData.gender || 'female',
+        subject_id: profileData.teacher_info?.subject?.id,
       })
     }
   }, [profileData])
 
   // 프로필 수정
   const updateMutation = useMutation({
-    mutationFn: async (data: ProfileData) => {
-      const response = await apiClient.put('/users/me/', data)
+    mutationFn: async (data: ProfileData & { subject_id?: number }) => {
+      const payload: ProfileData & { teacher_info?: { subject_id?: number } } = {
+        nick_name: data.nick_name,
+        email: data.email,
+        mobile: data.mobile,
+        gender: data.gender,
+      }
+
+      // 교사인 경우 teacher_info 추가
+      if (user?.user_type === 'teacher' && data.subject_id !== undefined) {
+        payload.teacher_info = {
+          subject_id: data.subject_id,
+        }
+      }
+
+      const response = await apiClient.put('/users/me/', payload)
       return response.data
     },
     onSuccess: (data) => {
@@ -149,6 +182,30 @@ export function ProfileSettings() {
           </select>
         </div>
 
+        {user?.user_type === 'teacher' && (
+          <div>
+            <label className="block text-sm font-medium">담당 과목</label>
+            <select
+              value={formData.subject_id || ''}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  subject_id: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              disabled={!isEditing}
+              className="mt-1 w-full rounded-md border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
+            >
+              <option value="">과목을 선택하세요</option>
+              {subjects?.map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.subject_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="flex gap-2">
           {!isEditing ? (
             <button
@@ -176,6 +233,7 @@ export function ProfileSettings() {
                     email: profileData?.email || '',
                     mobile: profileData?.mobile || '',
                     gender: profileData?.gender || 'female',
+                    subject_id: profileData?.teacher_info?.subject?.id,
                   })
                 }}
                 className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"

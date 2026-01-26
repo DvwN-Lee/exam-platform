@@ -102,7 +102,13 @@ class TeacherInfo(models.Model):
     user = models.OneToOneField(UserProfile, on_delete=models.CASCADE)
     teacher_name = models.CharField(max_length=20, default="", verbose_name="선생 이름")
     work_years = models.IntegerField(default=0, verbose_name="근무연도")
-    subject = models.ForeignKey(SubjectInfo, on_delete=models.PROTECT, verbose_name="소속 과목")
+    subject = models.ForeignKey(
+        SubjectInfo,
+        on_delete=models.PROTECT,
+        verbose_name="소속 과목",
+        null=True,
+        blank=True
+    )
     teacher_school = models.CharField(max_length=100, default="", verbose_name="선생 소속 학교")
 
     class Meta:

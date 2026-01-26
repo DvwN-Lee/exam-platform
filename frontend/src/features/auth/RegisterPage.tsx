@@ -61,15 +61,6 @@ const registerSchema = z
     message: `교사 이름은 ${NAME_MIN_LENGTH}자 이상이어야 합니다`,
     path: ['teacher_name'],
   })
-  .refine((data) => {
-    if (data.user_type === 'teacher') {
-      return data.subject_id && data.subject_id > 0
-    }
-    return true
-  }, {
-    message: '과목을 선택해주세요',
-    path: ['subject_id'],
-  })
 
 type RegisterForm = z.infer<typeof registerSchema>
 
@@ -96,12 +87,6 @@ export function RegisterPage() {
     setSelectedUserType(userType)
   }, [userType])
 
-  // 과목 목록 조회
-  const { data: subjects } = useQuery({
-    queryKey: ['subjects'],
-    queryFn: questionApi.getSubjects,
-  })
-
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
     onSuccess: () => {
@@ -127,13 +112,8 @@ export function RegisterPage() {
       requestData.student_name = data.student_name
     }
 
-    if (data.user_type === 'teacher') {
-      if (data.teacher_name) {
-        requestData.teacher_name = data.teacher_name
-      }
-      if (data.subject_id) {
-        requestData.subject_id = data.subject_id
-      }
+    if (data.user_type === 'teacher' && data.teacher_name) {
+      requestData.teacher_name = data.teacher_name
     }
 
     registerMutation.mutate(requestData)
@@ -359,27 +339,6 @@ export function RegisterPage() {
                 />
                 {errors.teacher_name && (
                   <p className="text-sm text-destructive">{errors.teacher_name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subject_id" className="text-[0.9375rem] font-semibold">
-                  담당 과목
-                </Label>
-                <select
-                  id="subject_id"
-                  {...register('subject_id', { valueAsNumber: true })}
-                  className="h-12 w-full rounded-[12px] border-2 border-input bg-background px-5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="">과목을 선택하세요</option>
-                  {subjects?.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.subject_name}
-                    </option>
-                  ))}
-                </select>
-                {errors.subject_id && (
-                  <p className="text-sm text-destructive">{errors.subject_id.message}</p>
                 )}
               </div>
             </>
