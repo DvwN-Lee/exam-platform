@@ -26,7 +26,7 @@ FROM nginx:1.27-alpine AS runtime
 RUN apk add --no-cache curl
 
 # nginx 캐시/런타임 디렉토리 권한 설정 (non-root 실행 지원)
-# Kubernetes podSecurityContext.runAsUser 설정 시 permission denied 방지
+# Kubernetes podSecurityContext에서 임의의 UID로 실행될 수 있으므로 777 권한 설정
 RUN mkdir -p /var/cache/nginx/client_temp \
              /var/cache/nginx/proxy_temp \
              /var/cache/nginx/fastcgi_temp \
@@ -34,8 +34,11 @@ RUN mkdir -p /var/cache/nginx/client_temp \
              /var/cache/nginx/scgi_temp \
              /var/run/nginx \
              /var/log/nginx && \
-    chown -R nginx:nginx /var/cache/nginx /var/run/nginx /var/log/nginx && \
-    chmod -R 755 /var/cache/nginx /var/run/nginx /var/log/nginx
+    chmod -R 777 /var/cache/nginx /var/run/nginx /var/log/nginx && \
+    # nginx pid 파일 경로를 쓰기 가능한 위치로 변경
+    sed -i 's|/run/nginx.pid|/var/run/nginx/nginx.pid|g' /etc/nginx/nginx.conf && \
+    # /etc/nginx/conf.d 디렉토리도 쓰기 가능하게 설정 (envsubst용)
+    chmod -R 777 /etc/nginx/conf.d
 
 # Nginx 설정 템플릿 복사
 COPY nginx.conf /etc/nginx/templates/default.conf.template
