@@ -41,7 +41,7 @@ backend:
         - name: Host
           value: "staging.exam.example.com"
     initialDelaySeconds: 0  # startupProbe 성공 후 즉시 시작
-    periodSeconds: 15
+    periodSeconds: 30
     timeoutSeconds: 15  # worker blocking 가능성 고려
     failureThreshold: 3
 
@@ -54,8 +54,8 @@ backend:
       httpHeaders:
         - name: Host
           value: "staging.exam.example.com"
-    initialDelaySeconds: 10
-    periodSeconds: 15
+    initialDelaySeconds: 15
+    periodSeconds: 30
     timeoutSeconds: 20
     failureThreshold: 3
 
@@ -69,10 +69,10 @@ backend:
       httpHeaders:
         - name: Host
           value: "staging.exam.example.com"
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    timeoutSeconds: 5
-    failureThreshold: 60  # 최대 310초 (10 + 5*60) 대기
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 30  # 최대 315초 (15 + 10*30) 대기
 
 # -----------------------------------------------------------------------------
 # Frontend
