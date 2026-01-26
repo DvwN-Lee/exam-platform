@@ -49,11 +49,13 @@ export default defineConfig({
     },
   ],
 
-  /* 개발 서버 설정 */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  /* 개발 서버 설정 - Staging 환경에서는 비활성화 */
+  webServer: process.env.VITE_TEST_URL
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:5173',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120000,
+      },
 });

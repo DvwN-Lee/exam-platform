@@ -25,7 +25,7 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "examonline-terraform-state-gcp"
+    bucket = "examonline-tf-state-titanium-k3s-20260123"
     prefix = "environments/staging"
   }
 }
@@ -60,13 +60,14 @@ module "gke" {
   project_id                    = var.project_id
   environment                   = var.environment
   cluster_name                  = var.cluster_name
-  location                      = var.region
+  location                      = "${var.region}-a" # Zonal 클러스터 (SSD 할당량 제한 회피)
   network_id                    = module.vpc.network_id
   subnet_id                     = module.vpc.private_subnet_id
   pods_secondary_range_name     = module.vpc.pods_secondary_range_name
   services_secondary_range_name = module.vpc.services_secondary_range_name
 
   node_machine_type   = var.node_machine_type
+  node_disk_type      = "pd-standard" # SSD 할당량 제한 회피
   initial_node_count  = var.initial_node_count
   min_node_count      = var.min_node_count
   max_node_count      = var.max_node_count
@@ -81,6 +82,14 @@ module "gke" {
     {
       cidr_block   = "221.153.70.15/32"
       display_name = "Developer Local"
+    },
+    {
+      cidr_block   = "106.101.4.123/32"
+      display_name = "Developer Previous"
+    },
+    {
+      cidr_block   = "112.218.39.251/32"
+      display_name = "Developer Current"
     }
   ]
 }
@@ -101,6 +110,9 @@ module "cloudsql" {
   database_name       = var.database_name
   deletion_protection = false # Staging
   ssl_mode            = "ENCRYPTED_ONLY" # SSL 암호화 필수
+
+  # VPC Private Service Connection이 완료된 후 생성
+  depends_on = [module.vpc]
 }
 
 # -----------------------------------------------------------------------------

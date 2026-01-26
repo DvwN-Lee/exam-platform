@@ -91,3 +91,8 @@ output "region" {
   description = "VPC region"
   value       = var.region
 }
+
+output "private_service_connection_id" {
+  description = "Private Service Connection ID for Cloud SQL/Memorystore"
+  value       = google_service_networking_connection.private_service_connection.id
+}

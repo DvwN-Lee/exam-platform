@@ -207,10 +207,6 @@ spec:
           readinessProbe:
             {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
           {{- end }}
-          {{- if .Values.backend.startupProbe.enabled }}
-          startupProbe:
-            {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
-          {{- end }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

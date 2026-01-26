@@ -181,4 +181,41 @@ export const selectors = {
     modal: '.modal',
     closeButton: 'button:has-text("닫기")',
   },
+
+  // Sidebar
+  sidebar: {
+    // Container
+    container: 'aside',
+    logo: 'a[href="/dashboard"]',
+
+    // Navigation
+    navMenu: 'nav ul',
+    navItem: (label: string) => `a:has-text("${label}")`,
+    activeNavItem: '.text-primary',
+
+    // User Profile Section
+    userProfile: {
+      trigger: 'button[aria-label="사용자 메뉴 열기"]',
+      userName: '.text-\\[15px\\].font-semibold',
+      userTypeLabel: '.text-\\[13px\\].text-gray-600',
+    },
+
+    // Dropdown Menu
+    dropdown: {
+      content: '[role="menu"]',
+      settingsItem: '[role="menuitem"]:has-text("설정")',
+      logoutItem: '[role="menuitem"]:has-text("로그아웃")',
+
+      // Theme Section
+      themeLabel: 'text=테마',
+      lightTheme: '[role="menuitemradio"]:has-text("라이트")',
+      darkTheme: '[role="menuitemradio"]:has-text("다크")',
+      systemTheme: '[role="menuitemradio"]:has-text("시스템")',
+    },
+
+    // Mobile
+    mobile: {
+      overlay: '.fixed.inset-0.bg-black\\/50',
+    },
+  },
 }
