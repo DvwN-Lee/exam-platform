@@ -164,8 +164,14 @@ spec:
                 secretKeyRef:
                   name: {{ include "exam-platform.redisSecretName" . }}
                   key: REDIS_PASSWORD
+            - name: REDIS_SSL
+              value: {{ .Values.config.redisSSL | default "False" | quote }}
             - name: REDIS_URL
+              {{- if eq (.Values.config.redisSSL | default "False") "True" }}
+              value: "rediss://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/0"
+              {{- else }}
               value: "redis://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/0"
+              {{- end }}
             # SSL settings
             - name: SECURE_SSL_REDIRECT
               valueFrom:

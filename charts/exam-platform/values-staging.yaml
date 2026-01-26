@@ -130,6 +130,9 @@ config:
   mongodbHost: ""   # Not used in current implementation
   redisHost: ""     # Provided by redis-credentials secret
 
+  # Redis TLS: GCP Memorystore transitEncryptionMode=SERVER_AUTHENTICATION
+  redisSSL: "True"
+
   secureSSLRedirect: "False"
   sessionCookieSecure: "False"
   csrfCookieSecure: "False"
