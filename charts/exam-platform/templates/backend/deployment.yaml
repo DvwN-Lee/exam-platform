@@ -166,6 +166,8 @@ spec:
                   key: REDIS_PASSWORD
             - name: REDIS_SSL
               value: {{ .Values.config.redisSSL | default "False" | quote }}
+            - name: REDIS_SSL_CERT_REQS
+              value: {{ .Values.config.redisSSLCertReqs | default "required" | quote }}
             - name: REDIS_URL
               {{- if eq (.Values.config.redisSSL | default "False") "True" }}
               value: "rediss://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/0"
