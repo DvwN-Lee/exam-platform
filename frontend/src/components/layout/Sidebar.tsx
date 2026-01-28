@@ -99,7 +99,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-gray-800 border-r border-slate-200 dark:border-slate-600 transition-all duration-300',
+          'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-600 transition-all duration-300',
           // Mobile: 숨김/슬라이드
           isOpen ? 'translate-x-0' : '-translate-x-full',
           'md:translate-x-0',
