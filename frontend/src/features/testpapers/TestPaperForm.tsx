@@ -233,7 +233,7 @@ export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propI
                 </p>
               </div>
 
-              {subjectId && (
+              {!!subjectId && (
                 <div className="space-y-2 max-h-96 overflow-y-auto rounded-lg border p-4">
                   {questions?.results.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">
