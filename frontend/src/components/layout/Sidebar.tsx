@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
@@ -66,6 +67,11 @@ export function Sidebar() {
   const { isOpen, isCollapsed, close } = useSidebarStore()
   const { theme, setTheme } = useTheme()
   const mounted = useMounted()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   const navItems =
     user?.user_type === 'teacher' ? teacherNavItems : studentNavItems
@@ -93,7 +99,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-900 shadow-sm transition-all duration-300',
+          'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-600 transition-all duration-300',
           // Mobile: 숨김/슬라이드
           isOpen ? 'translate-x-0' : '-translate-x-full',
           'md:translate-x-0',
@@ -205,7 +211,7 @@ export function Sidebar() {
 
           {/* User Profile with Dropdown */}
           <div className="mt-12">
-            <DropdownMenu>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
