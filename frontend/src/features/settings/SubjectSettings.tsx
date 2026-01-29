@@ -163,7 +163,7 @@ export function SubjectSettings() {
                         </button>
                         <button
                           onClick={() => handleDelete(subject.id, subject.subject_name)}
-                          className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                          className="rounded-md border border-red-200 dark:border-red-800 px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           삭제
                         </button>

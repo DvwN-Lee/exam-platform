@@ -220,7 +220,7 @@ export function AnalyticsPage() {
                           {typeof exam.subject === 'object' ? exam.subject?.subject_name : exam.subject} • {exam.student_count}명 응시
                         </div>
                       </div>
-                      <div className="rounded bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                      <div className="rounded bg-green-100 dark:bg-green-900/20 px-3 py-1 text-sm font-medium text-green-700 dark:text-green-300">
                         진행중
                       </div>
                     </div>
