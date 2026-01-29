@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import apiClient from '@/api/client'
 import { getErrorMessage } from '@/utils/error'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 
 interface Subject {
   id: number
@@ -99,7 +100,7 @@ export function SubjectSettings() {
   }
 
   if (isLoading) {
-    return <div className="text-center">로딩 중...</div>
+    return <LoadingPage message="과목 정보를 불러오는 중..." fullScreen={false} />
   }
 
   return (

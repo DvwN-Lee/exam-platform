@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { questionApi } from '@/api/question'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import { LoadingPage } from '@/components/ui/loading'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,11 +69,7 @@ export function QuestionDetailPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="문제 정보를 불러오는 중..." />
   }
 
   if (!question) {
