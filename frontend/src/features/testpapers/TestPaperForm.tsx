@@ -10,6 +10,7 @@ import { questionApi } from '@/api/question'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingPage } from '@/components/ui/loading'
 import type { TestPaper } from '@/types/testpaper'
 
 const testPaperSchema = z.object({
@@ -170,11 +171,7 @@ export function TestPaperForm({ testPaperId: propTestPaperId, initialData: propI
   }
 
   if (isLoadingTestPaper) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="시험지 정보를 불러오는 중..." />
   }
 
   return (

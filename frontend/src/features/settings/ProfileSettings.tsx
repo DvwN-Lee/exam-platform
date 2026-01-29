@@ -5,6 +5,7 @@ import apiClient from '@/api/client'
 import { getErrorMessage } from '@/utils/error'
 import { useAuthStore } from '@/stores/authStore'
 import { FadeIn } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 
 interface ProfileData {
   nick_name: string
@@ -70,7 +71,7 @@ export function ProfileSettings() {
   }
 
   if (isLoading) {
-    return <div className="text-center">로딩 중...</div>
+    return <LoadingPage message="프로필 정보를 불러오는 중..." fullScreen={false} />
   }
 
   return (

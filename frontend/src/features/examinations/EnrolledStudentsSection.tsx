@@ -5,6 +5,7 @@ import { examinationApi } from '@/api/testpaper'
 import type { EnrolledStudent } from '@/types/testpaper'
 import { Button } from '@/components/ui/button'
 import { FadeIn, StaggerTableBody, StaggerTableRow } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 import { StudentSelectModal } from './StudentSelectModal'
 
 interface EnrolledStudentsSectionProps {
@@ -42,7 +43,7 @@ export function EnrolledStudentsSection({
   }
 
   if (isLoading) {
-    return <div>로딩 중...</div>
+    return <LoadingPage message="학생 목록을 불러오는 중..." fullScreen={false} />
   }
 
   return (

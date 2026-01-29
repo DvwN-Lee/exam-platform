@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/authStore'
+import { LoadingPage } from '@/components/ui/loading'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -25,13 +26,7 @@ export function ProtectedRoute({ children, requireRole }: ProtectedRouteProps) {
   }, [isAuthenticated, isLoading, user, requireRole, navigate])
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg">로딩 중...</div>
-        </div>
-      </div>
-    )
+    return <LoadingPage message="인증 확인 중..." />
   }
 
   if (!isAuthenticated) {
