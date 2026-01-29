@@ -99,7 +99,7 @@ module "cloudsql" {
   tier                = var.db_tier
   network_id          = module.vpc.network_id
   database_name       = var.database_name
-  deletion_protection = false # Staging
+  deletion_protection = false            # Staging
   ssl_mode            = "ENCRYPTED_ONLY" # SSL 암호화 필수
 }
 
