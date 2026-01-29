@@ -13,9 +13,9 @@ export const STATUS_LABELS: Record<ExaminationStatus, string> = {
  * 시험 상태별 뱃지 스타일 클래스
  */
 export const STATUS_BADGE_CLASSES: Record<ExaminationStatus, string> = {
-  upcoming: 'bg-blue-100 text-blue-700',
-  ongoing: 'bg-green-100 text-green-700',
-  completed: 'bg-gray-100 text-gray-700',
+  upcoming: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
+  ongoing: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
+  completed: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
 } as const
 
 /**

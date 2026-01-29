@@ -26,12 +26,12 @@ export function Progress({
     <div className={cn('w-full', className)} {...props}>
       {showLabel && (
         <div className="mb-1 flex items-center justify-between text-sm">
-          <span className="font-medium text-gray-700">{percentage}%</span>
+          <span className="font-medium text-gray-700 dark:text-gray-300">{percentage}%</span>
         </div>
       )}
       <div
         className={cn(
-          'w-full overflow-hidden rounded-full bg-gray-200',
+          'w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700',
           heightClasses[height]
         )}
       >
@@ -60,13 +60,13 @@ export function LearningProgress({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-gray-900">{subject}</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">{subject}</span>
         <span className="text-sm font-semibold text-primary">
           {percentage}%
         </span>
       </div>
       <Progress value={percentage} height="sm" />
-      <div className="flex items-center justify-between text-xs text-gray-600">
+      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
         <span>
           {completed}/{total} 강의 완료
         </span>

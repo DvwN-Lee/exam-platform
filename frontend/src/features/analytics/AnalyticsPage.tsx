@@ -7,6 +7,7 @@ import type { PieChartDataItem, ChartDataItem } from '@/types/chart'
 import { motion } from 'framer-motion'
 import { cardHoverVariants } from '@/lib/animations'
 import { FileText, Users, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { STATUS_BADGE_CLASSES } from '@/constants/examination'
 import { LoadingPage } from '@/components/ui/loading'
 
 interface DashboardQuestion {
@@ -217,7 +218,7 @@ export function AnalyticsPage() {
                           {typeof exam.subject === 'object' ? exam.subject?.subject_name : exam.subject} • {exam.student_count}명 응시
                         </div>
                       </div>
-                      <div className="rounded bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                      <div className={`rounded px-3 py-1 text-sm font-medium ${STATUS_BADGE_CLASSES.ongoing}`}>
                         진행중
                       </div>
                     </div>

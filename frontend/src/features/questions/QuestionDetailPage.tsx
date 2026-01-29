@@ -200,7 +200,7 @@ export function QuestionDetailPage() {
                     <motion.div
                       className={`flex items-center gap-3 rounded-lg border p-3 ${
                         option.is_right
-                          ? 'border-green-500 bg-green-50'
+                          ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                           : 'border-border'
                       }`}
                       initial="rest"
