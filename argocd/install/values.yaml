@@ -89,7 +89,7 @@ configs:
   # Repository credentials
   repositories:
     exam-platform:
-      url: https://github.com/DvwN-Lee/exam-platform.git
+      url: git@github.com:DvwN-Lee/exam-platform.git
       type: git
 
   # RBAC
@@ -120,6 +120,9 @@ notifications:
     create: false
     name: argocd-notifications-secret
 
+  # Slack Token은 argocd-notifications-secret Secret의 `slack-token` key에서 참조.
+  # Secret 생성: kubectl create secret generic argocd-notifications-secret \
+  #   --from-literal=slack-token=xoxb-... -n argocd
   notifiers:
     service.slack: |
       token: $slack-token
