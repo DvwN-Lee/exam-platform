@@ -109,10 +109,19 @@ variable "database_name" {
   default     = "examonline"
 }
 
-variable "db_user" {
-  description = "Database user name"
+variable "db_port" {
+  description = "Database port"
   type        = string
-  default     = "examonline"
+  default     = "5432"
+}
+
+variable "master_authorized_cidrs" {
+  description = "GKE Master Authorized Networks에 추가할 CIDR 목록 (개발자 IP 등)"
+  type = list(object({
+    cidr_block   = string
+    display_name = string
+  }))
+  default = []
 }
 
 # -----------------------------------------------------------------------------
@@ -146,27 +155,6 @@ variable "registry_name" {
   description = "Artifact Registry repository name"
   type        = string
   default     = "exam-platform"
-}
-
-# -----------------------------------------------------------------------------
-# Kubernetes
-# -----------------------------------------------------------------------------
-variable "k8s_namespace" {
-  description = "Kubernetes namespace for application deployment"
-  type        = string
-  default     = "default"
-}
-
-variable "image_tag" {
-  description = "Docker image tag for deployment"
-  type        = string
-  default     = "latest"
-}
-
-variable "staging_domain" {
-  description = "Domain name for staging environment"
-  type        = string
-  default     = "staging.exam-platform.local"
 }
 
 # -----------------------------------------------------------------------------
