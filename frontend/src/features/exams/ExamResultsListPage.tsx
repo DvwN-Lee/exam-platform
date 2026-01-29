@@ -5,6 +5,7 @@ import { examApi } from '@/api/exam'
 import { Button } from '@/components/ui/button'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
+import { LoadingPage } from '@/components/ui/loading'
 
 export function ExamResultsListPage() {
   const navigate = useNavigate()
@@ -15,11 +16,7 @@ export function ExamResultsListPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="성적 목록을 불러오는 중..." />
   }
 
   return (
