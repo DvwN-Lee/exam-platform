@@ -20,7 +20,7 @@ resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.51.6"
+  version    = var.argocd_chart_version
   namespace  = kubernetes_namespace.argocd.metadata[0].name
 
   values = [
@@ -70,10 +70,6 @@ resource "random_password" "argocd_admin_password" {
 # Root App이 이를 자동으로 동기화함.
 # -----------------------------------------------------------------------------
 resource "kubernetes_manifest" "root_app" {
-  field_manager {
-    force_conflicts = true
-  }
-
   manifest = {
     apiVersion = "argoproj.io/v1alpha1"
     kind       = "Application"
@@ -92,7 +88,7 @@ resource "kubernetes_manifest" "root_app" {
       project = "default"
 
       source = {
-        repoURL        = "git@github.com:DvwN-Lee/exam-platform.git"
+        repoURL        = var.github_repo_ssh_url
         targetRevision = "main"
         path           = "argocd"
         directory = {
@@ -147,7 +143,7 @@ resource "kubernetes_secret" "argocd_repo_creds" {
 
   data = {
     type          = "git"
-    url           = "git@github.com:DvwN-Lee/exam-platform.git"
+    url           = var.github_repo_ssh_url
     sshPrivateKey = var.argocd_repo_ssh_key
   }
 

@@ -165,3 +165,15 @@ variable "argocd_repo_ssh_key" {
   type        = string
   sensitive   = true
 }
+
+variable "argocd_chart_version" {
+  description = "ArgoCD Helm chart version"
+  type        = string
+  default     = "5.51.6"
+}
+
+variable "github_repo_ssh_url" {
+  description = "GitHub repository SSH URL for ArgoCD"
+  type        = string
+  default     = "git@github.com:DvwN-Lee/exam-platform.git"
+}
