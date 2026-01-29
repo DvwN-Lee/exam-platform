@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router'
 import { examApi } from '@/api/exam'
 import { Button } from '@/components/ui/button'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 
 export function ExamResultPage() {
   const navigate = useNavigate()
@@ -15,11 +16,7 @@ export function ExamResultPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
-        <div>결과를 불러오는 중...</div>
-      </div>
-    )
+    return <LoadingPage message="결과를 불러오는 중..." />
   }
 
   if (!result) {

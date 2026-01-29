@@ -5,6 +5,7 @@ import { testPaperApi } from '@/api/testpaper'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 import { cardHoverVariants } from '@/lib/animations'
 
 export function TestPaperDetailPage() {
@@ -19,11 +20,7 @@ export function TestPaperDetailPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="시험지 정보를 불러오는 중..." />
   }
 
   if (!testPaper) {

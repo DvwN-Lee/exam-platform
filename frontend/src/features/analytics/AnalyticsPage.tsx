@@ -7,6 +7,7 @@ import type { PieChartDataItem, ChartDataItem } from '@/types/chart'
 import { motion } from 'framer-motion'
 import { cardHoverVariants } from '@/lib/animations'
 import { FileText, Users, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { LoadingPage } from '@/components/ui/loading'
 
 interface DashboardQuestion {
   id: number
@@ -35,11 +36,7 @@ export function AnalyticsPage() {
   })
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="통계 데이터를 불러오는 중..." />
   }
 
   // Chart data preparation
