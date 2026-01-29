@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   FileText,
   Files,
@@ -294,9 +295,7 @@ export function TeacherDashboard() {
             </div>
 
             {dashboard.recent_questions.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                생성한 문제가 없습니다.
-              </p>
+              <EmptyState compact title="생성한 문제가 없습니다." />
             ) : (
               <StaggerContainer className="space-y-3" delay={0.2}>
                 {dashboard.recent_questions.slice(0, 5).map((question) => (
@@ -340,9 +339,7 @@ export function TeacherDashboard() {
             </div>
 
             {dashboard.ongoing_exams.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                진행 중인 시험이 없습니다.
-              </p>
+              <EmptyState compact title="진행 중인 시험이 없습니다." />
             ) : (
               <StaggerContainer className="space-y-3" delay={0.2}>
                 {dashboard.ongoing_exams.slice(0, 5).map((exam) => (
@@ -379,9 +376,7 @@ export function TeacherDashboard() {
             <h2 className="mb-4 text-xl font-semibold">최근 제출된 시험</h2>
 
           {dashboard.student_statistics.recent_submissions.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              제출된 시험이 없습니다.
-            </p>
+            <EmptyState compact title="제출된 시험이 없습니다." />
           ) : (
             <StaggerContainer className="grid gap-3 md:grid-cols-2 lg:grid-cols-3" delay={0.2}>
               {dashboard.student_statistics.recent_submissions

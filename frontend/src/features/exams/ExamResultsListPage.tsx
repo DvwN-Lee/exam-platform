@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export function ExamResultsListPage() {
   const navigate = useNavigate()
@@ -21,7 +22,7 @@ export function ExamResultsListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         <FadeIn>
           <div className="flex items-center justify-between">
             <div>
@@ -39,15 +40,13 @@ export function ExamResultsListPage() {
         <StaggerContainer className="space-y-4">
           {!submissions || submissions.length === 0 ? (
             <FadeIn>
-              <div className="rounded-lg border bg-card p-12 text-center">
-                <p className="text-muted-foreground">제출한 시험이 없습니다.</p>
-                <Button
-                  className="mt-4"
-                  onClick={() => navigate({ to: '/exams' })}
-                >
-                  시험 보러 가기
-                </Button>
-              </div>
+              <EmptyState
+                title="제출한 시험이 없습니다"
+                action={{
+                  label: '시험 보러 가기',
+                  onClick: () => navigate({ to: '/exams' }),
+                }}
+              />
             </FadeIn>
           ) : (
             submissions.map((submission) => {
@@ -62,7 +61,7 @@ export function ExamResultsListPage() {
               return (
                 <StaggerItem key={submission.id}>
                   <motion.div
-                    className="rounded-lg border bg-card p-6 transition-colors cursor-pointer"
+                    className="rounded-lg border bg-card p-4 transition-colors cursor-pointer"
                     onClick={() => navigate({ to: `/exams/${submission.examination.id}/result` })}
                     initial="rest"
                     whileHover="hover"

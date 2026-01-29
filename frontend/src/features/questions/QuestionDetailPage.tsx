@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { questionApi } from '@/api/question'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { LoadingPage } from '@/components/ui/loading'
 import {
   AlertDialog,
@@ -93,16 +94,14 @@ export function QuestionDetailPage() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">{question.name}</h1>
               <div className="mt-2 flex items-center gap-2">
-                <span className="rounded bg-primary/10 px-2 py-1 text-sm font-medium">
+                <Badge variant="primary">
                   {questionTypeLabels[question.tq_type]}
-                </span>
-                <span className="rounded bg-secondary px-2 py-1 text-sm font-medium">
+                </Badge>
+                <Badge variant="secondary">
                   {questionDegreeLabels[question.tq_degree]}
-                </span>
+                </Badge>
                 {question.is_share && (
-                  <span className="rounded bg-green-100 px-2 py-1 text-sm font-medium text-green-700">
-                    공유됨
-                  </span>
+                  <Badge variant="success-soft">공유됨</Badge>
                 )}
               </div>
             </div>

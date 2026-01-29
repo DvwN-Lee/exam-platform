@@ -65,7 +65,7 @@ export function StudentListPage() {
               variants={cardHoverVariants}
               initial="initial"
               whileHover="hover"
-              className="relative overflow-hidden rounded-xl border bg-card p-6"
+              className="relative overflow-hidden rounded-lg border bg-card p-6"
             >
               <div className="absolute right-4 top-4 text-primary/10">
                 <Users className="h-16 w-16" />

@@ -6,14 +6,16 @@ import { toast } from 'sonner'
 import { examinationApi } from '@/api/testpaper'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cardHoverVariants } from '@/lib/animations'
 import {
   STATUS_LABELS,
   getExamStatus,
-  getStatusBadgeClass,
+  getStatusBadgeVariant,
 } from '@/constants/examination'
 import { formatKoreanDateTime } from '@/utils/time'
 import type { ExaminationFilters, Examination } from '@/types/testpaper'
@@ -138,17 +140,17 @@ export function ExaminationListPage() {
         <StaggerContainer className="space-y-4">
           {data?.results.length === 0 ? (
             <FadeIn>
-              <div className="rounded-lg border bg-card p-12 text-center">
-                <p className="text-muted-foreground">등록된 시험이 없습니다.</p>
-                {user?.user_type === 'teacher' && (
-                  <Button
-                    className="mt-4"
-                    onClick={() => navigate({ to: '/examinations/new' })}
-                  >
-                    첫 시험 만들기
-                  </Button>
-                )}
-              </div>
+              <EmptyState
+                title="등록된 시험이 없습니다"
+                action={
+                  user?.user_type === 'teacher'
+                    ? {
+                        label: '첫 시험 만들기',
+                        onClick: () => navigate({ to: '/examinations/new' }),
+                      }
+                    : undefined
+                }
+              />
             </FadeIn>
           ) : (
             data?.results.map((examination: Examination) => {
@@ -167,15 +169,11 @@ export function ExaminationListPage() {
                           <h3 className="text-lg font-semibold">
                             {examination.exam_name}
                           </h3>
-                          <span
-                            className={`rounded px-2 py-1 text-xs font-medium ${getStatusBadgeClass(status)}`}
-                          >
+                          <Badge variant={getStatusBadgeVariant(status)}>
                             {STATUS_LABELS[status]}
-                          </span>
+                          </Badge>
                           {examination.is_public && (
-                            <span className="rounded bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">
-                              공개
-                            </span>
+                            <Badge variant="purple-soft">공개</Badge>
                           )}
                         </div>
                         <div className="mt-2 text-sm text-muted-foreground">
