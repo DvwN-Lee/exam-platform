@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 import { cardHoverVariants } from '@/lib/animations'
 import type { QuestionFilters, QuestionType, QuestionDegree } from '@/types/question'
 
@@ -60,11 +61,7 @@ export function QuestionListPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="문제 목록을 불러오는 중..." />
   }
 
   return (

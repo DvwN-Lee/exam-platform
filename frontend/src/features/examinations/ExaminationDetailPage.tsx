@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { EnrolledStudentsSection } from './EnrolledStudentsSection'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
+import { LoadingPage } from '@/components/ui/loading'
 import { cardHoverVariants } from '@/lib/animations'
 import type { ExaminationStatus } from '@/types/testpaper'
 
@@ -62,11 +63,7 @@ export function ExaminationDetailPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="시험 정보를 불러오는 중..." />
   }
 
   if (!examination) {

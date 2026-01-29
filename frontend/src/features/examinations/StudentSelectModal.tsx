@@ -6,6 +6,7 @@ import { getStudents } from '@/api/student'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { StaggerContainer, StaggerItem } from '@/components/animation'
+import { LoadingSpinner } from '@/components/ui/loading'
 import { modalOverlayVariants, modalContentVariants } from '@/lib/animations'
 import type { Student } from '@/types/student'
 
@@ -95,7 +96,9 @@ export function StudentSelectModal({
 
             <div className="mb-4 max-h-96 overflow-y-auto">
               {isLoading ? (
-                <div className="py-8 text-center">로딩 중...</div>
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSpinner />
+                </div>
               ) : availableStudents.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
                   {search ? '검색 결과가 없습니다.' : '등록 가능한 학생이 없습니다.'}
