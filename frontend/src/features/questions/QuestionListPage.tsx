@@ -190,7 +190,7 @@ export function QuestionListPage() {
                           {questionDegreeLabels[question.tq_degree]}
                         </span>
                         {question.is_share && (
-                          <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                          <span className="rounded bg-green-100 dark:bg-green-900/20 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
                             공유됨
                           </span>
                         )}

@@ -315,7 +315,7 @@ export function ExaminationForm({
             <input
               type="checkbox"
               id="is_public"
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
               {...register('is_public')}
             />
             <Label htmlFor="is_public" className="cursor-pointer">
