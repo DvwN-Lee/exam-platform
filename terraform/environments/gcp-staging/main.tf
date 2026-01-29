@@ -25,7 +25,7 @@ terraform {
   }
 
   backend "gcs" {
-    bucket = "examonline-terraform-state-gcp"
+    bucket = "examonline-tf-state-titanium-k3s-20260123"
     prefix = "environments/staging"
   }
 }
@@ -72,17 +72,16 @@ module "gke" {
   max_node_count      = var.max_node_count
   deletion_protection = false # Staging
 
-  # Master Authorized Networks - VPC Internal + 개발자 IP 허용
-  master_authorized_networks = [
-    {
-      cidr_block   = var.private_subnet_cidr
-      display_name = "VPC Private Subnet"
-    },
-    {
-      cidr_block   = "221.153.70.15/32"
-      display_name = "Developer Local"
-    }
-  ]
+  # Master Authorized Networks - VPC Internal + 추가 허용 CIDR
+  master_authorized_networks = concat(
+    [
+      {
+        cidr_block   = var.private_subnet_cidr
+        display_name = "VPC Private Subnet"
+      }
+    ],
+    var.master_authorized_cidrs
+  )
 }
 
 # -----------------------------------------------------------------------------
@@ -99,7 +98,7 @@ module "cloudsql" {
   tier                = var.db_tier
   network_id          = module.vpc.network_id
   database_name       = var.database_name
-  deletion_protection = false # Staging
+  deletion_protection = false            # Staging
   ssl_mode            = "ENCRYPTED_ONLY" # SSL 암호화 필수
 }
 

@@ -14,12 +14,12 @@ variable "region" {
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod, test)"
+  description = "Environment name (dev, staging, prod)"
   type        = string
 
   validation {
-    condition     = contains(["dev", "staging", "prod", "test"], var.environment)
-    error_message = "Environment must be one of: dev, staging, prod, test."
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, staging, prod."
   }
 }
 
@@ -89,6 +89,12 @@ variable "services_cidr" {
     condition     = can(cidrhost(var.services_cidr, 0))
     error_message = "services_cidr must be a valid CIDR block."
   }
+}
+
+variable "health_check_ports" {
+  description = "TCP ports to allow for GCP health checks"
+  type        = list(string)
+  default     = ["80", "443", "8080", "10256"]
 }
 
 variable "tags" {

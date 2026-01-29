@@ -166,6 +166,7 @@ resource "google_compute_firewall" "allow_health_check" {
 
   allow {
     protocol = "tcp"
+    ports    = var.health_check_ports
   }
 
   # Google health check ranges

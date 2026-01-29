@@ -28,7 +28,7 @@ resource "google_secret_manager_secret" "db_port" {
 
 resource "google_secret_manager_secret_version" "db_port" {
   secret      = google_secret_manager_secret.db_port.id
-  secret_data = "5432"
+  secret_data = var.db_port
 }
 
 resource "google_secret_manager_secret" "db_name" {
@@ -54,7 +54,7 @@ resource "google_secret_manager_secret" "db_user" {
 
 resource "google_secret_manager_secret_version" "db_user" {
   secret      = google_secret_manager_secret.db_user.id
-  secret_data = var.db_user
+  secret_data = module.cloudsql.database_user
 }
 
 resource "google_secret_manager_secret" "db_password" {
