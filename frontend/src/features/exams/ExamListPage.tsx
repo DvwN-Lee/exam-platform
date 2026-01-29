@@ -41,7 +41,7 @@ export function ExamListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         <FadeIn>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">응시 가능한 시험</h1>
@@ -57,7 +57,7 @@ export function ExamListPage() {
               variants={cardHoverVariants}
               initial="initial"
               whileHover="hover"
-              className="relative overflow-hidden rounded-xl border bg-card p-6"
+              className="relative overflow-hidden rounded-lg border bg-card p-6"
             >
               <div className="absolute right-4 top-4 text-primary/10">
                 <FileText className="h-16 w-16" />

@@ -5,7 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
@@ -23,6 +23,26 @@ const badgeVariants = cva(
           'border border-gray-300 dark:border-gray-600',
           'text-gray-700 dark:text-gray-300',
           'hover:bg-gray-50 dark:hover:bg-gray-800',
+        ].join(' '),
+        'success-soft': [
+          'bg-green-100 dark:bg-green-900/20',
+          'text-green-700 dark:text-green-300',
+          'hover:bg-green-200 dark:hover:bg-green-900/30',
+        ].join(' '),
+        'info-soft': [
+          'bg-blue-100 dark:bg-blue-900/20',
+          'text-blue-700 dark:text-blue-300',
+          'hover:bg-blue-200 dark:hover:bg-blue-900/30',
+        ].join(' '),
+        'purple-soft': [
+          'bg-purple-100 dark:bg-purple-900/20',
+          'text-purple-700 dark:text-purple-300',
+          'hover:bg-purple-200 dark:hover:bg-purple-900/30',
+        ].join(' '),
+        'muted-soft': [
+          'bg-gray-100 dark:bg-gray-800',
+          'text-gray-700 dark:text-gray-300',
+          'hover:bg-gray-200 dark:hover:bg-gray-700',
         ].join(' '),
       },
     },

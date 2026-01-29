@@ -6,9 +6,11 @@ import { toast } from 'sonner'
 import { questionApi } from '@/api/question'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cardHoverVariants } from '@/lib/animations'
 import type { QuestionFilters, QuestionType, QuestionDegree } from '@/types/question'
 
@@ -155,17 +157,17 @@ export function QuestionListPage() {
         <StaggerContainer className="space-y-4">
           {data?.results.length === 0 ? (
             <FadeIn>
-              <div className="rounded-lg border bg-card p-12 text-center">
-                <p className="text-muted-foreground">문제가 없습니다.</p>
-                {user?.user_type === 'teacher' && (
-                  <Button
-                    className="mt-4"
-                    onClick={() => navigate({ to: '/questions/new' })}
-                  >
-                    첫 문제 만들기
-                  </Button>
-                )}
-              </div>
+              <EmptyState
+                title="문제가 없습니다"
+                action={
+                  user?.user_type === 'teacher'
+                    ? {
+                        label: '첫 문제 만들기',
+                        onClick: () => navigate({ to: '/questions/new' }),
+                      }
+                    : undefined
+                }
+              />
             </FadeIn>
           ) : (
             data?.results.map((question) => (
@@ -180,16 +182,14 @@ export function QuestionListPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-semibold">{question.name}</h3>
-                        <span className="rounded bg-primary/10 px-2 py-1 text-xs font-medium">
+                        <Badge variant="primary">
                           {questionTypeLabels[question.tq_type]}
-                        </span>
-                        <span className="rounded bg-secondary px-2 py-1 text-xs font-medium">
+                        </Badge>
+                        <Badge variant="secondary">
                           {questionDegreeLabels[question.tq_degree]}
-                        </span>
+                        </Badge>
                         {question.is_share && (
-                          <span className="rounded bg-green-100 dark:bg-green-900/20 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-300">
-                            공유됨
-                          </span>
+                          <Badge variant="success-soft">공유됨</Badge>
                         )}
                       </div>
                       <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
