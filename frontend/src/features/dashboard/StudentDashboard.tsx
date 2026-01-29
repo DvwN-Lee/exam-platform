@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { dashboardApi } from '@/api/dashboard'
 import { Button } from '@/components/ui/button'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 import { DDayBadge } from '@/components/ui/badge'
 import { CheckCircle2, TrendingUp, Calendar } from 'lucide-react'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
@@ -201,9 +202,7 @@ export function StudentDashboard() {
             </div>
 
             {(dashboard.recent_submissions?.length ?? 0) === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                응시한 시험이 없습니다.
-              </p>
+              <EmptyState compact title="응시한 시험이 없습니다." />
             ) : (
               <StaggerContainer className="space-y-3" delay={0.2}>
                 {(dashboard.recent_submissions ?? []).slice(0, 5).map((submission) => (
@@ -261,9 +260,7 @@ export function StudentDashboard() {
             </div>
 
             {(dashboard.upcoming_exams?.length ?? 0) === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                예정된 시험이 없습니다.
-              </p>
+              <EmptyState compact title="예정된 시험이 없습니다." />
             ) : (
               <StaggerContainer className="space-y-3" delay={0.2}>
                 {(dashboard.upcoming_exams ?? []).slice(0, 5).map((exam) => {

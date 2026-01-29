@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cardHoverVariants } from '@/lib/animations'
 
 export function TestPaperDetailPage() {
@@ -173,17 +174,17 @@ export function TestPaperDetailPage() {
 
         {testPaper.questions.length === 0 && (
           <FadeIn delay={0.2}>
-            <div className="rounded-lg border bg-card p-12 text-center">
-              <p className="text-muted-foreground">등록된 문제가 없습니다.</p>
-              {isOwner && (
-                <Button
-                  className="mt-4"
-                  onClick={() => navigate({ to: `/testpapers/${id}/edit` })}
-                >
-                  문제 추가하기
-                </Button>
-              )}
-            </div>
+            <EmptyState
+              title="등록된 문제가 없습니다"
+              action={
+                isOwner
+                  ? {
+                      label: '문제 추가하기',
+                      onClick: () => navigate({ to: `/testpapers/${id}/edit` }),
+                    }
+                  : undefined
+              }
+            />
           </FadeIn>
         )}
       </div>

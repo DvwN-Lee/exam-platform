@@ -5,11 +5,12 @@ import { toast } from 'sonner'
 import { examinationApi } from '@/api/testpaper'
 import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { EnrolledStudentsSection } from './EnrolledStudentsSection'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { LoadingPage } from '@/components/ui/loading'
 import { cardHoverVariants } from '@/lib/animations'
-import { STATUS_LABELS, STATUS_BADGE_CLASSES } from '@/constants/examination'
+import { STATUS_LABELS, getStatusBadgeVariant } from '@/constants/examination'
 import type { ExaminationStatus } from '@/types/testpaper'
 
 export function ExaminationDetailPage() {
@@ -71,15 +72,11 @@ export function ExaminationDetailPage() {
                 {examination.exam_name}
               </h1>
               <div className="mt-2 flex items-center gap-2">
-                <span
-                  className={`rounded px-2 py-1 text-sm font-medium ${STATUS_BADGE_CLASSES[status]}`}
-                >
+                <Badge variant={getStatusBadgeVariant(status)}>
                   {STATUS_LABELS[status]}
-                </span>
+                </Badge>
                 {examination.is_public && (
-                  <span className="rounded bg-purple-100 px-2 py-1 text-sm font-medium text-purple-700">
-                    공개
-                  </span>
+                  <Badge variant="purple-soft">공개</Badge>
                 )}
               </div>
             </div>

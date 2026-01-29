@@ -9,6 +9,7 @@ interface EmptyStateProps {
     label: string
     onClick: () => void
   }
+  compact?: boolean
 }
 
 export function EmptyState({
@@ -16,7 +17,16 @@ export function EmptyState({
   title,
   description,
   action,
+  compact = false,
 }: EmptyStateProps) {
+  if (compact) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-sm text-muted-foreground">{title}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
       {Icon && (

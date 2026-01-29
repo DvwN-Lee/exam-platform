@@ -5,6 +5,9 @@ import apiClient from '@/api/client'
 import { getErrorMessage } from '@/utils/error'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animation'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface Subject {
   id: number
@@ -121,28 +124,29 @@ export function SubjectSettings() {
                 <div className="flex items-center justify-between rounded-lg border p-3">
                   {editingId === subject.id ? (
                     <div className="flex flex-1 items-center gap-2">
-                      <input
+                      <Input
                         type="text"
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
-                        className="flex-1 rounded-md border px-3 py-1"
+                        className="flex-1"
                         autoFocus
                       />
-                      <button
+                      <Button
+                        size="sm"
                         onClick={() => handleUpdate(subject.id)}
-                        className="rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground hover:bg-primary/90"
                       >
                         저장
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => {
                           setEditingId(null)
                           setEditingName('')
                         }}
-                        className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
                       >
                         취소
-                      </button>
+                      </Button>
                     </div>
                   ) : (
                     <>
@@ -153,21 +157,23 @@ export function SubjectSettings() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => {
                             setEditingId(subject.id)
                             setEditingName(subject.subject_name)
                           }}
-                          className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
                         >
                           수정
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
                           onClick={() => handleDelete(subject.id, subject.subject_name)}
-                          className="rounded-md border border-red-200 dark:border-red-800 px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           삭제
-                        </button>
+                        </Button>
                       </div>
                     </>
                   )}
@@ -177,48 +183,51 @@ export function SubjectSettings() {
           </StaggerContainer>
         ) : (
           <FadeIn type="slideUp" delay={0.1}>
-            <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-              등록된 과목이 없습니다. 과목을 추가해주세요.
-            </div>
+            <EmptyState
+              title="등록된 과목이 없습니다"
+              description="과목을 추가해주세요."
+            />
           </FadeIn>
         )}
 
         {/* 과목 추가 폼 */}
         {isAdding ? (
           <form onSubmit={handleAdd} className="flex gap-2 rounded-lg border p-3">
-            <input
+            <Input
               type="text"
               value={newSubjectName}
               onChange={(e) => setNewSubjectName(e.target.value)}
               placeholder="새 과목명을 입력하세요"
-              className="flex-1 rounded-md border px-3 py-1"
+              className="flex-1"
               autoFocus
             />
-            <button
+            <Button
               type="submit"
+              size="sm"
               disabled={addMutation.isPending}
-              className="rounded-md bg-primary px-4 py-1 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {addMutation.isPending ? '추가 중...' : '추가'}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="sm"
+              variant="outline"
               onClick={() => {
                 setIsAdding(false)
                 setNewSubjectName('')
               }}
-              className="rounded-md border px-4 py-1 text-sm hover:bg-muted"
             >
               취소
-            </button>
+            </Button>
           </form>
         ) : (
-          <button
+          <Button
+            variant="outline"
             onClick={() => setIsAdding(true)}
-            className="w-full rounded-lg border border-dashed p-3 text-sm text-muted-foreground hover:border-primary hover:text-primary"
+            className="w-full border-dashed text-muted-foreground hover:border-primary hover:text-primary"
           >
             + 새 과목 추가
-          </button>
+          </Button>
         )}
       </div>
     </div>

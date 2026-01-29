@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
 import { LoadingPage } from '@/components/ui/loading'
+import { EmptyState } from '@/components/ui/empty-state'
 
 export function TestPaperListPage() {
   const navigate = useNavigate()
@@ -56,17 +57,17 @@ export function TestPaperListPage() {
         <StaggerContainer className="space-y-4">
           {data?.results.length === 0 ? (
             <FadeIn>
-              <div className="rounded-lg border bg-card p-12 text-center">
-                <p className="text-muted-foreground">시험지가 없습니다.</p>
-                {user?.user_type === 'teacher' && (
-                  <Button
-                    className="mt-4"
-                    onClick={() => navigate({ to: '/testpapers/new' })}
-                  >
-                    첫 시험지 만들기
-                  </Button>
-                )}
-              </div>
+              <EmptyState
+                title="시험지가 없습니다"
+                action={
+                  user?.user_type === 'teacher'
+                    ? {
+                        label: '첫 시험지 만들기',
+                        onClick: () => navigate({ to: '/testpapers/new' }),
+                      }
+                    : undefined
+                }
+              />
             </FadeIn>
           ) : (
             data?.results.map((testPaper) => (
