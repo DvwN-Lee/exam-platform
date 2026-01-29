@@ -10,6 +10,7 @@ import { examinationApi, testPaperApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingPage } from '@/components/ui/loading'
 import {
   DEFAULT_EXAM_START_OFFSET_MS,
   DEFAULT_EXAM_END_OFFSET_MS,
@@ -214,11 +215,7 @@ export function ExaminationForm({
 
   // 로딩 상태 처리
   if (isLoadingExamination) {
-    return (
-      <div className="flex min-h-[250px] sm:min-h-[300px] md:min-h-[400px] items-center justify-center">
-        로딩 중...
-      </div>
-    )
+    return <LoadingPage message="시험 정보를 불러오는 중..." />
   }
 
   // 에러 상태 처리

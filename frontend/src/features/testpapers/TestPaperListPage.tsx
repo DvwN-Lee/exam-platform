@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { Button } from '@/components/ui/button'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
+import { LoadingPage } from '@/components/ui/loading'
 
 export function TestPaperListPage() {
   const navigate = useNavigate()
@@ -32,11 +33,7 @@ export function TestPaperListPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div>로딩 중...</div>
-      </div>
-    )
+    return <LoadingPage message="시험지 목록을 불러오는 중..." />
   }
 
   return (
