@@ -8,13 +8,8 @@ import { Button } from '@/components/ui/button'
 import { EnrolledStudentsSection } from './EnrolledStudentsSection'
 import { StaggerContainer, StaggerItem, FadeIn } from '@/components/animation'
 import { cardHoverVariants } from '@/lib/animations'
+import { STATUS_LABELS, STATUS_BADGE_CLASSES } from '@/constants/examination'
 import type { ExaminationStatus } from '@/types/testpaper'
-
-const statusLabels: Record<ExaminationStatus, string> = {
-  upcoming: '예정',
-  ongoing: '진행중',
-  completed: '완료',
-}
 
 export function ExaminationDetailPage() {
   const navigate = useNavigate()
@@ -50,17 +45,6 @@ export function ExaminationDetailPage() {
     return 'ongoing'
   }
 
-  const getStatusBadgeClass = (status: ExaminationStatus) => {
-    switch (status) {
-      case 'upcoming':
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
-      case 'ongoing':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-      case 'completed':
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-    }
-  }
-
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -91,11 +75,9 @@ export function ExaminationDetailPage() {
               </h1>
               <div className="mt-2 flex items-center gap-2">
                 <span
-                  className={`rounded px-2 py-1 text-sm font-medium ${getStatusBadgeClass(
-                    status
-                  )}`}
+                  className={`rounded px-2 py-1 text-sm font-medium ${STATUS_BADGE_CLASSES[status]}`}
                 >
-                  {statusLabels[status]}
+                  {STATUS_LABELS[status]}
                 </span>
                 {examination.is_public && (
                   <span className="rounded bg-purple-100 px-2 py-1 text-sm font-medium text-purple-700">
