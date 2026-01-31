@@ -3,6 +3,7 @@ kind: Application
 metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-deployed.slack: exam-prod-deployments
     notifications.argoproj.io/subscribe.on-health-degraded.slack: exam-prod-alerts
     notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-prod-alerts
     notifications.argoproj.io/subscribe.on-sync-running.slack: exam-prod-deployments

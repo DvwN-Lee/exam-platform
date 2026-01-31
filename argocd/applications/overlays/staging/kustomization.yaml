@@ -19,7 +19,7 @@ patches:
       - op: replace
         path: /metadata/labels/app.kubernetes.io~1instance
         value: staging
-      - op: add
+      - op: replace
         path: /metadata/labels/environment
         value: staging
       - op: add
