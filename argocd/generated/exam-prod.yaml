@@ -44,7 +44,7 @@ spec:
       - values-prod.yaml
     path: charts/exam-platform
     repoURL: git@github.com:DvwN-Lee/exam-platform.git
-    targetRevision: main
+    targetRevision: release
   syncPolicy:
     retry:
       backoff:

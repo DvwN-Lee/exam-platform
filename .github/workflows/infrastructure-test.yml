@@ -6,6 +6,7 @@ on:
     paths:
       - 'terraform/**'
       - 'charts/**'
+      - 'argocd/**'
       - 'tests/terratest/**'
       - '.github/workflows/infrastructure-test.yml'
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - 'terraform/**'
       - 'charts/**'
+      - 'argocd/**'
       - 'tests/terratest/**'
   workflow_dispatch:
 
@@ -67,6 +69,30 @@ jobs:
 
       - name: Run GKE Module Tests
         run: go test -v -timeout 30m ./terraform/gke/...
+
+  kustomize-build-check:
+    name: Kustomize Generated Files Consistency
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Rebuild Generated Files
+        run: |
+          for env in dev staging prod; do
+            kubectl kustomize argocd/applications/overlays/${env} > argocd/generated/exam-${env}.yaml
+          done
+
+      - name: Check for Drift
+        run: |
+          if ! git diff --exit-code argocd/generated/; then
+            echo "::error::Generated files are out of sync with overlay definitions. Run 'kubectl kustomize' and commit the results."
+            exit 1
+          fi
 
   helm-lint-tests:
     name: Helm Chart Lint Tests
@@ -237,7 +263,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [terraform-tests, helm-lint-tests, helm-template-tests]
+    needs: [terraform-tests, helm-lint-tests, helm-template-tests, kustomize-build-check]
     if: always()
 
     steps:
@@ -250,3 +276,4 @@ jobs:
           echo "| Terraform Module Tests | ${{ needs.terraform-tests.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Helm Lint Tests | ${{ needs.helm-lint-tests.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Helm Template Tests | ${{ needs.helm-template-tests.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kustomize Build Check | ${{ needs.kustomize-build-check.result == 'success' && 'Passed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
