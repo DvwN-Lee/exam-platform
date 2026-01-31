@@ -21,20 +21,30 @@ patches:
       - op: replace
         path: /metadata/labels/app.kubernetes.io~1instance
         value: prod
-      - op: add
+      - op: replace
         path: /metadata/labels/environment
         value: prod
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "1"
       - op: replace
-        path: /metadata/annotations
-        value:
-          argocd.argoproj.io/sync-wave: "1"
-          notifications.argoproj.io/subscribe.on-sync-running.slack: exam-prod-deployments
-          notifications.argoproj.io/subscribe.on-sync-succeeded.slack: exam-prod-deployments
-          notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-prod-alerts
-          notifications.argoproj.io/subscribe.on-health-degraded.slack: exam-prod-alerts
+        path: /metadata/annotations/notifications.argoproj.io~1subscribe.on-deployed.slack
+        value: exam-prod-deployments
+      - op: replace
+        path: /metadata/annotations/notifications.argoproj.io~1subscribe.on-sync-failed.slack
+        value: exam-prod-alerts
+      - op: add
+        path: /metadata/annotations/notifications.argoproj.io~1subscribe.on-sync-running.slack
+        value: exam-prod-deployments
+      - op: add
+        path: /metadata/annotations/notifications.argoproj.io~1subscribe.on-sync-succeeded.slack
+        value: exam-prod-deployments
+      - op: add
+        path: /metadata/annotations/notifications.argoproj.io~1subscribe.on-health-degraded.slack
+        value: exam-prod-alerts
       - op: replace
         path: /spec/destination/namespace
-        value: exam-prod
+        value: exam-platform-prod
       - op: replace
         path: /spec/source/helm/valueFiles
         value:
