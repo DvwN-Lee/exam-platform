@@ -1,0 +1,18 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_IMAGE_URL}:${SHORT_SHA}
+      - -t
+      - ${_IMAGE_URL}:staging
+      - -f
+      - examonline/Dockerfile
+      - examonline/
+
+images:
+  - ${_IMAGE_URL}:${SHORT_SHA}
+  - ${_IMAGE_URL}:staging
+
+options:
+  logging: CLOUD_LOGGING_ONLY
