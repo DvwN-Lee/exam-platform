@@ -71,7 +71,7 @@ backend:
 frontend:
   replicaCount: 2
   image:
-    tag: "staging"
+    tag: "5261ad2"
     pullPolicy: IfNotPresent
   resources:
     requests:
