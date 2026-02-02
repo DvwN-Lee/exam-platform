@@ -71,7 +71,7 @@ backend:
 frontend:
   replicaCount: 2
   image:
-    tag: "5261ad2"
+    tag: "300ce60"
     pullPolicy: IfNotPresent
   resources:
     requests:
