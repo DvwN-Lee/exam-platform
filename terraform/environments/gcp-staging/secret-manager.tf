@@ -96,7 +96,7 @@ resource "google_secret_manager_secret" "redis_port" {
 
 resource "google_secret_manager_secret_version" "redis_port" {
   secret      = google_secret_manager_secret.redis_port.id
-  secret_data = "6379"
+  secret_data = tostring(module.memorystore.port)
 }
 
 # -----------------------------------------------------------------------------
