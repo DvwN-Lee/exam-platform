@@ -86,11 +86,8 @@ redis:
 # Configs
 # -----------------------------------------------------------------------------
 configs:
-  # Repository credentials
-  repositories:
-    exam-platform:
-      url: git@github.com:DvwN-Lee/exam-platform.git
-      type: git
+  # Repository credentials는 Terraform kubernetes_secret으로 관리 (argocd.tf)
+  # Helm에서 중복 등록 시 sshPrivateKey 없는 Secret이 생성되어 인증 실패 발생
 
   # RBAC
   rbac:
