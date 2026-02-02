@@ -1,6 +1,5 @@
 """
 Django base settings for examonline project.
-
 Common settings for all environments.
 """
 

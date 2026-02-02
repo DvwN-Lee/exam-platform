@@ -12,13 +12,13 @@ steps:
       - examonline/
 
   # Step 2: Git Write-Back (Immutable Tag -> ArgoCD Auto Sync)
-  - name: gcr.io/cloud-builders/git
+  - name: gcr.io/cloud-builders/gcloud
     entrypoint: bash
     args:
       - -c
       - |
         # 0. yq 설치
-        wget -qO /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/bin/yq
         chmod a+x /usr/bin/yq
 
         # 1. SSH Setup
