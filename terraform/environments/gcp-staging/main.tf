@@ -22,6 +22,14 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 
   backend "gcs" {
@@ -49,6 +57,8 @@ module "vpc" {
   private_subnet_cidr = var.private_subnet_cidr
   pods_cidr           = var.pods_cidr
   services_cidr       = var.services_cidr
+
+  depends_on = [google_project_service.apis]
 }
 
 # -----------------------------------------------------------------------------
@@ -60,7 +70,7 @@ module "gke" {
   project_id                    = var.project_id
   environment                   = var.environment
   cluster_name                  = var.cluster_name
-  location                      = var.region
+  location                      = "${var.region}-a"
   network_id                    = module.vpc.network_id
   subnet_id                     = module.vpc.private_subnet_id
   pods_secondary_range_name     = module.vpc.pods_secondary_range_name
@@ -100,6 +110,8 @@ module "cloudsql" {
   database_name       = var.database_name
   deletion_protection = false            # Staging
   ssl_mode            = "ENCRYPTED_ONLY" # SSL 암호화 필수
+
+  depends_on = [module.vpc]
 }
 
 # -----------------------------------------------------------------------------
@@ -140,4 +152,22 @@ module "gar" {
   environment   = var.environment
   repository_id = var.registry_name
   location      = var.region
+}
+
+# -----------------------------------------------------------------------------
+# Cloud Build (CI - Docker Image Build)
+# -----------------------------------------------------------------------------
+module "cloud_build" {
+  source = "../../modules/cloud-build"
+
+  project_id                        = var.project_id
+  region                            = var.region
+  environment                       = var.environment
+  registry_url                      = module.gar.repository_url
+  github_owner                      = var.github_owner
+  github_repo                       = var.github_repo
+  branch                            = "main"
+  github_app_installation_id        = var.github_app_installation_id
+  github_oauth_token_secret_version = var.github_oauth_token_secret_version
+  vite_api_base_url                 = var.vite_api_base_url
 }

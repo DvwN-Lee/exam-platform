@@ -11,6 +11,10 @@ resource "kubernetes_namespace" "argocd" {
   }
 
   depends_on = [module.gke]
+
+  timeouts {
+    delete = "10m"
+  }
 }
 
 # -----------------------------------------------------------------------------
@@ -33,6 +37,46 @@ resource "helm_release" "argocd" {
   create_namespace = false
 
   depends_on = [kubernetes_namespace.argocd]
+}
+
+# -----------------------------------------------------------------------------
+# ArgoCD Finalizer Cleanup (Destroy 시 Namespace Deadlock 방지)
+# -----------------------------------------------------------------------------
+# terraform destroy 시 ArgoCD Application/AppProject의 Finalizer가
+# Namespace 삭제를 차단하는 문제를 자동으로 해결한다.
+# depends_on으로 helm_release.argocd에 연결되어 있으므로,
+# Destroy 순서: root_app -> cleanup_argocd_finalizers -> helm_release -> namespace
+# -----------------------------------------------------------------------------
+resource "null_resource" "cleanup_argocd_finalizers" {
+  triggers = {
+    cluster_name = module.gke.cluster_name
+    zone         = "${var.region}-a"
+    project_id   = var.project_id
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      gcloud container clusters get-credentials ${self.triggers.cluster_name} \
+        --zone ${self.triggers.zone} \
+        --project ${self.triggers.project_id} --quiet 2>/dev/null
+
+      if kubectl get ns argocd 2>/dev/null; then
+        echo "Removing ArgoCD Application Finalizers..."
+        kubectl get applications -n argocd -o name 2>/dev/null | \
+          xargs -r kubectl patch -n argocd --type json \
+          -p '[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
+
+        echo "Removing ArgoCD AppProject Finalizers..."
+        kubectl get appprojects -n argocd -o name 2>/dev/null | \
+          xargs -r kubectl patch -n argocd --type json \
+          -p '[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
+      fi
+    EOT
+    on_failure = continue
+  }
+
+  depends_on = [helm_release.argocd]
 }
 
 # -----------------------------------------------------------------------------
@@ -69,64 +113,56 @@ resource "random_password" "argocd_admin_password" {
 # 나머지 Application, Project, Add-on은 Git 리포지토리에서 관리되며,
 # Root App이 이를 자동으로 동기화함.
 # -----------------------------------------------------------------------------
-resource "kubernetes_manifest" "root_app" {
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = "root-app"
-      namespace = kubernetes_namespace.argocd.metadata[0].name
-      labels = {
-        "app.kubernetes.io/name"      = "root-app"
-        "app.kubernetes.io/component" = "bootstrap"
-      }
-      finalizers = [
-        "resources-finalizer.argocd.argoproj.io"
-      ]
-    }
-    spec = {
-      project = "default"
-
-      source = {
-        repoURL        = var.github_repo_ssh_url
-        targetRevision = "main"
-        path           = "argocd"
-        directory = {
-          recurse = true
-          include = "{generated/*.yaml,projects/*.yaml}"
-        }
-      }
-
-      destination = {
-        server    = "https://kubernetes.default.svc"
-        namespace = "argocd"
-      }
-
-      syncPolicy = {
-        automated = {
-          prune      = true
-          selfHeal   = true
-          allowEmpty = false
-        }
-        syncOptions = [
-          "CreateNamespace=false",
-          "PrunePropagationPolicy=foreground"
-        ]
-        retry = {
-          limit = 5
-          backoff = {
-            duration    = "5s"
-            factor      = 2
-            maxDuration = "3m"
-          }
-        }
-      }
-
-      revisionHistoryLimit = 5
-    }
-  }
+resource "kubectl_manifest" "root_app" {
+  yaml_body = <<-YAML
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: root-app
+      namespace: ${kubernetes_namespace.argocd.metadata[0].name}
+      labels:
+        app.kubernetes.io/name: root-app
+        app.kubernetes.io/component: bootstrap
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: ${var.github_repo_ssh_url}
+        targetRevision: main
+        path: argocd
+        directory:
+          recurse: true
+          include: "{generated/*.yaml,projects/*.yaml}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: false
+        syncOptions:
+          - CreateNamespace=false
+          - PrunePropagationPolicy=foreground
+        retry:
+          limit: 5
+          backoff:
+            duration: "5s"
+            factor: 2
+            maxDuration: "3m"
+      revisionHistoryLimit: 5
+  YAML
 
   depends_on = [helm_release.argocd]
+}
+
+# -----------------------------------------------------------------------------
+# ArgoCD Repository SSH Key (from GCP Secret Manager)
+# -----------------------------------------------------------------------------
+data "google_secret_manager_secret_version" "argocd_repo_ssh_key" {
+  secret  = "argocd-repo-ssh-key"
+  project = var.project_id
 }
 
 # -----------------------------------------------------------------------------
@@ -144,7 +180,7 @@ resource "kubernetes_secret" "argocd_repo_creds" {
   data = {
     type          = "git"
     url           = var.github_repo_ssh_url
-    sshPrivateKey = var.argocd_repo_ssh_key
+    sshPrivateKey = data.google_secret_manager_secret_version.argocd_repo_ssh_key.secret_data
   }
 
   type = "Opaque"
