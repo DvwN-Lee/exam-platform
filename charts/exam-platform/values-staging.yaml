@@ -15,7 +15,7 @@ backend:
 
   image:
     tag: "staging"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   resources:
     requests:
@@ -82,7 +82,7 @@ frontend:
 
   image:
     tag: "staging"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
 
   resources:
     requests:

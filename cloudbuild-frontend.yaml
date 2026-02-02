@@ -1,4 +1,5 @@
 steps:
+  # Step 1: Docker Build & Tag
   - name: gcr.io/cloud-builders/docker
     args:
       - build
@@ -12,9 +13,46 @@ steps:
       - frontend/Dockerfile
       - frontend/
 
+  # Step 2: Git Write-Back (Immutable Tag -> ArgoCD Auto Sync)
+  - name: gcr.io/cloud-builders/git
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        # 0. yq 설치
+        wget -qO /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        chmod a+x /usr/bin/yq
+
+        # 1. SSH Setup
+        mkdir -p /root/.ssh
+        echo "$$DEPLOY_KEY" > /root/.ssh/id_ed25519
+        chmod 600 /root/.ssh/id_ed25519
+        ssh-keyscan github.com >> /root/.ssh/known_hosts
+
+        # 2. Clone & Config
+        git clone --depth 1 --branch main git@github.com:DvwN-Lee/exam-platform.git /workspace/repo
+        cd /workspace/repo
+        git config user.email "cloud-build@titanium-k3s-20260123.iam.gserviceaccount.com"
+        git config user.name "Cloud Build"
+
+        # 3. yq로 정확한 YAML path 수정
+        yq -i '.frontend.image.tag = "${SHORT_SHA}"' charts/exam-platform/values-staging.yaml
+
+        # 4. Commit & Push (Race Condition 방지: pull --rebase)
+        git add charts/exam-platform/values-staging.yaml
+        git diff --cached --quiet || git commit -m "chore(cd): Frontend image tag ${SHORT_SHA} [skip ci]"
+        git pull --rebase origin main
+        git push origin main
+    secretEnv: ['DEPLOY_KEY']
+
 images:
   - ${_IMAGE_URL}:${SHORT_SHA}
   - ${_IMAGE_URL}:staging
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/titanium-k3s-20260123/secrets/github-deploy-key/versions/latest
+      env: DEPLOY_KEY

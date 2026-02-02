@@ -13,6 +13,7 @@ data:
   ALLOWED_HOSTS: {{ .Values.config.allowedHosts | quote }}
   DEBUG: {{ .Values.config.debug | quote }}
 
+  {{- if not .Values.externalSecrets.enabled }}
   # PostgreSQL
   POSTGRES_HOST: {{ .Values.config.postgresHost | quote }}
   POSTGRES_PORT: {{ .Values.config.postgresPort | quote }}
@@ -29,6 +30,7 @@ data:
   # Redis
   REDIS_HOST: {{ .Values.config.redisHost | quote }}
   REDIS_PORT: {{ .Values.config.redisPort | quote }}
+  {{- end }}
 
   # SSL settings
   SECURE_SSL_REDIRECT: {{ .Values.config.secureSSLRedirect | quote }}
