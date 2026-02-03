@@ -123,8 +123,8 @@ config:
   # Redis TLS: GCP Memorystore transitEncryptionMode=SERVER_AUTHENTICATION
   redisSSL: "True"
   redisSSLCertReqs: "none"
-  # Enable SSL in production
-  secureSSLRedirect: "True"
+  # SSL termination at Ingress level, no redirect needed in Django
+  secureSSLRedirect: "False"
   sessionCookieSecure: "True"
   csrfCookieSecure: "True"
 # -----------------------------------------------------------------------------
