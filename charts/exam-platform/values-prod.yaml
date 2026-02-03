@@ -10,7 +10,7 @@ namespace:
 # Backend
 # -----------------------------------------------------------------------------
 backend:
-  replicaCount: 3
+  replicaCount: 2
   image:
     tag: "fa6063a"
     pullPolicy: IfNotPresent
@@ -26,7 +26,7 @@ backend:
     threads: 2
   autoscaling:
     enabled: true
-    minReplicas: 3
+    minReplicas: 2
     maxReplicas: 10
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
@@ -73,7 +73,7 @@ backend:
 # Frontend
 # -----------------------------------------------------------------------------
 frontend:
-  replicaCount: 3
+  replicaCount: 2
   image:
     tag: "fa6063a"
     pullPolicy: IfNotPresent
