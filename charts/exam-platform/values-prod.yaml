@@ -75,7 +75,7 @@ backend:
 frontend:
   replicaCount: 3
   image:
-    tag: "latest"
+    tag: "fa6063a"
     pullPolicy: IfNotPresent
   resources:
     requests:
