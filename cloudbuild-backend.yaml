@@ -6,7 +6,7 @@ steps:
       - -t
       - ${_IMAGE_URL}:${SHORT_SHA}
       - -t
-      - ${_IMAGE_URL}:staging
+      - ${_IMAGE_URL}:${BRANCH_NAME}
       - -f
       - examonline/Dockerfile
       - examonline/
@@ -27,25 +27,34 @@ steps:
         chmod 600 /root/.ssh/id_ed25519
         ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-        # 2. Clone & Config
-        git clone --depth 1 --branch main git@github.com:DvwN-Lee/exam-platform.git /workspace/repo
+        # 2. Branch에 따라 values 파일 결정
+        if [ "${BRANCH_NAME}" = "release" ]; then
+          VALUES_FILE="charts/exam-platform/values-prod.yaml"
+          TARGET_BRANCH="release"
+        else
+          VALUES_FILE="charts/exam-platform/values-staging.yaml"
+          TARGET_BRANCH="main"
+        fi
+
+        # 3. Clone & Config
+        git clone --depth 1 --branch $${TARGET_BRANCH} git@github.com:DvwN-Lee/exam-platform.git /workspace/repo
         cd /workspace/repo
         git config user.email "cloud-build@titanium-k3s-20260123.iam.gserviceaccount.com"
         git config user.name "Cloud Build"
 
-        # 3. yq로 정확한 YAML path 수정
-        yq -i '.backend.image.tag = "${SHORT_SHA}"' charts/exam-platform/values-staging.yaml
+        # 4. yq로 정확한 YAML path 수정
+        yq -i '.backend.image.tag = "${SHORT_SHA}"' $${VALUES_FILE}
 
-        # 4. Commit & Push (Race Condition 방지: pull --rebase)
-        git add charts/exam-platform/values-staging.yaml
+        # 5. Commit & Push (Race Condition 방지: pull --rebase)
+        git add $${VALUES_FILE}
         git diff --cached --quiet || git commit -m "chore(cd): Backend image tag ${SHORT_SHA} [skip ci]"
-        git pull --rebase origin main
-        git push origin main
+        git pull --rebase origin $${TARGET_BRANCH}
+        git push origin $${TARGET_BRANCH}
     secretEnv: ['DEPLOY_KEY']
 
 images:
   - ${_IMAGE_URL}:${SHORT_SHA}
-  - ${_IMAGE_URL}:staging
+  - ${_IMAGE_URL}:${BRANCH_NAME}
 
 options:
   logging: CLOUD_LOGGING_ONLY
