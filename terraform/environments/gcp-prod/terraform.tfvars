@@ -1,0 +1,73 @@
+# =============================================================================
+# GCP Production Environment - Terraform Variables
+# =============================================================================
+
+project_id  = "titanium-k3s-20260123"
+region      = "asia-northeast3"
+environment = "prod"
+
+# -----------------------------------------------------------------------------
+# Network
+# -----------------------------------------------------------------------------
+network_name        = "vpc"
+public_subnet_cidr  = "10.2.1.0/24"
+private_subnet_cidr = "10.2.2.0/24"
+pods_cidr           = "10.200.0.0/16"
+services_cidr       = "10.201.0.0/20"
+
+# -----------------------------------------------------------------------------
+# GKE
+# -----------------------------------------------------------------------------
+cluster_name       = "exam-cluster"
+node_machine_type  = "e2-standard-2"
+initial_node_count = 3
+min_node_count     = 3
+max_node_count     = 10
+
+master_authorized_cidrs = [
+  {
+    cidr_block   = "112.150.249.93/32"
+    display_name = "Admin IP"
+  },
+  {
+    cidr_block   = "221.153.70.15/32"
+    display_name = "Admin IP 2"
+  },
+  {
+    cidr_block   = "112.218.39.251/32"
+    display_name = "Current Machine"
+  }
+]
+
+# -----------------------------------------------------------------------------
+# Cloud SQL
+# -----------------------------------------------------------------------------
+db_instance_name     = "exam-db"
+db_tier              = "db-custom-2-8192"
+db_availability_type = "REGIONAL"
+database_name        = "examonline"
+
+# -----------------------------------------------------------------------------
+# Memorystore (Redis)
+# -----------------------------------------------------------------------------
+redis_instance_name = "exam-redis"
+redis_memory_gb     = 4
+
+# -----------------------------------------------------------------------------
+# Storage
+# -----------------------------------------------------------------------------
+storage_bucket_name = "examonline-assets-titanium-k3s-20260123"
+
+# -----------------------------------------------------------------------------
+# Artifact Registry
+# -----------------------------------------------------------------------------
+registry_name = "exam-platform"
+
+# -----------------------------------------------------------------------------
+# Cloud Build
+# -----------------------------------------------------------------------------
+github_owner                      = "DvwN-Lee"
+github_repo                       = "exam-platform"
+github_app_installation_id        = 107266895
+github_oauth_token_secret_version = "projects/titanium-k3s-20260123/secrets/staging-github-connection-github-oauthtoken-ee5ed5/versions/latest"
+vite_api_base_url                 = ""

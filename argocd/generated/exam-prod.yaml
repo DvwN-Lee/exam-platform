@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    notifications.argoproj.io/subscribe.on-deployed.slack: exam-prod-deployments
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: exam-prod-alerts
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-prod-alerts
+    notifications.argoproj.io/subscribe.on-sync-running.slack: exam-prod-deployments
+    notifications.argoproj.io/subscribe.on-sync-succeeded.slack: exam-prod-deployments
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/instance: prod
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/name: exam-platform
+    environment: prod
+  name: exam-prod
+  namespace: argocd
+spec:
+  destination:
+    namespace: exam-platform-prod
+    server: https://kubernetes.default.svc
+  ignoreDifferences:
+  - group: apps
+    jsonPointers:
+    - /spec/replicas
+    kind: Deployment
+  - group: autoscaling
+    jsonPointers:
+    - /spec/minReplicas
+    - /spec/maxReplicas
+    kind: HorizontalPodAutoscaler
+  project: exam-platform
+  revisionHistoryLimit: 20
+  source:
+    helm:
+      parameters:
+      - name: backend.image.repository
+        value: asia-northeast3-docker.pkg.dev/titanium-k3s-20260123/exam-platform/backend
+      - name: frontend.image.repository
+        value: asia-northeast3-docker.pkg.dev/titanium-k3s-20260123/exam-platform/frontend
+      valueFiles:
+      - values-prod.yaml
+    path: charts/exam-platform
+    repoURL: git@github.com:DvwN-Lee/exam-platform.git
+    targetRevision: release
+  syncPolicy:
+    retry:
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+      limit: 3
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - ApplyOutOfSyncOnly=true
+    - RespectIgnoreDifferences=true
