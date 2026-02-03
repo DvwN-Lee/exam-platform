@@ -99,6 +99,19 @@ resource "google_secret_manager_secret_version" "redis_port" {
   secret_data = tostring(module.memorystore.port)
 }
 
+resource "google_secret_manager_secret" "redis_password" {
+  secret_id = "examonline-staging-redis-password"
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "redis_password" {
+  secret      = google_secret_manager_secret.redis_password.id
+  secret_data = module.memorystore.auth_string
+}
+
 # -----------------------------------------------------------------------------
 # Application Secrets
 # -----------------------------------------------------------------------------
