@@ -46,6 +46,10 @@ spec:
     repoURL: git@github.com:DvwN-Lee/exam-platform.git
     targetRevision: release
   syncPolicy:
+    automated:
+      allowEmpty: false
+      prune: true
+      selfHeal: true
     retry:
       backoff:
         duration: 10s
