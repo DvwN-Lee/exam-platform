@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
@@ -68,12 +68,6 @@ export function Sidebar() {
   const { theme, setTheme } = useTheme()
   const mounted = useMounted()
   const [menuOpen, setMenuOpen] = useState(false)
-
-  // 라우트 변경 시 모바일 메뉴 닫기
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => {
-    setMenuOpen(false)
-  }, [location.pathname])
 
   const navItems =
     user?.user_type === 'teacher' ? teacherNavItems : studentNavItems
@@ -213,7 +207,7 @@ export function Sidebar() {
 
           {/* User Profile with Dropdown */}
           <div className="mt-12">
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenu key={location.pathname} open={menuOpen} onOpenChange={setMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
