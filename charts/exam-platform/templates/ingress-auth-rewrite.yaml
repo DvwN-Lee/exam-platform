@@ -38,7 +38,7 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          - path: /(auth|users)/(.*)
+          - path: /(auth|users|subjects|students|questions|testpapers|examinations|dashboard)/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
