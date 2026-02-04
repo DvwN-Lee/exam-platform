@@ -20,8 +20,6 @@ E2E_TEST_API_ENABLED = os.getenv("E2E_TEST_API_ENABLED", "false").lower() == "tr
 urlpatterns = [
     # Django Admin (경로 환경 변수화)
     path(ADMIN_URL, admin.site.urls),
-    # Auth endpoints (legacy support for frontend calling /auth/ directly)
-    path("auth/", include("user.api.urls")),
     # API v1 endpoints
     path("api/v1/", include("user.api.urls")),
     path("api/v1/", include("testquestion.api.urls")),
