@@ -12,7 +12,8 @@ metadata:
     {{- include "exam-platform.labels" . | nindent 4 }}
   annotations:
     argocd.argoproj.io/sync-wave: "3"
-    nginx.ingress.kubernetes.io/rewrite-target: /api/v1/$1
+    nginx.ingress.kubernetes.io/rewrite-target: /api/v1/$1/$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     {{- if .Values.ingress.tls }}
@@ -37,14 +38,7 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          - path: /auth/(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: {{ include "exam-platform.backend.fullname" $ }}
-                port:
-                  number: {{ $.Values.backend.service.port }}
-          - path: /users/(.*)
+          - path: /(auth|users)/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
