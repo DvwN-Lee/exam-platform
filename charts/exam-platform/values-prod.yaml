@@ -94,9 +94,9 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  # Enable auth path rewrite: /auth/* -> /api/v1/auth/*
+  # auth-rewrite Ingress 비활성화: Frontend가 이미 /api/v1/auth/* 경로를 사용하므로 불필요
   authRewrite:
-    enabled: true
+    enabled: false
   hosts:
     - host: exam-platform.me
       paths:
