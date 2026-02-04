@@ -38,7 +38,9 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          - path: /(auth|users|subjects|students|questions|testpapers|examinations|dashboard)/(.*)
+          # Only rewrite API paths that don't conflict with frontend routes
+          # auth/*, users/*, subjects/* have no frontend route conflicts
+          - path: /(auth|users|subjects)/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
