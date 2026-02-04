@@ -70,4 +70,4 @@ github_owner                      = "DvwN-Lee"
 github_repo                       = "exam-platform"
 github_app_installation_id        = 107266895
 github_oauth_token_secret_version = "projects/titanium-k3s-20260123/secrets/staging-github-connection-github-oauthtoken-ee5ed5/versions/latest"
-vite_api_base_url                 = ""
+vite_api_base_url                 = "/api/v1"
