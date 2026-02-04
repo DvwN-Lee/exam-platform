@@ -12,7 +12,7 @@ namespace:
 backend:
   replicaCount: 2
   image:
-    tag: "fa6063a"
+    tag: "3c7799d"
     pullPolicy: IfNotPresent
   resources:
     requests:
