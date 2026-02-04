@@ -82,10 +82,13 @@ export function InteractivePieChart({
   const { styles } = useChartTheme()
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
+  // Ensure colors array is always defined (fallback for explicit undefined)
+  const safeColors = colors ?? CHART_COLORS.pie
+
   // Process data with colors
   const processedData = data.map((item, index) => ({
     ...item,
-    color: item.color || colors[index % colors.length],
+    color: item.color || safeColors[index % safeColors.length],
     displayValue: item.displayValue ?? item.value,
     actualValue: item.actualValue ?? item.value,
     isZero: item.value === 0,
