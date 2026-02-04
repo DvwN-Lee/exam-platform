@@ -94,21 +94,9 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location ~ ^/auth/(.*)$ {
-        proxy_pass http://exam-prod-exam-platform-backend.exam-platform-prod.svc.cluster.local:8000/api/v1/auth/$1$is_args$args;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      }
-      location ~ ^/users/(.*)$ {
-        proxy_pass http://exam-prod-exam-platform-backend.exam-platform-prod.svc.cluster.local:8000/api/v1/users/$1$is_args$args;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-      }
+  # Enable auth path rewrite: /auth/* -> /api/v1/auth/*
+  authRewrite:
+    enabled: true
   hosts:
     - host: exam-platform.me
       paths:
