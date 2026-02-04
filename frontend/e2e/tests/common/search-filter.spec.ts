@@ -128,26 +128,28 @@ test.describe('Search and Filter', () => {
 
     await test.step('객관식 필터', async () => {
       // 전체 유형 드롭다운에서 객관식 선택
-      await page.selectOption('select:has-text("전체 유형")', 'xz')
+      const typeSelect = page.locator('select').first()
+      await typeSelect.selectOption('xz')
       await waitForLoadingComplete(page)
 
-      // 객관식 문제 레이블이 표시되는지 확인 (span 태그 내부)
-      await expect(page.locator('span.rounded.bg-primary\\/10:has-text("객관식")').first()).toBeVisible()
+      // 객관식 문제 레이블이 표시되는지 확인 (Badge 컴포넌트는 div 태그)
+      await expect(page.locator('div.rounded-lg:has-text("객관식")').first()).toBeVisible()
 
       console.log('✓ Multiple choice filter works')
     })
 
     await test.step('주관식 필터', async () => {
-      await page.selectOption('select', { index: 0 }) // reset
+      // reset
+      const typeSelect = page.locator('select').first()
+      await typeSelect.selectOption('')
       await page.waitForTimeout(300)
 
       // 주관식 선택
-      const typeSelect = page.locator('select').first()
       await typeSelect.selectOption('pd')
       await waitForLoadingComplete(page)
 
-      // 주관식 레이블이 보이는지 확인
-      await expect(page.locator('span.rounded.bg-primary\\/10:has-text("주관식")').first()).toBeVisible()
+      // 주관식 레이블이 보이는지 확인 (Badge 컴포넌트는 div 태그)
+      await expect(page.locator('div.rounded-lg:has-text("주관식")').first()).toBeVisible()
 
       console.log('✓ Short answer filter works')
     })
@@ -157,8 +159,8 @@ test.describe('Search and Filter', () => {
       await typeSelect.selectOption('tk')
       await waitForLoadingComplete(page)
 
-      // 빈칸채우기 레이블 확인
-      await expect(page.locator('span.rounded.bg-primary\\/10:has-text("빈칸채우기")').first()).toBeVisible()
+      // 빈칸채우기 레이블 확인 (Badge 컴포넌트는 div 태그)
+      await expect(page.locator('div.rounded-lg:has-text("빈칸채우기")').first()).toBeVisible()
 
       console.log('✓ Fill in blank filter works')
     })
@@ -182,8 +184,8 @@ test.describe('Search and Filter', () => {
       await degreeSelect.selectOption('jd')
       await waitForLoadingComplete(page)
 
-      // 쉬움 레이블 확인
-      await expect(page.locator('.rounded.bg-secondary:has-text("쉬움")').first()).toBeVisible()
+      // 쉬움 레이블 확인 (Badge secondary variant는 bg-gray-100)
+      await expect(page.locator('div.rounded-lg:has-text("쉬움")').first()).toBeVisible()
 
       console.log('✓ Easy difficulty filter works')
     })
@@ -193,7 +195,7 @@ test.describe('Search and Filter', () => {
       await degreeSelect.selectOption('zd')
       await waitForLoadingComplete(page)
 
-      await expect(page.locator('.rounded.bg-secondary:has-text("보통")').first()).toBeVisible()
+      await expect(page.locator('div.rounded-lg:has-text("보통")').first()).toBeVisible()
 
       console.log('✓ Medium difficulty filter works')
     })
@@ -203,7 +205,7 @@ test.describe('Search and Filter', () => {
       await degreeSelect.selectOption('kn')
       await waitForLoadingComplete(page)
 
-      await expect(page.locator('.rounded.bg-secondary:has-text("어려움")').first()).toBeVisible()
+      await expect(page.locator('div.rounded-lg:has-text("어려움")').first()).toBeVisible()
 
       console.log('✓ Hard difficulty filter works')
     })
