@@ -398,7 +398,9 @@ class ExamTakingViewSet(viewsets.ViewSet):
                 correct_option = correct_options_dict.get(question_id)
                 if correct_option and user_answer:
                     # 대소문자 무시, 앞뒤 공백 제거 후 비교
-                    is_correct = user_answer.strip().lower() == correct_option.option.strip().lower()
+                    is_correct = (
+                        user_answer.strip().lower() == correct_option.option.strip().lower()
+                    )
 
             earned_score = question_score if is_correct else 0
             total_score += earned_score

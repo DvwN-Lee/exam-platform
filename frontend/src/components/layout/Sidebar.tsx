@@ -69,6 +69,8 @@ export function Sidebar() {
   const mounted = useMounted()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  // 라우트 변경 시 모바일 메뉴 닫기
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setMenuOpen(false)
   }, [location.pathname])
