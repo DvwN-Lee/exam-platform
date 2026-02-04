@@ -40,7 +40,7 @@ backend:
       port: 8000
       httpHeaders:
         - name: Host
-          value: "exam.example.com"
+          value: "exam-platform.me"
     initialDelaySeconds: 0
     periodSeconds: 30
     timeoutSeconds: 15
@@ -52,7 +52,7 @@ backend:
       port: 8000
       httpHeaders:
         - name: Host
-          value: "exam.example.com"
+          value: "exam-platform.me"
     initialDelaySeconds: 15
     periodSeconds: 30
     timeoutSeconds: 20
@@ -64,7 +64,7 @@ backend:
       port: 8000
       httpHeaders:
         - name: Host
-          value: "exam.example.com"
+          value: "exam-platform.me"
     initialDelaySeconds: 15
     periodSeconds: 10
     timeoutSeconds: 10
@@ -95,7 +95,7 @@ ingress:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: exam.example.com
+    - host: exam-platform.me
       paths:
         - path: /api
           pathType: Prefix
@@ -109,12 +109,12 @@ ingress:
   tls:
     - secretName: exam-platform-tls
       hosts:
-        - exam.example.com
+        - exam-platform.me
 # -----------------------------------------------------------------------------
 # Config
 # -----------------------------------------------------------------------------
 config:
-  allowedHosts: "exam.example.com,localhost"
+  allowedHosts: "exam-platform.me,localhost"
   debug: "False"
   # Database endpoints are provided via ExternalSecrets
   postgresHost: ""
