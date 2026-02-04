@@ -57,6 +57,16 @@ const questionSchema = z
         })
       }
     }
+    // 빈칸채우기(tk)인 경우 정답 validation 적용
+    if (data.tq_type === 'tk') {
+      if (!data.options[0]?.option || data.options[0].option.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '정답을 입력해주세요',
+          path: ['options', 0, 'option'],
+        })
+      }
+    }
   })
 
 type QuestionFormData = z.infer<typeof questionSchema>
@@ -139,13 +149,22 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
   const onSubmit = (data: QuestionFormData) => {
     setIsSubmitting(true)
 
-    // 주관식(pd)과 빈칸채우기(tk)는 빈 옵션 제거
-    const submitData = {
-      ...data,
-      options:
-        data.tq_type === 'xz'
-          ? data.options
-          : data.options.filter((opt) => opt.option && opt.option.trim().length > 0),
+    let submitData: QuestionFormData
+    if (data.tq_type === 'xz') {
+      // 객관식: 그대로 사용
+      submitData = data
+    } else if (data.tq_type === 'tk') {
+      // 빈칸채우기: 첫 번째 옵션을 정답으로 설정
+      submitData = {
+        ...data,
+        options: [{ option: data.options[0]?.option || '', is_right: true }],
+      }
+    } else {
+      // 주관식(pd): 빈 옵션 제거
+      submitData = {
+        ...data,
+        options: data.options.filter((opt) => opt.option && opt.option.trim().length > 0),
+      }
     }
 
     if (questionId) {
@@ -300,6 +319,21 @@ export function QuestionForm({ questionId, initialData }: QuestionFormProps) {
                     ? errors.options.message
                     : '선택지를 확인해주세요'}
                 </p>
+              )}
+            </div>
+          )}
+
+          {tqType === 'tk' && (
+            <div className="space-y-2">
+              <Label htmlFor="correct_answer">정답</Label>
+              <Input
+                id="correct_answer"
+                placeholder="정답을 입력하세요"
+                {...register('options.0.option')}
+              />
+              <input type="hidden" {...register('options.0.is_right')} value="true" />
+              {errors.options?.[0]?.option && (
+                <p className="text-sm text-destructive">정답을 입력해주세요</p>
               )}
             </div>
           )}

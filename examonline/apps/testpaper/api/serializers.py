@@ -365,9 +365,9 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
 
     exam_name = serializers.CharField(source="exam.name", read_only=True)
     subject_name = serializers.CharField(source="exam.subject.subject_name", read_only=True)
-    paper_name = serializers.CharField(source="test_paper.name", read_only=True)
-    total_possible = serializers.IntegerField(source="test_paper.total_score", read_only=True)
-    passing_score = serializers.IntegerField(source="test_paper.passing_score", read_only=True)
+    paper_name = serializers.SerializerMethodField()
+    total_possible = serializers.SerializerMethodField()
+    passing_score = serializers.SerializerMethodField()
     passed = serializers.SerializerMethodField()
     question_results = serializers.SerializerMethodField()
 
@@ -387,6 +387,18 @@ class MyScoreDetailSerializer(serializers.ModelSerializer):
             "time_used",
             "question_results",
         ]
+
+    def get_paper_name(self, obj):
+        """시험지 이름 (null-safety)"""
+        return obj.test_paper.name if obj.test_paper else None
+
+    def get_total_possible(self, obj):
+        """총점 (null-safety)"""
+        return obj.test_paper.total_score if obj.test_paper else 0
+
+    def get_passing_score(self, obj):
+        """합격 점수 (null-safety)"""
+        return obj.test_paper.passing_score if obj.test_paper else 0
 
     def get_passed(self, obj):
         """합격 여부"""

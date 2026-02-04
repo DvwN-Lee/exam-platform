@@ -12,7 +12,7 @@ namespace:
 backend:
   replicaCount: 2
   image:
-    tag: "fa6063a"
+    tag: "40efa2d"
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -75,7 +75,7 @@ backend:
 frontend:
   replicaCount: 2
   image:
-    tag: "fa6063a"
+    tag: "b9a2f72"
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -94,6 +94,9 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     cert-manager.io/cluster-issuer: letsencrypt-prod
+  # auth-rewrite Ingress: Frontend가 VITE_API_BASE_URL=/api/v1을 사용하므로 비활성화
+  authRewrite:
+    enabled: false
   hosts:
     - host: exam-platform.me
       paths:

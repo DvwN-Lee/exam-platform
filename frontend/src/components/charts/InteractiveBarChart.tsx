@@ -46,10 +46,13 @@ export function InteractiveBarChart({
   const { styles } = useChartTheme()
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
+  // Ensure colors array is always defined (fallback for explicit undefined)
+  const safeColors = colors ?? CHART_COLORS.difficulty
+
   // Process data with colors
   const processedData = data.map((item, index) => ({
     ...item,
-    color: item.color || colors[index % colors.length],
+    color: item.color || safeColors[index % safeColors.length],
   }))
 
   // Check if all data is empty
