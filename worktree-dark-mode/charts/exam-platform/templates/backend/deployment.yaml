@@ -1,0 +1,227 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "exam-platform.backend.fullname" . }}
+  namespace: {{ include "exam-platform.namespace" . }}
+  labels:
+    {{- include "exam-platform.backend.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "exam-platform.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "exam-platform.backend.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      {{- include "exam-platform.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "exam-platform.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: backend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "exam-platform.backend.image" . }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            # Django settings
+            - name: DJANGO_SETTINGS_MODULE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: DJANGO_SETTINGS_MODULE
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: ALLOWED_HOSTS
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: DEBUG
+            # Secret key
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.appSecretName" . }}
+                  key: SECRET_KEY
+            # PostgreSQL
+            {{- if .Values.externalSecrets.enabled }}
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.dbSecretName" . }}
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.dbSecretName" . }}
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.dbSecretName" . }}
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.dbSecretName" . }}
+                  key: POSTGRES_USER
+            {{- else }}
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: POSTGRES_USER
+            {{- end }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.dbSecretName" . }}
+                  key: POSTGRES_PASSWORD
+            {{- if .Values.config.mongodbHost }}
+            # MongoDB
+            - name: MONGODB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_HOST
+            - name: MONGODB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_PORT
+            - name: MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_DATABASE
+            - name: MONGODB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_USER
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.dbSecretName" . }}
+                  key: MONGODB_PASSWORD
+            - name: MONGODB_AUTH_SOURCE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: MONGODB_AUTH_SOURCE
+            {{- end }}
+            # Redis
+            {{- if .Values.externalSecrets.enabled }}
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.redisSecretName" . }}
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.redisSecretName" . }}
+                  key: REDIS_PORT
+            {{- else }}
+            - name: REDIS_HOST
+              value: {{ .Values.config.redisHost | quote }}
+            - name: REDIS_PORT
+              value: {{ .Values.config.redisPort | quote }}
+            {{- end }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "exam-platform.redisSecretName" . }}
+                  key: REDIS_PASSWORD
+            - name: REDIS_SSL
+              value: {{ .Values.config.redisSSL | default "False" | quote }}
+            - name: REDIS_SSL_CERT_REQS
+              value: {{ .Values.config.redisSSLCertReqs | default "required" | quote }}
+            - name: REDIS_URL
+              {{- if eq (.Values.config.redisSSL | default "False") "True" }}
+              value: "rediss://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/0"
+              {{- else }}
+              value: "redis://:$(REDIS_PASSWORD)@$(REDIS_HOST):$(REDIS_PORT)/0"
+              {{- end }}
+            # SSL settings
+            - name: SECURE_SSL_REDIRECT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: SECURE_SSL_REDIRECT
+            - name: SESSION_COOKIE_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: SESSION_COOKIE_SECURE
+            - name: CSRF_COOKIE_SECURE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "exam-platform.configMapName" . }}
+                  key: CSRF_COOKIE_SECURE
+            # Gunicorn settings
+            - name: GUNICORN_WORKERS
+              value: {{ .Values.backend.gunicorn.workers | quote }}
+            - name: GUNICORN_THREADS
+              value: {{ .Values.backend.gunicorn.threads | quote }}
+          {{- if .Values.backend.startupProbe.enabled }}
+          startupProbe:
+            {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.backend.livenessProbe.enabled }}
+          livenessProbe:
+            {{- omit .Values.backend.livenessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.backend.readinessProbe.enabled }}
+          readinessProbe:
+            {{- omit .Values.backend.readinessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.backend.startupProbe.enabled }}
+          startupProbe:
+            {{- omit .Values.backend.startupProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,66 @@
+# =============================================================================
+# ArgoCD Application - Base Template
+# =============================================================================
+# Kustomize overlay로 환경별 설정을 오버라이드함.
+# 공통 설정만 정의.
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: exam-platform
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: exam-platform
+    app.kubernetes.io/instance: base
+    app.kubernetes.io/managed-by: argocd
+    environment: base
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: exam-deployments
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: exam-alerts
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: exam-platform
+
+  # ---------------------------------------------------------------------------
+  # Source
+  # ---------------------------------------------------------------------------
+  source:
+    repoURL: git@github.com:DvwN-Lee/exam-platform.git
+    targetRevision: main
+    path: charts/exam-platform
+    helm:
+      valueFiles:
+        - values.yaml
+
+  # ---------------------------------------------------------------------------
+  # Destination (overlay에서 오버라이드)
+  # ---------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: exam-platform
+
+  # ---------------------------------------------------------------------------
+  # Sync Policy
+  # ---------------------------------------------------------------------------
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ---------------------------------------------------------------------------
+  # Revision History
+  # ---------------------------------------------------------------------------
+  revisionHistoryLimit: 10

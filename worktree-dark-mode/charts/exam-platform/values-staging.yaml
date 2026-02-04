@@ -1,0 +1,178 @@
+# =============================================================================
+# Exam Platform Helm Chart - Staging Environment Values
+# =============================================================================
+# Usage: helm install exam-platform ./charts/exam-platform -f values-staging.yaml
+# =============================================================================
+
+namespace:
+  name: exam-platform-staging
+
+# -----------------------------------------------------------------------------
+# Backend
+# -----------------------------------------------------------------------------
+backend:
+  replicaCount: 2
+
+  image:
+    tag: "staging"
+    pullPolicy: Always
+
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  gunicorn:
+    workers: 3
+    threads: 2
+
+  autoscaling:
+    enabled: false
+
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/live/
+      port: 8000
+      httpHeaders:
+        - name: Host
+          value: "staging.exam.example.com"
+    initialDelaySeconds: 0  # startupProbe 성공 후 즉시 시작
+    periodSeconds: 30
+    timeoutSeconds: 15  # worker blocking 가능성 고려
+    failureThreshold: 3
+
+  # readinessProbe: MongoDB host 빈 값 시 skip 로직 적용됨 (commit 4d27b81)
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/ready/
+      port: 8000
+      httpHeaders:
+        - name: Host
+          value: "staging.exam.example.com"
+    initialDelaySeconds: 15
+    periodSeconds: 30
+    timeoutSeconds: 20
+    failureThreshold: 3
+
+  # Startup Probe: 컨테이너 기동 완료 확인
+  # /api/v1/health/live/: DB 연결 확인 없이 서버 상태만 확인 (빠른 응답)
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/live/
+      port: 8000
+      httpHeaders:
+        - name: Host
+          value: "staging.exam.example.com"
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 30  # 최대 315초 (15 + 10*30) 대기
+
+# -----------------------------------------------------------------------------
+# Frontend
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 2
+
+  image:
+    tag: "staging"
+    pullPolicy: Always
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+  hosts:
+    - host: staging.exam.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /admin
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+  tls: []
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+config:
+  # localhost: Health Check Pod IP 요청 및 로컬 디버깅용 유지
+  allowedHosts: "staging.exam.example.com,localhost"
+  debug: "False"
+
+  # Database endpoints are provided via ExternalSecrets
+  # See external-secret.yaml template
+  postgresHost: ""  # Provided by db-credentials secret
+  mongodbHost: ""   # Not used in current implementation
+  redisHost: ""     # Provided by redis-credentials secret
+
+  # Redis TLS: GCP Memorystore transitEncryptionMode=SERVER_AUTHENTICATION
+  redisSSL: "True"
+  redisSSLCertReqs: "none"  # GCP Memorystore 내부 네트워크에서 인증서 검증 불필요
+
+  secureSSLRedirect: "False"
+  sessionCookieSecure: "False"
+  csrfCookieSecure: "False"
+
+# -----------------------------------------------------------------------------
+# Secrets
+# -----------------------------------------------------------------------------
+secrets:
+  # External Secrets Operator manages secrets from Google Secret Manager
+  create: false
+  secretKey: ""
+  postgresPassword: ""
+  mongodbPassword: ""
+  redisPassword: ""
+
+# -----------------------------------------------------------------------------
+# External Secrets
+# -----------------------------------------------------------------------------
+externalSecrets:
+  enabled: true
+  refreshInterval: "1h"
+  secretStoreRef: "gcp-secret-manager"
+
+  secrets:
+    # Database
+    dbHost: "examonline-staging-db-host"
+    dbPort: "examonline-staging-db-port"
+    dbName: "examonline-staging-db-name"
+    dbUser: "examonline-staging-db-user"
+    dbPassword: "examonline-staging-db-password"
+
+    # Redis
+    redisHost: "examonline-staging-redis-host"
+    redisPort: "examonline-staging-redis-port"
+    redisPassword: "examonline-staging-redis-password"
+
+    # Application
+    djangoSecretKey: "examonline-staging-django-secret-key"
+    jwtSecretKey: "examonline-staging-jwt-secret-key"
+
+    # GCS
+    gcsBucketName: "examonline-staging-gcs-bucket-name"

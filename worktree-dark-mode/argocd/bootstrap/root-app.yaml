@@ -1,0 +1,60 @@
+# =============================================================================
+# Root Application (App of Apps Pattern)
+# =============================================================================
+# Terraform이 유일하게 관리하는 ArgoCD Application.
+# 이 Application이 나머지 모든 Application, Project, Add-on을 관리함.
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-app
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: root-app
+    app.kubernetes.io/component: bootstrap
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # ---------------------------------------------------------------------------
+  # Source - ArgoCD 디렉토리 전체를 스캔
+  # ---------------------------------------------------------------------------
+  source:
+    repoURL: git@github.com:DvwN-Lee/exam-platform.git
+    targetRevision: main
+    path: argocd
+    directory:
+      recurse: true
+      include: "{generated/*.yaml,projects/*.yaml}"
+
+  # ---------------------------------------------------------------------------
+  # Destination
+  # ---------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  # ---------------------------------------------------------------------------
+  # Sync Policy
+  # ---------------------------------------------------------------------------
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=false
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ---------------------------------------------------------------------------
+  # Revision History
+  # ---------------------------------------------------------------------------
+  revisionHistoryLimit: 5

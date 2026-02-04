@@ -1,0 +1,79 @@
+# =============================================================================
+# External Secrets Operator - ArgoCD Application
+# =============================================================================
+# ESO Helm Chart를 ArgoCD로 관리.
+# Terraform에서 이관됨 (GitOps 원칙 준수).
+# =============================================================================
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: external-secrets
+    app.kubernetes.io/component: add-on
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # ---------------------------------------------------------------------------
+  # Source - ESO Helm Chart
+  # ---------------------------------------------------------------------------
+  source:
+    repoURL: https://charts.external-secrets.io
+    targetRevision: 0.9.11
+    chart: external-secrets
+    helm:
+      releaseName: external-secrets
+      values: |
+        # Service Account Workload Identity 설정
+        serviceAccount:
+          create: true
+          name: external-secrets
+          annotations:
+            iam.gke.io/gcp-service-account: external-secrets-staging@titanium-k3s-20260123.iam.gserviceaccount.com
+
+        # Controller 설정
+        installCRDs: true
+
+        # Webhook 설정
+        webhook:
+          create: true
+
+        # Cert Controller 설정
+        certController:
+          create: true
+
+  # ---------------------------------------------------------------------------
+  # Destination
+  # ---------------------------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-secrets
+
+  # ---------------------------------------------------------------------------
+  # Sync Policy
+  # ---------------------------------------------------------------------------
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ---------------------------------------------------------------------------
+  # Revision History
+  # ---------------------------------------------------------------------------
+  revisionHistoryLimit: 5

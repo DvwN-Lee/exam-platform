@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시험 응시 - ExamOnline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --primary-light: #34D399;
+            --bg-light: #F0FDF4;
+            --surface: #FFFFFF;
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --border: #E5E7EB;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Poppins', sans-serif;
+            background: var(--bg-light);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Exam Header */
+        .exam-header {
+            background: var(--surface);
+            padding: 1.25rem 2rem;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .exam-info h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .exam-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-light);
+            padding: 0.875rem 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+        }
+
+        .timer-icon {
+            font-size: 1.5rem;
+        }
+
+        .timer-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timer-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .timer-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Poppins', monospace;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Main Layout */
+        .exam-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+        }
+
+        /* Question Navigator */
+        .question-nav {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .nav-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-btn {
+            aspect-ratio: 1;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .nav-btn.answered {
+            background: var(--bg-light);
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+
+        .legend-box.current {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .legend-box.answered {
+            background: var(--bg-light);
+            border-color: var(--primary-light);
+        }
+
+        .legend-box.unanswered {
+            background: var(--surface);
+            border-color: var(--border);
+        }
+
+        /* Question Content */
+        .question-content {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .question-number {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .question-points {
+            background: var(--bg-light);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            color: var(--text);
+            margin-bottom: 2.5rem;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .option-item {
+            position: relative;
+        }
+
+        .option-input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-light);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option-input:checked + .option-label {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--primary);
+        }
+
+        .option-label:hover {
+            border-color: var(--primary-light);
+            transform: translateX(4px);
+        }
+
+        .option-marker {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .option-input:checked + .option-label .option-marker {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .option-text {
+            flex: 1;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text);
+            padding-top: 0.25rem;
+        }
+
+        /* Navigation Buttons */
+        .question-nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Progress Indicator */
+        .progress-indicator {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-top: 1.5rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .progress-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .progress-stats {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar-bg {
+            height: 8px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .exam-container {
+                grid-template-columns: 1fr;
+            }
+
+            .question-nav {
+                position: static;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Exam Header -->
+    <header class="exam-header">
+        <div class="header-content">
+            <div class="exam-info">
+                <h1>자료구조 중간고사</h1>
+                <p class="exam-subtitle">자료구조 및 알고리즘 | 총 30문제 | 90분</p>
+            </div>
+            <div class="header-actions">
+                <div class="timer">
+                    <i data-lucide="timer" class="timer-icon" style="width: 24px; height: 24px;"></i>
+                    <div class="timer-content">
+                        <span class="timer-label">남은 시간</span>
+                        <span class="timer-value">01:15:30</span>
+                    </div>
+                </div>
+                <button class="btn-submit">시험 제출</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="exam-container">
+        <!-- Question Navigator -->
+        <aside class="question-nav">
+            <h3 class="nav-title">문제 목록</h3>
+            <div class="nav-grid">
+                <button class="nav-btn active">1</button>
+                <button class="nav-btn answered">2</button>
+                <button class="nav-btn answered">3</button>
+                <button class="nav-btn answered">4</button>
+                <button class="nav-btn answered">5</button>
+                <button class="nav-btn">6</button>
+                <button class="nav-btn">7</button>
+                <button class="nav-btn">8</button>
+                <button class="nav-btn">9</button>
+                <button class="nav-btn">10</button>
+                <button class="nav-btn">11</button>
+                <button class="nav-btn">12</button>
+                <button class="nav-btn">13</button>
+                <button class="nav-btn">14</button>
+                <button class="nav-btn">15</button>
+                <button class="nav-btn">16</button>
+                <button class="nav-btn">17</button>
+                <button class="nav-btn">18</button>
+                <button class="nav-btn">19</button>
+                <button class="nav-btn">20</button>
+                <button class="nav-btn">21</button>
+                <button class="nav-btn">22</button>
+                <button class="nav-btn">23</button>
+                <button class="nav-btn">24</button>
+                <button class="nav-btn">25</button>
+                <button class="nav-btn">26</button>
+                <button class="nav-btn">27</button>
+                <button class="nav-btn">28</button>
+                <button class="nav-btn">29</button>
+                <button class="nav-btn">30</button>
+            </div>
+
+            <div class="nav-legend">
+                <div class="legend-item">
+                    <div class="legend-box current"></div>
+                    <span>현재 문제</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box answered"></div>
+                    <span>답변 완료</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box unanswered"></div>
+                    <span>미답변</span>
+                </div>
+            </div>
+
+            <div class="progress-indicator">
+                <div class="progress-header">
+                    <span class="progress-title">전체 진행률</span>
+                    <span class="progress-stats">5/30</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: 17%;"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Question Content -->
+        <main class="question-content">
+            <div class="question-header">
+                <div class="question-number">문제 1</div>
+                <div class="question-points">5점</div>
+            </div>
+
+            <div class="question-text">
+                스택(Stack) 자료구조의 특징으로 올바른 것은 무엇입니까?
+                스택은 컴퓨터 과학에서 가장 기본적인 자료구조 중 하나로,
+                다양한 알고리즘과 애플리케이션에서 활용됩니다.
+            </div>
+
+            <div class="options-list">
+                <div class="option-item">
+                    <input type="radio" id="option1" name="answer" class="option-input">
+                    <label for="option1" class="option-label">
+                        <div class="option-marker">①</div>
+                        <div class="option-text">
+                            FIFO(First In First Out) 구조로 먼저 들어간 데이터가 먼저 나옵니다.
+                        </div>
+                    </label>
+                </div>
+
+                <div class="option-item">
+                    <input type="radio" id="option2" name="answer" class="option-input" checked>
+                    <label for="option2" class="option-label">
+                        <div class="option-marker">②</div>
+                        <div class="option-text">
+                            LIFO(Last In First Out) 구조로 마지막에 들어간 데이터가 먼저 나옵니다.
+                        </div>
+                    </label>
+                </div>
+
+                <div class="option-item">
+                    <input type="radio" id="option3" name="answer" class="option-input">
+                    <label for="option3" class="option-label">
+                        <div class="option-marker">③</div>
+                        <div class="option-text">
+                            데이터를 양방향에서 삽입하고 삭제할 수 있는 구조입니다.
+                        </div>
+                    </label>
+                </div>
+
+                <div class="option-item">
+                    <input type="radio" id="option4" name="answer" class="option-input">
+                    <label for="option4" class="option-label">
+                        <div class="option-marker">④</div>
+                        <div class="option-text">
+                            각 노드가 부모와 자식 관계로 연결된 계층적 구조입니다.
+                        </div>
+                    </label>
+                </div>
+
+                <div class="option-item">
+                    <input type="radio" id="option5" name="answer" class="option-input">
+                    <label for="option5" class="option-label">
+                        <div class="option-marker">⑤</div>
+                        <div class="option-text">
+                            인덱스를 통해 임의의 위치에 있는 요소에 직접 접근할 수 있습니다.
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="question-nav-buttons">
+                <button class="btn btn-secondary">
+                    ← 이전 문제
+                </button>
+                <button class="btn btn-primary">
+                    다음 문제 →
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

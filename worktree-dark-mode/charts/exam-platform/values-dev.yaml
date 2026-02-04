@@ -1,0 +1,99 @@
+# =============================================================================
+# Exam Platform Helm Chart - Dev Environment Values
+# =============================================================================
+# Usage: helm install exam-platform ./charts/exam-platform -f values-dev.yaml
+# =============================================================================
+
+namespace:
+  name: exam-dev
+
+# -----------------------------------------------------------------------------
+# Backend
+# -----------------------------------------------------------------------------
+backend:
+  replicaCount: 1
+
+  image:
+    tag: "dev-latest"
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  gunicorn:
+    workers: 2
+    threads: 2
+
+  autoscaling:
+    enabled: false
+
+# -----------------------------------------------------------------------------
+# Frontend
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 1
+
+  image:
+    tag: "dev-latest"
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+  hosts:
+    - host: dev.exam.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /admin
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+  tls: []
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+config:
+  allowedHosts: "dev.exam.example.com"
+  debug: "True"
+
+  # Dev database endpoints
+  postgresHost: "postgres-dev.database.svc.cluster.local"
+  mongodbHost: "mongodb-dev.database.svc.cluster.local"
+  redisHost: "redis-dev.cache.svc.cluster.local"
+
+  secureSSLRedirect: "False"
+  sessionCookieSecure: "False"
+  csrfCookieSecure: "False"
+
+# -----------------------------------------------------------------------------
+# Secrets
+# -----------------------------------------------------------------------------
+secrets:
+  create: true
+  secretKey: "dev-secret-key-change-me"
+  postgresPassword: "dev-password"
+  mongodbPassword: "dev-password"
+  redisPassword: "dev-password"

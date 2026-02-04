@@ -1,0 +1,118 @@
+# =============================================================================
+# Exam Platform - Minikube Local Values
+# =============================================================================
+# Minikube 환경에서 로컬 Docker의 PostgreSQL/Redis를 재사용하는 설정
+
+# Backend
+backend:
+  image:
+    repository: examonline/backend
+    tag: "latest"
+    pullPolicy: Never
+
+  # Probe 설정: 로컬 환경에서 초기 기동 시간 여유
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/ready/
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 60
+
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Frontend
+frontend:
+  image:
+    repository: examonline/frontend
+    tag: "latest"
+    pullPolicy: Never
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: exam.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /admin
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+# ConfigMap
+config:
+  djangoSettingsModule: config.production
+  allowedHosts: "*"
+  debug: "True"
+
+  # PostgreSQL: 로컬 Docker (192.168.65.254:5433 = host.minikube.internal)
+  postgresHost: "192.168.65.254"
+  postgresPort: "5433"
+  postgresDb: "examonline"
+  postgresUser: "examuser"
+
+  # MongoDB: 비활성화
+  mongodbHost: ""
+  mongodbPort: "27017"
+  mongodbDatabase: ""
+  mongodbUser: ""
+  mongodbAuthSource: ""
+
+  # Redis: 로컬 Docker (192.168.65.254:6379 = host.minikube.internal)
+  redisHost: "192.168.65.254"
+  redisPort: "6379"
+
+  # SSL 비활성화
+  secureSSLRedirect: "False"
+  sessionCookieSecure: "False"
+  csrfCookieSecure: "False"
+
+# Secrets
+secrets:
+  create: true
+  secretKey: "local-dev-secret-key-not-for-production"
+  postgresPassword: "testpassword123"
+  mongodbPassword: ""
+  redisPassword: ""
+
+# Pod Security: Backend=appuser(1000), Frontend=nginx(101)
+# runAsUser를 제거하여 각 Container의 Dockerfile USER 지시자 사용
+podSecurityContext:
+  runAsNonRoot: false
+
+# Namespace: 이미 존재하므로 생성 비활성화
+namespace:
+  create: false
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL

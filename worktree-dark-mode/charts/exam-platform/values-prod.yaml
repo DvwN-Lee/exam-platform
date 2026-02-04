@@ -1,0 +1,139 @@
+# =============================================================================
+# Exam Platform Helm Chart - Production Environment Values
+# =============================================================================
+# Usage: helm install exam-platform ./charts/exam-platform -f values-prod.yaml
+# =============================================================================
+
+namespace:
+  name: exam-platform-prod
+
+# -----------------------------------------------------------------------------
+# Backend
+# -----------------------------------------------------------------------------
+backend:
+  replicaCount: 3
+
+  image:
+    # Use specific version tag, not 'latest'
+    tag: "1.0.0"
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+
+  gunicorn:
+    workers: 4
+    threads: 2
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# -----------------------------------------------------------------------------
+# Frontend
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 3
+
+  image:
+    tag: "1.0.0"
+
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+  hosts:
+    - host: exam.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /admin
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+  tls:
+    - secretName: exam-platform-tls
+      hosts:
+        - exam.example.com
+
+# -----------------------------------------------------------------------------
+# Config
+# -----------------------------------------------------------------------------
+config:
+  allowedHosts: "exam.example.com"
+  debug: "False"
+
+  # Production database endpoints (AWS RDS, MongoDB Atlas, ElastiCache)
+  postgresHost: "examonline-postgres.xxxx.ap-northeast-2.rds.amazonaws.com"
+  postgresPort: "5432"
+  postgresDb: "examonline"
+  postgresUser: "examuser"
+
+  mongodbHost: "examonline-cluster.xxxx.mongodb.net"
+  mongodbPort: "27017"
+  mongodbDatabase: "examonline_logs"
+  mongodbUser: "mongouser"
+  mongodbAuthSource: "admin"
+
+  redisHost: "examonline-redis.xxxx.cache.amazonaws.com"
+  redisPort: "6379"
+
+  # Enable SSL in production
+  secureSSLRedirect: "True"
+  sessionCookieSecure: "True"
+  csrfCookieSecure: "True"
+
+# -----------------------------------------------------------------------------
+# Secrets
+# -----------------------------------------------------------------------------
+secrets:
+  # In production, use external secrets management
+  # (AWS Secrets Manager, HashiCorp Vault, External Secrets Operator)
+  create: false
+  externalSecretName: "exam-platform-prod-secrets"
+
+# -----------------------------------------------------------------------------
+# Pod Affinity (High Availability)
+# -----------------------------------------------------------------------------
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - exam-platform-backend
+          topologyKey: topology.kubernetes.io/zone

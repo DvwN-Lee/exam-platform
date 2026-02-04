@@ -1,0 +1,108 @@
+[project]
+name = "examonline"
+version = "0.1.0"
+description = "Online Exam Management System with DevOps"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=5.2,<5.3",
+    "pillow>=12.0.0",
+    "psycopg[binary]>=3.2",
+    "pymongo>=4.10",
+    "python-dotenv>=1.0",
+    "djangorestframework>=3.15",
+    "djangorestframework-simplejwt>=5.3",
+    "drf-spectacular>=0.27",
+    "django-filter>=24.3",
+    "django-cors-headers>=4.6",
+    "bleach>=6.1",
+    "gunicorn>=23.0",
+    "redis>=5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8",
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "pytest-cov>=6.0",
+    "ipython>=8.30",
+    "mypy>=1.13",
+    "django-stubs>=5.1",
+    "djangorestframework-stubs>=3.15",
+]
+s3 = [
+    "django-storages[s3]>=1.14",
+    "boto3>=1.35",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "W",   # pycodestyle warnings
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "DTZ", # flake8-datetimez
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Django 설정 파일: star import는 Django 설정 패턴
+"config/local.py" = ["F403", "F405"]
+"config/production.py" = ["F403", "F405"]
+# 테스트 파일: timezone 관련 규칙 완화
+"test_*.py" = ["DTZ"]
+"*_test.py" = ["DTZ"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.isort]
+known-first-party = ["examonline", "apps"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.local"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--cov=apps",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]
+
+[tool.mypy]
+python_version = "3.14"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+check_untyped_defs = true
+disallow_any_generics = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+exclude = [
+    "migrations/",
+]
+
+[tool.django-stubs]
+django_settings_module = "config.local"

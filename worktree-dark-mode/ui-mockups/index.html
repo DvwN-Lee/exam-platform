@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamOnline UI Mockups - 목차</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10B981;
+            --primary-dark: #059669;
+            --primary-light: #34D399;
+            --bg-light: #F0FDF4;
+            --surface: #FFFFFF;
+            --text: #1F2937;
+            --text-secondary: #6B7280;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Poppins', sans-serif;
+            background: var(--bg-light);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 3rem 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .design-info {
+            display: inline-block;
+            background: var(--surface);
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+        }
+
+        .design-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .design-tags {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .mockups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .mockup-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+        }
+
+        .mockup-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .mockup-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .mockup-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.75rem;
+        }
+
+        .mockup-desc {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .mockup-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .mockup-features li {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            padding: 0.375rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .mockup-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .btn-view {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-view:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .color-palette {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 3rem;
+        }
+
+        .palette-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .color-item {
+            text-align: center;
+        }
+
+        .color-box {
+            height: 80px;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .color-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+
+        .color-code {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .resources {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .resources h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+        }
+
+        .resources ul {
+            list-style: none;
+        }
+
+        .resources li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .resources li:last-child {
+            border-bottom: none;
+        }
+
+        .resources a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .resources a:hover {
+            color: var(--primary-dark);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .mockups-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .palette-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ExamOnline UI Mockups</h1>
+            <p class="subtitle">온라인 시험 시스템 현대적 UI/UX 디자인</p>
+
+            <div class="design-info">
+                <h3>Design Concept</h3>
+                <div class="design-tags">
+                    <span class="tag">Educational Platform</span>
+                    <span class="tag">Emerald Green Theme</span>
+                    <span class="tag">Card-based Layout</span>
+                    <span class="tag">Responsive Design</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="mockups-grid">
+            <div class="mockup-card">
+                <div class="mockup-icon">
+                    <i data-lucide="home"></i>
+                </div>
+                <h2 class="mockup-title">Landing Page</h2>
+                <p class="mockup-desc">
+                    서비스 소개와 주요 기능을 보여주는 메인 페이지
+                </p>
+                <ul class="mockup-features">
+                    <li>Hero Section with CTA</li>
+                    <li>Features Grid (6개)</li>
+                    <li>Statistics Section</li>
+                    <li>Responsive Navigation</li>
+                </ul>
+                <a href="01-landing-page.html" class="btn-view">목업 보기</a>
+            </div>
+
+            <div class="mockup-card">
+                <div class="mockup-icon">
+                    <i data-lucide="lock"></i>
+                </div>
+                <h2 class="mockup-title">Login Page</h2>
+                <p class="mockup-desc">
+                    사용자 로그인 및 역할 선택 페이지
+                </p>
+                <ul class="mockup-features">
+                    <li>역할 선택 (학생/교사)</li>
+                    <li>소셜 로그인 지원</li>
+                    <li>중앙 정렬 카드 레이아웃</li>
+                    <li>일러스트레이션 섹션</li>
+                </ul>
+                <a href="05-login-page.html" class="btn-view">목업 보기</a>
+            </div>
+
+            <div class="mockup-card">
+                <div class="mockup-icon">
+                    <i data-lucide="layout-dashboard"></i>
+                </div>
+                <h2 class="mockup-title">Student Dashboard</h2>
+                <p class="mockup-desc">
+                    학생용 대시보드로 예정된 시험과 성적을 확인
+                </p>
+                <ul class="mockup-features">
+                    <li>통계 카드 (3개)</li>
+                    <li>예정된 시험 목록</li>
+                    <li>최근 성적 차트</li>
+                    <li>학습 진행률</li>
+                </ul>
+                <a href="02-student-dashboard.html" class="btn-view">목업 보기</a>
+            </div>
+
+            <div class="mockup-card">
+                <div class="mockup-icon">
+                    <i data-lucide="file-check"></i>
+                </div>
+                <h2 class="mockup-title">Exam Interface</h2>
+                <p class="mockup-desc">
+                    실제 시험을 응시하는 인터페이스
+                </p>
+                <ul class="mockup-features">
+                    <li>실시간 타이머</li>
+                    <li>문제 네비게이션</li>
+                    <li>진행률 표시</li>
+                    <li>커스텀 선택지 UI</li>
+                </ul>
+                <a href="03-exam-interface.html" class="btn-view">목업 보기</a>
+            </div>
+
+            <div class="mockup-card">
+                <div class="mockup-icon">
+                    <i data-lucide="user"></i>
+                </div>
+                <h2 class="mockup-title">Teacher Dashboard</h2>
+                <p class="mockup-desc">
+                    교사용 대시보드로 시험 관리와 성적 분석
+                </p>
+                <ul class="mockup-features">
+                    <li>통계 카드 (4개)</li>
+                    <li>시험 결과 테이블</li>
+                    <li>최근 활동 타임라인</li>
+                    <li>점수 분포 차트</li>
+                </ul>
+                <a href="04-teacher-dashboard.html" class="btn-view">목업 보기</a>
+            </div>
+        </div>
+
+        <div class="color-palette">
+            <h2 class="palette-title">Color Palette (Emerald Theme)</h2>
+            <div class="palette-grid">
+                <div class="color-item">
+                    <div class="color-box" style="background: #10B981;"></div>
+                    <div class="color-name">Primary</div>
+                    <div class="color-code">#10B981</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #059669;"></div>
+                    <div class="color-name">Primary Dark</div>
+                    <div class="color-code">#059669</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #34D399;"></div>
+                    <div class="color-name">Primary Light</div>
+                    <div class="color-code">#34D399</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #F0FDF4;"></div>
+                    <div class="color-name">Background</div>
+                    <div class="color-code">#F0FDF4</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #FFFFFF; border: 1px solid #E5E7EB;"></div>
+                    <div class="color-name">Surface</div>
+                    <div class="color-code">#FFFFFF</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #22C55E;"></div>
+                    <div class="color-name">Success</div>
+                    <div class="color-code">#22C55E</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #F59E0B;"></div>
+                    <div class="color-name">Warning</div>
+                    <div class="color-code">#F59E0B</div>
+                </div>
+                <div class="color-item">
+                    <div class="color-box" style="background: #EF4444;"></div>
+                    <div class="color-name">Error</div>
+                    <div class="color-code">#EF4444</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="resources">
+            <h2>Implementation Resources</h2>
+            <ul>
+                <li><strong>Typography:</strong> Noto Sans KR, Poppins</li>
+                <li><strong>CSS Framework:</strong> Tailwind CSS (권장)</li>
+                <li><strong>Component Library:</strong> shadcn/ui, Radix UI</li>
+                <li><strong>Icons:</strong> React Icons, Lucide Icons</li>
+                <li><strong>Animation:</strong> Framer Motion</li>
+                <li><strong>Charts:</strong> Recharts, Chart.js</li>
+                <li>
+                    <a href="README.md">상세 디자인 가이드 보기 →</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "exam-platform.configMapName" . }}
+  namespace: {{ include "exam-platform.namespace" . }}
+  labels:
+    {{- include "exam-platform.labels" . | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  # Django settings
+  DJANGO_SETTINGS_MODULE: {{ .Values.config.djangoSettingsModule | quote }}
+  ALLOWED_HOSTS: {{ .Values.config.allowedHosts | quote }}
+  DEBUG: {{ .Values.config.debug | quote }}
+
+  # PostgreSQL
+  POSTGRES_HOST: {{ .Values.config.postgresHost | quote }}
+  POSTGRES_PORT: {{ .Values.config.postgresPort | quote }}
+  POSTGRES_DB: {{ .Values.config.postgresDb | quote }}
+  POSTGRES_USER: {{ .Values.config.postgresUser | quote }}
+
+  # MongoDB
+  MONGODB_HOST: {{ .Values.config.mongodbHost | quote }}
+  MONGODB_PORT: {{ .Values.config.mongodbPort | quote }}
+  MONGODB_DATABASE: {{ .Values.config.mongodbDatabase | quote }}
+  MONGODB_USER: {{ .Values.config.mongodbUser | quote }}
+  MONGODB_AUTH_SOURCE: {{ .Values.config.mongodbAuthSource | quote }}
+
+  # Redis
+  REDIS_HOST: {{ .Values.config.redisHost | quote }}
+  REDIS_PORT: {{ .Values.config.redisPort | quote }}
+
+  # SSL settings
+  SECURE_SSL_REDIRECT: {{ .Values.config.secureSSLRedirect | quote }}
+  SESSION_COOKIE_SECURE: {{ .Values.config.sessionCookieSecure | quote }}
+  CSRF_COOKIE_SECURE: {{ .Values.config.csrfCookieSecure | quote }}

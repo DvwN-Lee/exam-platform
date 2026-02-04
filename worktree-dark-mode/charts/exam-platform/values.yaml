@@ -1,0 +1,265 @@
+# =============================================================================
+# Exam Platform Helm Chart - Default Values (Development)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Global Settings
+# -----------------------------------------------------------------------------
+global:
+  # Container image registry
+  imageRegistry: ""
+  # Image pull secrets
+  imagePullSecrets: []
+
+# Namespace
+namespace:
+  create: true
+  name: exam-platform
+
+# -----------------------------------------------------------------------------
+# Backend (Django + Gunicorn)
+# -----------------------------------------------------------------------------
+backend:
+  replicaCount: 1
+
+  image:
+    repository: examonline/backend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # Liveness/Readiness Probe
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /api/v1/health/
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  # Startup Probe (slow-starting containers)
+  # /api/v1/health/ready/: DB 연결 확인 포함 (migration 완료 후 정상 응답)
+  startupProbe:
+    enabled: false
+    httpGet:
+      path: /api/v1/health/ready/
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+  # Gunicorn settings
+  gunicorn:
+    workers: 2
+    threads: 2
+
+  # HorizontalPodAutoscaler
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  # Pod disruption budget
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+
+# -----------------------------------------------------------------------------
+# Frontend (React + Nginx)
+# -----------------------------------------------------------------------------
+frontend:
+  replicaCount: 1
+
+  image:
+    repository: examonline/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: 80
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# -----------------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  # kubernetes.io/ingress.class: nginx
+  # cert-manager.io/cluster-issuer: letsencrypt-prod
+
+  hosts:
+    - host: exam.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          backend: backend
+        - path: /admin
+          pathType: Prefix
+          backend: backend
+        - path: /
+          pathType: Prefix
+          backend: frontend
+
+  tls: []
+  # - secretName: exam-platform-tls
+  #   hosts:
+  #     - exam.local
+
+# -----------------------------------------------------------------------------
+# ConfigMap (Non-sensitive environment variables)
+# -----------------------------------------------------------------------------
+config:
+  # Django settings
+  djangoSettingsModule: config.production
+  allowedHosts: "exam.local,localhost"
+  debug: "False"
+
+  # PostgreSQL
+  postgresHost: "postgres.database.svc.cluster.local"
+  postgresPort: "5432"
+  postgresDb: "examonline"
+  postgresUser: "examuser"
+
+  # MongoDB
+  mongodbHost: "mongodb.database.svc.cluster.local"
+  mongodbPort: "27017"
+  mongodbDatabase: "examonline_logs"
+  mongodbUser: "mongouser"
+  mongodbAuthSource: "admin"
+
+  # Redis
+  redisHost: "redis.cache.svc.cluster.local"
+  redisPort: "6379"
+
+  # SSL settings (Docker/Local: False, Production: True)
+  secureSSLRedirect: "False"
+  sessionCookieSecure: "False"
+  csrfCookieSecure: "False"
+
+# -----------------------------------------------------------------------------
+# Secrets (Sensitive data)
+# -----------------------------------------------------------------------------
+secrets:
+  # Create secrets from values (for development only)
+  # In production, use external secrets management (e.g., AWS Secrets Manager, Vault)
+  create: true
+
+  # Django
+  secretKey: "change-me-in-production"
+
+  # PostgreSQL
+  postgresPassword: "change-me"
+
+  # MongoDB
+  mongodbPassword: "change-me"
+
+  # Redis
+  redisPassword: "change-me"
+
+  # External secret reference (if secrets.create is false)
+  externalSecretName: ""
+
+# -----------------------------------------------------------------------------
+# External Secrets (ESO Integration)
+# -----------------------------------------------------------------------------
+externalSecrets:
+  # Enable ESO integration (requires ESO and ClusterSecretStore)
+  enabled: false
+  # Secret refresh interval
+  refreshInterval: "1h"
+  # ClusterSecretStore reference
+  secretStoreRef: "gcp-secret-manager"
+  # Secret mappings for GCP Secret Manager
+  secrets:
+    dbPassword:
+      key: "exam-db-password"
+    djangoSecretKey:
+      key: "exam-django-secret-key"
+    redisPassword:
+      key: "exam-redis-password"
+
+# -----------------------------------------------------------------------------
+# Service Account
+# -----------------------------------------------------------------------------
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# -----------------------------------------------------------------------------
+# Pod Security
+# -----------------------------------------------------------------------------
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+# -----------------------------------------------------------------------------
+# Node Selection
+# -----------------------------------------------------------------------------
+nodeSelector: {}
+tolerations: []
+affinity: {}

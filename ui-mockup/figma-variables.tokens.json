@@ -1,0 +1,60 @@
+o{
+  "color": {
+    "background": { "$value": "#f8fafc", "$type": "color" },
+    "foreground": { "$value": "#1f2937", "$type": "color" },
+    "card": {
+      "DEFAULT": { "$value": "#ffffff", "$type": "color" },
+      "foreground": { "$value": "#1f2937", "$type": "color" }
+    },
+    "popover": {
+      "DEFAULT": { "$value": "#ffffff", "$type": "color" },
+      "foreground": { "$value": "#1f2937", "$type": "color" }
+    },
+    "primary": {
+      "DEFAULT": { "$value": "#10b981", "$type": "color" },
+      "foreground": { "$value": "#ffffff", "$type": "color" },
+      "dark": { "$value": "#059669", "$type": "color" },
+      "light": { "$value": "#34d399", "$type": "color" }
+    },
+    "secondary": {
+      "DEFAULT": { "$value": "#e5e7eb", "$type": "color" },
+      "foreground": { "$value": "#1f2937", "$type": "color" }
+    },
+    "muted": {
+      "DEFAULT": { "$value": "#f1f5f9", "$type": "color" },
+      "foreground": { "$value": "#64748b", "$type": "color" }
+    },
+    "accent": {
+      "DEFAULT": { "$value": "#f0fdf4", "$type": "color" },
+      "foreground": { "$value": "#1f2937", "$type": "color" }
+    },
+    "destructive": {
+      "DEFAULT": { "$value": "#ef4444", "$type": "color" },
+      "foreground": { "$value": "#ffffff", "$type": "color" }
+    },
+    "success": { "$value": "#22c55e", "$type": "color" },
+    "warning": { "$value": "#f59e0b", "$type": "color" },
+    "border": { "$value": "#e2e8f0", "$type": "color" },
+    "input": { "$value": "#e2e8f0", "$type": "color" },
+    "ring": { "$value": "#10b981", "$type": "color" }
+  },
+  "radius": {
+    "sm": { "$value": "12px", "$type": "dimension" },
+    "md": { "$value": "16px", "$type": "dimension" },
+    "lg": { "$value": "24px", "$type": "dimension" },
+    "xl": { "$value": "32px", "$type": "dimension" }
+  },
+  "duration": {
+    "instant": { "$value": "100ms", "$type": "duration" },
+    "fast": { "$value": "200ms", "$type": "duration" },
+    "normal": { "$value": "300ms", "$type": "duration" },
+    "slow": { "$value": "500ms", "$type": "duration" },
+    "slower": { "$value": "800ms", "$type": "duration" },
+    "chart": { "$value": "800ms", "$type": "duration" }
+  },
+  "stagger": {
+    "fast": { "$value": "50ms", "$type": "duration" },
+    "normal": { "$value": "100ms", "$type": "duration" },
+    "slow": { "$value": "150ms", "$type": "duration" }
+  }
+}
