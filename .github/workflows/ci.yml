@@ -40,7 +40,7 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          cache-dependency-glob: "**/uv.lock"
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
@@ -72,7 +72,7 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          cache-dependency-glob: "**/uv.lock"
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
@@ -118,7 +118,7 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          cache-dependency-glob: "**/uv.lock"
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
@@ -253,7 +253,7 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-          cache-dependency-glob: "uv.lock"
+          cache-dependency-glob: "**/uv.lock"
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
