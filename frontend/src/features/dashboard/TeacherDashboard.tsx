@@ -46,16 +46,16 @@ export function TeacherDashboard() {
 
   // PieChart 데이터 준비 (0값은 차트에서 숨기고 Legend에서만 표시)
   const questionTypeData: PieChartDataItem[] = [
-    { name: '객관식', value: dashboard.question_statistics.questions_by_type.xz ?? 0, type: 'xz' },
-    { name: '빈칸채우기', value: dashboard.question_statistics.questions_by_type.tk ?? 0, type: 'tk' },
-    { name: '주관식', value: dashboard.question_statistics.questions_by_type.pd ?? 0, type: 'pd' },
+    { name: '객관식', value: dashboard.question_statistics?.questions_by_type?.xz ?? 0, type: 'xz' },
+    { name: '빈칸채우기', value: dashboard.question_statistics?.questions_by_type?.tk ?? 0, type: 'tk' },
+    { name: '주관식', value: dashboard.question_statistics?.questions_by_type?.pd ?? 0, type: 'pd' },
   ]
 
   // BarChart 데이터 준비
   const questionDifficultyData: ChartDataItem[] = [
-    { name: '쉬움', value: dashboard.question_statistics.questions_by_difficulty.jd ?? 0, difficulty: 'jd' },
-    { name: '보통', value: dashboard.question_statistics.questions_by_difficulty.zd ?? 0, difficulty: 'zd' },
-    { name: '어려움', value: dashboard.question_statistics.questions_by_difficulty.kn ?? 0, difficulty: 'kn' },
+    { name: '쉬움', value: dashboard.question_statistics?.questions_by_difficulty?.jd ?? 0, difficulty: 'jd' },
+    { name: '보통', value: dashboard.question_statistics?.questions_by_difficulty?.zd ?? 0, difficulty: 'zd' },
+    { name: '어려움', value: dashboard.question_statistics?.questions_by_difficulty?.kn ?? 0, difficulty: 'kn' },
   ]
 
   return (
@@ -101,20 +101,20 @@ export function TeacherDashboard() {
                   생성한 문제
                 </div>
                 <div className="mt-2 text-3xl font-bold">
-                  {dashboard.question_statistics.total_questions}
+                  {dashboard.question_statistics?.total_questions ?? 0}
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
-                  {dashboard.question_statistics.trend > 0 && (
+                  {(dashboard.question_statistics?.trend ?? 0) > 0 && (
                     <span className="text-green-600">
-                      ↑ 이번 달 {dashboard.question_statistics.trend}개 추가
+                      ↑ 이번 달 {dashboard.question_statistics?.trend}개 추가
                     </span>
                   )}
-                  {dashboard.question_statistics.trend < 0 && (
+                  {(dashboard.question_statistics?.trend ?? 0) < 0 && (
                     <span className="text-red-600">
-                      ↓ 이번 달 {Math.abs(dashboard.question_statistics.trend)}개 감소
+                      ↓ 이번 달 {Math.abs(dashboard.question_statistics?.trend ?? 0)}개 감소
                     </span>
                   )}
-                  {dashboard.question_statistics.trend === 0 && dashboard.question_statistics.total_questions === 0 && (
+                  {(dashboard.question_statistics?.trend ?? 0) === 0 && (dashboard.question_statistics?.total_questions ?? 0) === 0 && (
                     <span className="text-muted-foreground">
                       아직 문제가 없습니다
                     </span>
@@ -215,20 +215,20 @@ export function TeacherDashboard() {
                   평균 점수
                 </div>
                 <div className="mt-2 text-3xl font-bold text-green-600">
-                  {dashboard.student_statistics.average_score.toFixed(1)}
+                  {(dashboard.student_statistics?.average_score ?? 0).toFixed(1)}
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
-                  {dashboard.student_statistics.score_trend > 0 && (
+                  {(dashboard.student_statistics?.score_trend ?? 0) > 0 && (
                     <span className="text-green-600">
-                      ↑ 이번 달 {dashboard.student_statistics.score_trend.toFixed(1)}점 상승
+                      ↑ 이번 달 {(dashboard.student_statistics?.score_trend ?? 0).toFixed(1)}점 상승
                     </span>
                   )}
-                  {dashboard.student_statistics.score_trend < 0 && (
+                  {(dashboard.student_statistics?.score_trend ?? 0) < 0 && (
                     <span className="text-red-600">
-                      ↓ 이번 달 {Math.abs(dashboard.student_statistics.score_trend).toFixed(1)}점 하락
+                      ↓ 이번 달 {Math.abs(dashboard.student_statistics?.score_trend ?? 0).toFixed(1)}점 하락
                     </span>
                   )}
-                  {dashboard.student_statistics.score_trend === 0 && dashboard.student_statistics.total_submissions === 0 && (
+                  {(dashboard.student_statistics?.score_trend ?? 0) === 0 && (dashboard.student_statistics?.total_submissions ?? 0) === 0 && (
                     <span className="text-muted-foreground">
                       아직 점수 데이터가 없습니다
                     </span>
@@ -375,11 +375,11 @@ export function TeacherDashboard() {
           <div className="rounded-lg border bg-card p-6">
             <h2 className="mb-4 text-xl font-semibold">최근 제출된 시험</h2>
 
-          {dashboard.student_statistics.recent_submissions.length === 0 ? (
+          {(dashboard.student_statistics?.recent_submissions ?? []).length === 0 ? (
             <EmptyState compact title="제출된 시험이 없습니다." />
           ) : (
             <StaggerContainer className="grid gap-3 md:grid-cols-2 lg:grid-cols-3" delay={0.2}>
-              {dashboard.student_statistics.recent_submissions
+              {(dashboard.student_statistics?.recent_submissions ?? [])
                 .slice(0, 6)
                 .map((submission) => (
                   <StaggerItem key={submission.id}>
