@@ -394,6 +394,11 @@ class ExamTakingViewSet(viewsets.ViewSet):
                     else:
                         # 기존 방식 (answer 필드에 직접 ID가 있는 경우)
                         is_correct = str(user_answer) == str(correct_option.id)
+            elif question.tq_type == "tk":  # 빈칸채우기
+                correct_option = correct_options_dict.get(question_id)
+                if correct_option and user_answer:
+                    # 대소문자 무시, 앞뒤 공백 제거 후 비교
+                    is_correct = user_answer.strip().lower() == correct_option.option.strip().lower()
 
             earned_score = question_score if is_correct else 0
             total_score += earned_score
