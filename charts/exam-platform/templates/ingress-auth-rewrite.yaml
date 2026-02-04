@@ -38,9 +38,9 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          # Only rewrite API paths that don't conflict with frontend routes
-          # auth/*, users/*, subjects/* have no frontend route conflicts
-          - path: /(auth|users|subjects)/(.*)
+          # Rewrite all API paths: Frontend VITE_API_BASE_URL이 빈 문자열일 때 사용
+          # TODO: Frontend 이미지 재빌드 후 auth만 남기거나 삭제
+          - path: /(auth|users|subjects|dashboard|questions|testpapers|examinations|exams)/(.*)
             pathType: ImplementationSpecific
             backend:
               service:
