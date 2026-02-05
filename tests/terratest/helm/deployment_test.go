@@ -33,13 +33,14 @@ func TestHelmDeploymentIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// Helm 옵션 설정 (namespace 생성 비활성화 - 테스트용 namespace 사용)
-	// nginx 이미지 사용 시 Django 전용 probe 비활성화
+	// nginxinc/nginx-unprivileged 사용 (non-root 실행, podSecurityContext 호환)
+	// Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":         "nginx",
+			"backend.image.repository":         "nginxinc/nginx-unprivileged",
 			"backend.image.tag":                "alpine",
-			"frontend.image.repository":        "nginx",
+			"frontend.image.repository":        "nginxinc/nginx-unprivileged",
 			"frontend.image.tag":               "alpine",
 			"backend.replicaCount":             "1",
 			"frontend.replicaCount":            "1",
@@ -88,13 +89,14 @@ func TestHelmUpgradeIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// 초기 설치 (namespace 생성 비활성화 - 테스트용 namespace 사용)
-	// nginx 이미지 사용 시 Django 전용 probe 비활성화
+	// nginxinc/nginx-unprivileged 사용 (non-root 실행, podSecurityContext 호환)
+	// Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":         "nginx",
+			"backend.image.repository":         "nginxinc/nginx-unprivileged",
 			"backend.image.tag":                "1.24-alpine",
-			"frontend.image.repository":        "nginx",
+			"frontend.image.repository":        "nginxinc/nginx-unprivileged",
 			"frontend.image.tag":               "1.24-alpine",
 			"backend.replicaCount":             "1",
 			"frontend.replicaCount":            "1",
@@ -144,13 +146,14 @@ func TestHelmRollbackIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
-	// nginx 이미지 사용 시 Django 전용 probe 비활성화
+	// nginxinc/nginx-unprivileged 사용 (non-root 실행, podSecurityContext 호환)
+	// Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":         "nginx",
+			"backend.image.repository":         "nginxinc/nginx-unprivileged",
 			"backend.image.tag":                "1.24-alpine",
-			"frontend.image.repository":        "nginx",
+			"frontend.image.repository":        "nginxinc/nginx-unprivileged",
 			"frontend.image.tag":               "1.24-alpine",
 			"backend.replicaCount":             "1",
 			"frontend.replicaCount":            "1",
@@ -199,13 +202,14 @@ func TestHelmHealthCheckIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
-	// nginx 이미지 사용 시 Django 전용 probe 비활성화
+	// nginxinc/nginx-unprivileged 사용 (non-root 실행, podSecurityContext 호환)
+	// Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":         "nginx",
+			"backend.image.repository":         "nginxinc/nginx-unprivileged",
 			"backend.image.tag":                "alpine",
-			"frontend.image.repository":        "nginx",
+			"frontend.image.repository":        "nginxinc/nginx-unprivileged",
 			"frontend.image.tag":               "alpine",
 			"backend.replicaCount":             "1",
 			"frontend.replicaCount":            "1",
@@ -258,13 +262,14 @@ func TestHelmScalingIntegration(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
-	// nginx 이미지 사용 시 Django 전용 probe 비활성화
+	// nginxinc/nginx-unprivileged 사용 (non-root 실행, podSecurityContext 호환)
+	// Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":         "nginx",
+			"backend.image.repository":         "nginxinc/nginx-unprivileged",
 			"backend.image.tag":                "alpine",
-			"frontend.image.repository":        "nginx",
+			"frontend.image.repository":        "nginxinc/nginx-unprivileged",
 			"frontend.image.tag":               "alpine",
 			"backend.replicaCount":             "1",
 			"frontend.replicaCount":            "1",
@@ -320,13 +325,14 @@ func TestPlaywrightSmokeAfterDeployment(t *testing.T) {
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
 
 	// namespace 생성 비활성화 - 테스트용 namespace 사용
-	// nginx 이미지 사용 시 Django 전용 probe 비활성화
+	// nginxinc/nginx-unprivileged 사용 (non-root 실행, podSecurityContext 호환)
+	// Django 전용 probe 비활성화
 	helmOptions := &helm.Options{
 		KubectlOptions: kubectlOptions,
 		SetValues: map[string]string{
-			"backend.image.repository":         "nginx",
+			"backend.image.repository":         "nginxinc/nginx-unprivileged",
 			"backend.image.tag":                "alpine",
-			"frontend.image.repository":        "nginx",
+			"frontend.image.repository":        "nginxinc/nginx-unprivileged",
 			"frontend.image.tag":               "alpine",
 			"backend.replicaCount":             "1",
 			"frontend.replicaCount":            "1",
