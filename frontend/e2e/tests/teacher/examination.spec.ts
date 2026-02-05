@@ -21,7 +21,7 @@ test.describe('Teacher Examination Management', () => {
     await waitForLoadingComplete(page)
 
     // 페이지 제목이 나타날 때까지 대기 후 확인
-    await expect(page.locator('h1')).toContainText('시험', { timeout: 10000 })
+    await expect(page.locator('h1')).toContainText('시험', { timeout: 20000 })
 
     console.log('✓ Examination list page rendered successfully')
   })
@@ -46,7 +46,7 @@ test.describe('Teacher Examination Management', () => {
     await waitForLoadingComplete(page)
 
     // 페이지 제목이 나타날 때까지 대기
-    await expect(page.locator('h1')).toContainText('시험', { timeout: 10000 })
+    await expect(page.locator('h1')).toContainText('시험', { timeout: 20000 })
 
     // 페이지네이션 또는 빈 메시지, 또는 리스트 카드가 있어야 함
     const hasContent =

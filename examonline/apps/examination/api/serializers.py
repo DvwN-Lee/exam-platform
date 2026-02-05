@@ -255,7 +255,7 @@ class ExaminationCreateSerializer(serializers.ModelSerializer):
             )
 
         # 시험 시간 검증
-        if duration and duration <= 0:
+        if duration is not None and duration <= 0:
             raise serializers.ValidationError({"duration": "시험 시간은 0보다 커야 합니다."})
 
         # 시험지 최소 1개 검증
@@ -323,7 +323,7 @@ class ExaminationUpdateSerializer(serializers.ModelSerializer):
             )
 
         # 시험 시간 검증
-        if duration and duration <= 0:
+        if duration is not None and duration <= 0:
             raise serializers.ValidationError({"duration": "시험 시간은 0보다 커야 합니다."})
 
         return attrs
