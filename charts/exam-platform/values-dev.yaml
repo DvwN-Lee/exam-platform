@@ -79,22 +79,36 @@ ingress:
 config:
   allowedHosts: "dev.exam.example.com"
   debug: "True"
-
-  # Dev database endpoints
-  postgresHost: "postgres-dev.database.svc.cluster.local"
-  mongodbHost: "mongodb-dev.database.svc.cluster.local"
-  redisHost: "redis-dev.cache.svc.cluster.local"
-
   secureSSLRedirect: "False"
   sessionCookieSecure: "False"
   csrfCookieSecure: "False"
 
 # -----------------------------------------------------------------------------
-# Secrets
+# Secrets (disabled - using External Secrets)
 # -----------------------------------------------------------------------------
 secrets:
-  create: true
-  secretKey: "dev-secret-key-change-me"
-  postgresPassword: "dev-password"
-  mongodbPassword: "dev-password"
-  redisPassword: "dev-password"
+  create: false
+
+# -----------------------------------------------------------------------------
+# External Secrets (GCP Secret Manager)
+# -----------------------------------------------------------------------------
+externalSecrets:
+  enabled: true
+  refreshInterval: "1h"
+  secretStoreRef: "gcp-secret-manager"
+  secrets:
+    # Database
+    dbHost: "examonline-prod-db-host"
+    dbPort: "examonline-prod-db-port"
+    dbName: "examonline-prod-db-name"
+    dbUser: "examonline-prod-db-user"
+    dbPassword: "examonline-prod-db-password"
+    # Redis
+    redisHost: "examonline-prod-redis-host"
+    redisPort: "examonline-prod-redis-port"
+    redisPassword: "examonline-prod-redis-password"
+    # Application
+    djangoSecretKey: "examonline-prod-django-secret-key"
+    jwtSecretKey: "examonline-prod-jwt-secret-key"
+    # GCS
+    gcsBucketName: "examonline-prod-gcs-bucket-name"
