@@ -53,8 +53,9 @@ test.describe('Profile Management', () => {
       // 사용자명 확인
       await expect(page.locator(`text=${student.user.username}`)).toBeVisible()
 
-      // 사용자 유형 확인 (학생) - 정확한 텍스트 매칭
-      await expect(page.getByText('학생', { exact: true })).toBeVisible()
+      // 사용자 유형 확인 (학생) - 사용자 유형 섹션 내에서 확인
+      const userTypeSection = page.locator('text=사용자 유형').locator('..')
+      await expect(userTypeSection.getByText('학생')).toBeVisible()
 
       // Email 확인
       const emailValue = await page.locator('#email').inputValue()
@@ -118,8 +119,9 @@ test.describe('Profile Management', () => {
       // 사용자명 확인
       await expect(page.locator(`text=${teacher.user.username}`)).toBeVisible()
 
-      // 사용자 유형 확인 (교사) - 정확한 텍스트 매칭
-      await expect(page.getByText('교사', { exact: true })).toBeVisible()
+      // 사용자 유형 확인 (교사) - 사용자 유형 섹션 내에서 확인
+      const userTypeSection = page.locator('text=사용자 유형').locator('..')
+      await expect(userTypeSection.getByText('교사')).toBeVisible()
 
       console.log('✓ Teacher profile verified')
     })
