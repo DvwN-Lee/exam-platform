@@ -19,6 +19,23 @@ test.describe('Teacher Examination Management', () => {
     // CI 환경에서 API 응답이 느릴 수 있으므로 timeout 증가
     test.setTimeout(60000)
 
+    // 네트워크 요청 모니터링 (디버깅용)
+    page.on('request', (request) => {
+      if (request.url().includes('/examinations')) {
+        console.log(`>> Request: ${request.method()} ${request.url()}`)
+      }
+    })
+    page.on('response', (response) => {
+      if (response.url().includes('/examinations')) {
+        console.log(`<< Response: ${response.status()} ${response.url()}`)
+      }
+    })
+    page.on('requestfailed', (request) => {
+      if (request.url().includes('/examinations')) {
+        console.log(`!! Request failed: ${request.url()} - ${request.failure()?.errorText}`)
+      }
+    })
+
     // Examination 관리 페이지로 이동
     await page.goto('/examinations')
 
@@ -46,6 +63,23 @@ test.describe('Teacher Examination Management', () => {
   test('Examination 목록이 표시되어야 함', async ({ page }) => {
     // CI 환경에서 API 응답이 느릴 수 있으므로 timeout 증가
     test.setTimeout(60000)
+
+    // 네트워크 요청 모니터링 (디버깅용)
+    page.on('request', (request) => {
+      if (request.url().includes('/examinations')) {
+        console.log(`>> Request: ${request.method()} ${request.url()}`)
+      }
+    })
+    page.on('response', (response) => {
+      if (response.url().includes('/examinations')) {
+        console.log(`<< Response: ${response.status()} ${response.url()}`)
+      }
+    })
+    page.on('requestfailed', (request) => {
+      if (request.url().includes('/examinations')) {
+        console.log(`!! Request failed: ${request.url()} - ${request.failure()?.errorText}`)
+      }
+    })
 
     // Examination 목록 페이지로 이동
     await page.goto('/examinations')

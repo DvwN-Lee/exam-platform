@@ -121,9 +121,21 @@ jobs:
           E2E_MOCK_TIME_ENABLED: "true"
           REDIS_URL: redis://localhost:6379/0
         run: |
-          uv run python manage.py runserver &
-          sleep 10
-          curl -s http://localhost:8000/api/v1/health/ || echo "Health check skipped"
+          uv run python manage.py runserver 0.0.0.0:8000 &
+          echo "Backend server starting..."
+
+          # Health check with retry (최대 30초 대기)
+          for i in {1..6}; do
+            if curl -s http://localhost:8000/api/v1/health/ > /dev/null 2>&1; then
+              echo "Backend server is ready (attempt $i)"
+              break
+            fi
+            echo "Waiting for backend... (attempt $i/6)"
+            sleep 5
+          done
+
+          # Health check 결과 출력
+          curl -s http://localhost:8000/api/v1/health/ || echo "Health check failed"
 
       - name: Install Frontend dependencies
         working-directory: ./frontend
@@ -132,6 +144,72 @@ jobs:
       - name: Install Playwright browsers
         working-directory: ./frontend
         run: npx playwright install --with-deps chromium
+
+      - name: Verify API endpoints
+        env:
+          POSTGRES_DB: examdb
+          POSTGRES_USER: examuser
+          POSTGRES_PASSWORD: exampass
+          DJANGO_SETTINGS_MODULE: config.local
+          E2E_TEST_API_ENABLED: "true"
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          echo "=== API Endpoint Verification ==="
+
+          # 1. 테스트 교사 계정 생성 및 로그인
+          echo "Creating test teacher account..."
+          cd examonline
+          uv run python manage.py shell -c "
+          from user.models import UserProfile
+          if not UserProfile.objects.filter(username='testteacher2').exists():
+              user = UserProfile.objects.create_user(
+                  username='testteacher2',
+                  password='test12345678',
+                  user_type='teacher',
+                  nick_name='TestTeacher'
+              )
+              print(f'Created teacher: {user.username}')
+          else:
+              print('Teacher account already exists')
+          "
+          cd ..
+
+          # 2. 로그인하여 토큰 획득
+          echo "Getting auth token..."
+          TOKEN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/v1/auth/token/ \
+            -H "Content-Type: application/json" \
+            -d '{"username":"testteacher2","password":"test12345678"}')
+          echo "Token response: $TOKEN_RESPONSE"
+
+          ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | python3 -c "import sys, json; print(json.load(sys.stdin).get('access', ''))" 2>/dev/null || echo "")
+
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "Warning: Could not get access token"
+          else
+            echo "Got access token (${#ACCESS_TOKEN} chars)"
+
+            # 3. Examinations API 응답 시간 측정
+            echo "Testing /api/v1/examinations/ endpoint..."
+            START_TIME=$(date +%s%N)
+            EXAM_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET http://localhost:8000/api/v1/examinations/ \
+              -H "Authorization: Bearer $ACCESS_TOKEN" \
+              -H "Content-Type: application/json")
+            END_TIME=$(date +%s%N)
+
+            HTTP_CODE=$(echo "$EXAM_RESPONSE" | tail -n1)
+            RESPONSE_BODY=$(echo "$EXAM_RESPONSE" | head -n -1)
+            ELAPSED_MS=$(( (END_TIME - START_TIME) / 1000000 ))
+
+            echo "HTTP Status: $HTTP_CODE"
+            echo "Response time: ${ELAPSED_MS}ms"
+            echo "Response (first 200 chars): ${RESPONSE_BODY:0:200}"
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "Warning: Examinations API returned non-200 status"
+            fi
+          fi
+
+          echo "=== API Verification Complete ==="
 
       - name: Determine test scope
         id: test-scope
