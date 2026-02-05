@@ -64,7 +64,7 @@ test.describe('Login Page', () => {
     await expect(studentButton).toHaveClass(/border-primary/)
   })
 
-  test('유효한 Student 자격증명으로 로그인 성공해야 함', async ({ page }) => {
+  test('유효한 Student 자격증명으로 로그인 성공해야 함 @smoke', async ({ page }) => {
     // 동적으로 생성된 Student 계정으로 로그인
     await loginAsStudent(page, {
       username: testStudent!.user.username,

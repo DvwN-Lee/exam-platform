@@ -77,7 +77,7 @@ test.describe('User Registration', () => {
     console.log('✓ Password mismatch error displayed')
   })
 
-  test('Student 회원가입 - 성공', async ({ page }) => {
+  test('Student 회원가입 - 성공 @smoke', async ({ page }) => {
     const timestamp = Date.now()
     const username = `e2e_student_${timestamp}`
     const password = 'test12345678'

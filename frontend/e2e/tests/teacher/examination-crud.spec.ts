@@ -106,7 +106,7 @@ test.describe('Teacher Examination Management', () => {
     }
   })
 
-  test('Teacher가 Examination 전체 CRUD를 완료할 수 있어야 함', async ({ page }) => {
+  test('Teacher가 Examination 전체 CRUD를 완료할 수 있어야 함 @smoke', async ({ page }) => {
     // 브라우저 콘솔 로그 캡처
     page.on('console', (msg) => {
       if (msg.type() === 'error' || msg.type() === 'warning') {
