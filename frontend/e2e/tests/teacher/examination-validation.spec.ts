@@ -77,7 +77,7 @@ test.describe('Teacher Examination Backend Validation', () => {
 
   test.beforeEach(async ({ page }) => {
     // Teacher 로그인
-    await loginAsTeacher(page, teacherUsername, teacherPassword)
+    await loginAsTeacher(page, { username: teacherUsername, password: teacherPassword })
     await waitForLoadingComplete(page)
 
     // 시험 생성 페이지로 이동
