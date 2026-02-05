@@ -19,25 +19,45 @@ test.describe('Teacher Examination Management', () => {
     // CI 환경에서 API 응답이 느릴 수 있으므로 timeout 증가
     test.setTimeout(60000)
 
+    // Console 에러 캡처 (디버깅용)
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        console.log(`!! Console Error: ${msg.text()}`)
+      }
+    })
+    page.on('pageerror', (error) => {
+      console.log(`!! Page Error: ${error.message}`)
+    })
+
     // 네트워크 요청 모니터링 (디버깅용)
     page.on('request', (request) => {
-      if (request.url().includes('/examinations')) {
+      if (request.url().includes('/examinations') || request.url().includes('/api/')) {
         console.log(`>> Request: ${request.method()} ${request.url()}`)
       }
     })
     page.on('response', (response) => {
-      if (response.url().includes('/examinations')) {
+      if (response.url().includes('/examinations') || response.url().includes('/api/')) {
         console.log(`<< Response: ${response.status()} ${response.url()}`)
       }
     })
     page.on('requestfailed', (request) => {
-      if (request.url().includes('/examinations')) {
-        console.log(`!! Request failed: ${request.url()} - ${request.failure()?.errorText}`)
-      }
+      console.log(`!! Request failed: ${request.url()} - ${request.failure()?.errorText}`)
     })
 
     // Examination 관리 페이지로 이동
     await page.goto('/examinations')
+    console.log('>> Page navigated to /examinations')
+
+    // 페이지 상태 확인 (5초 간격)
+    const checkState = async () => {
+      const h1Visible = await page.locator('h1').isVisible().catch(() => false)
+      const loadingVisible = await page.locator('.animate-spin').isVisible().catch(() => false)
+      console.log(`>> State check - h1: ${h1Visible}, loading: ${loadingVisible}`)
+    }
+
+    // 3초 후 상태 확인
+    await page.waitForTimeout(3000)
+    await checkState()
 
     // h1이 나타날 때까지 명시적 대기 (성공 또는 에러 상태 모두 h1 포함)
     await page.locator('h1').waitFor({ state: 'visible', timeout: 50000 })
@@ -64,25 +84,40 @@ test.describe('Teacher Examination Management', () => {
     // CI 환경에서 API 응답이 느릴 수 있으므로 timeout 증가
     test.setTimeout(60000)
 
+    // Console 에러 캡처 (디버깅용)
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        console.log(`!! Console Error: ${msg.text()}`)
+      }
+    })
+    page.on('pageerror', (error) => {
+      console.log(`!! Page Error: ${error.message}`)
+    })
+
     // 네트워크 요청 모니터링 (디버깅용)
     page.on('request', (request) => {
-      if (request.url().includes('/examinations')) {
+      if (request.url().includes('/examinations') || request.url().includes('/api/')) {
         console.log(`>> Request: ${request.method()} ${request.url()}`)
       }
     })
     page.on('response', (response) => {
-      if (response.url().includes('/examinations')) {
+      if (response.url().includes('/examinations') || response.url().includes('/api/')) {
         console.log(`<< Response: ${response.status()} ${response.url()}`)
       }
     })
     page.on('requestfailed', (request) => {
-      if (request.url().includes('/examinations')) {
-        console.log(`!! Request failed: ${request.url()} - ${request.failure()?.errorText}`)
-      }
+      console.log(`!! Request failed: ${request.url()} - ${request.failure()?.errorText}`)
     })
 
     // Examination 목록 페이지로 이동
     await page.goto('/examinations')
+    console.log('>> Page navigated to /examinations')
+
+    // 페이지 상태 확인 (3초 후)
+    await page.waitForTimeout(3000)
+    const h1Visible = await page.locator('h1').isVisible().catch(() => false)
+    const loadingVisible = await page.locator('.animate-spin').isVisible().catch(() => false)
+    console.log(`>> State check - h1: ${h1Visible}, loading: ${loadingVisible}`)
 
     // h1이 나타날 때까지 명시적 대기 (성공 또는 에러 상태 모두 h1 포함)
     await page.locator('h1').waitFor({ state: 'visible', timeout: 50000 })
