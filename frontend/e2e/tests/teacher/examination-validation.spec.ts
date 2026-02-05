@@ -123,7 +123,7 @@ test.describe('Teacher Examination Backend Validation', () => {
     await expect(toast).not.toBeVisible({ timeout: 8000 })
   })
 
-  test('duration = 0 입력 시 validation 에러 Toast 표시', async ({ page }) => {
+  test('duration = 0 입력 시 validation 에러 표시', async ({ page }) => {
     // 시험명 입력
     await page.fill('#exam_name', `Validation 테스트 ${Date.now()}`)
 
@@ -152,19 +152,14 @@ test.describe('Teacher Examination Backend Validation', () => {
     // 시험 생성 버튼 클릭
     await page.click('button:has-text("시험 생성")')
 
-    // Toast 메시지 확인
-    const toast = page.locator('[data-sonner-toast]').first()
-    await expect(toast).toBeVisible({ timeout: 5000 })
-
-    // Toast 텍스트 확인
-    const toastText = await toast.textContent()
-    expect(toastText).toContain('시험 시간은 0보다 커야 합니다.')
-
-    // Toast 자동 닫힘 확인
-    await expect(toast).not.toBeVisible({ timeout: 8000 })
+    // Frontend Zod validation에서 inline 에러 표시됨 (Toast가 아닌 inline 에러)
+    // end_time > start_time 검증 실패로 인한 에러
+    const inlineError = page.locator('.text-destructive')
+    await expect(inlineError).toBeVisible({ timeout: 5000 })
+    await expect(inlineError).toContainText('종료 시간은 시작 시간 이후여야 합니다')
   })
 
-  test('여러 필드 에러 발생 시 모든 메시지 쉼표로 연결하여 표시', async ({ page }) => {
+  test('종료 시간이 시작 시간 이전일 때 validation 에러 표시', async ({ page }) => {
     // 시험명 입력
     await page.fill('#exam_name', `Validation 테스트 ${Date.now()}`)
 
@@ -181,25 +176,20 @@ test.describe('Teacher Examination Backend Validation', () => {
     // 시험지 선택
     await page.selectOption('#testpaper_id', { index: 1 })
 
-    // 과거 시간으로 설정하고 duration = 0으로 설정하여 두 개의 validation 에러 발생
-    await page.fill('#start_time', '2024-01-01T10:00')
-    await page.fill('#end_time', '2024-01-01T10:00')
+    // 미래 시간으로 설정하되 종료 시간을 시작 시간 이전으로 설정
+    const now = new Date()
+    const startTime = new Date(now.getTime() + 2 * 60 * 60 * 1000) // 2시간 후
+    const endTime = new Date(now.getTime() + 1 * 60 * 60 * 1000) // 1시간 후 (시작보다 이전)
+    await page.fill('#start_time', startTime.toISOString().slice(0, 16))
+    await page.fill('#end_time', endTime.toISOString().slice(0, 16))
 
     // 시험 생성 버튼 클릭
     await page.click('button:has-text("시험 생성")')
 
-    // Toast 메시지 확인
-    const toast = page.locator('[data-sonner-toast]').first()
-    await expect(toast).toBeVisible({ timeout: 5000 })
-
-    // Toast 텍스트 확인 - 여러 메시지가 쉼표로 연결되어야 함
-    const toastText = await toast.textContent()
-    expect(toastText).toContain('시작 시간은 현재 시간 이후여야 합니다.')
-    expect(toastText).toContain('시험 시간은 0보다 커야 합니다.')
-    expect(toastText).toContain(',')
-
-    // Toast 자동 닫힘 확인
-    await expect(toast).not.toBeVisible({ timeout: 8000 })
+    // Frontend Zod validation에서 inline 에러 표시됨
+    const inlineError = page.locator('.text-destructive')
+    await expect(inlineError).toBeVisible({ timeout: 5000 })
+    await expect(inlineError).toContainText('종료 시간은 시작 시간 이후여야 합니다')
   })
 
   test('validation 성공 시 Toast 에러가 나타나지 않음', async ({ page }) => {

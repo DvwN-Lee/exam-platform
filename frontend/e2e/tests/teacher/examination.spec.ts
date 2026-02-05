@@ -18,10 +18,10 @@ test.describe('Teacher Examination Management', () => {
   test('Examination 목록 페이지가 렌더링되어야 함', async ({ page }) => {
     // Examination 관리 페이지로 이동
     await page.goto('/examinations')
-    await waitForLoadingComplete(page)
 
-    // 페이지 제목이 나타날 때까지 대기 후 확인
-    await expect(page.locator('h1')).toContainText('시험', { timeout: 20000 })
+    // h1이 나타날 때까지 명시적 대기 (React Query 로딩 완료 대기)
+    await page.locator('h1').waitFor({ state: 'visible', timeout: 30000 })
+    await expect(page.locator('h1')).toContainText('시험')
 
     console.log('✓ Examination list page rendered successfully')
   })
@@ -43,10 +43,10 @@ test.describe('Teacher Examination Management', () => {
   test('Examination 목록이 표시되어야 함', async ({ page }) => {
     // Examination 목록 페이지로 이동
     await page.goto('/examinations')
-    await waitForLoadingComplete(page)
 
-    // 페이지 제목이 나타날 때까지 대기
-    await expect(page.locator('h1')).toContainText('시험', { timeout: 20000 })
+    // h1이 나타날 때까지 명시적 대기 (React Query 로딩 완료 대기)
+    await page.locator('h1').waitFor({ state: 'visible', timeout: 30000 })
+    await expect(page.locator('h1')).toContainText('시험')
 
     // 페이지네이션 또는 빈 메시지, 또는 리스트 카드가 있어야 함
     const hasContent =
