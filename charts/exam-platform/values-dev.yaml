@@ -77,7 +77,7 @@ ingress:
 # Config
 # -----------------------------------------------------------------------------
 config:
-  allowedHosts: "dev.exam.example.com"
+  allowedHosts: "*"
   debug: "True"
   secureSSLRedirect: "False"
   sessionCookieSecure: "False"
