@@ -126,6 +126,7 @@ jobs:
         run: |
           helm upgrade --install exam-platform ./charts/exam-platform \
             --namespace "$NAMESPACE" \
+            --create-namespace \
             --values ./charts/exam-platform/values-dev.yaml \
             --set backend.image.repository="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${BACKEND_IMAGE}" \
             --set backend.image.tag="${BACKEND_TAG}" \
