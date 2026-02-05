@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { examinationApi } from '@/api/testpaper'
@@ -41,6 +41,12 @@ export function EnrolledStudentsSection({
   const handleEnrollStudents = (studentIds: number[]) => {
     enrollMutation.mutate(studentIds)
   }
+
+  // 성능 최적화: useMemo로 메모이제이션하여 불필요한 배열 재생성 방지
+  const enrolledStudentIds = useMemo(
+    () => enrolledStudents?.map((s: EnrolledStudent) => s.id) ?? [],
+    [enrolledStudents]
+  )
 
   if (isLoading) {
     return <LoadingPage message="학생 목록을 불러오는 중..." fullScreen={false} />
@@ -109,7 +115,7 @@ export function EnrolledStudentsSection({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleEnrollStudents}
-        enrolledStudentIds={enrolledStudents?.map((s: EnrolledStudent) => s.id) || []}
+        enrolledStudentIds={enrolledStudentIds}
       />
     </div>
   )

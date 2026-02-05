@@ -1,11 +1,12 @@
 // Animation timing constants
+// 성능 최적화: 체감 속도 개선을 위해 Duration 값 단축
 export const DURATION = {
-  instant: 0.1,
-  fast: 0.2,
-  normal: 0.3,
-  slow: 0.5,
-  slower: 0.8,
-  chart: 0.8,
+  instant: 0.08,
+  fast: 0.15,
+  normal: 0.25,
+  slow: 0.4,
+  slower: 0.5, // 0.8 -> 0.5 (37% 단축)
+  chart: 0.5, // 0.8 -> 0.5 (37% 단축)
 } as const
 
 // Easing curves (Material Design inspired)

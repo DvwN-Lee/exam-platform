@@ -132,14 +132,14 @@ export const staggerItemScaleVariants: Variants = {
 }
 
 // Card hover variants
+// GPU 가속을 위해 boxShadow 대신 transform(scale)만 사용
+// boxShadow는 CSS transition + Tailwind 클래스로 처리 권장
 export const cardHoverVariants: Variants = {
   rest: {
     scale: 1,
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
   },
   hover: {
     scale: 1.02,
-    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
     transition: {
       duration: DURATION.fast,
       ease: EASING.easeOut,
@@ -174,12 +174,14 @@ export const scaleHoverVariants: Variants = {
 }
 
 // List item hover variants
+// GPU 가속을 위해 backgroundColor 대신 opacity 기반 오버레이 사용 권장
+// CSS hover:bg-muted/50 + transition-colors 조합으로 대체 가능
 export const listItemHoverVariants: Variants = {
   rest: {
-    backgroundColor: 'transparent',
+    opacity: 1,
   },
   hover: {
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    opacity: 0.96,
     transition: {
       duration: DURATION.fast,
     },
@@ -187,14 +189,17 @@ export const listItemHoverVariants: Variants = {
 }
 
 // Progress bar variants
+// GPU 가속을 위해 width 대신 scaleX 사용 (레이아웃 시프트 방지)
 export const progressBarVariants: Variants = {
   hidden: {
-    width: 0,
+    scaleX: 0,
+    originX: 0,
   },
   visible: (progress: number) => ({
-    width: `${progress}%`,
+    scaleX: progress / 100,
+    originX: 0,
     transition: {
-      duration: DURATION.slower,
+      duration: DURATION.slow,
       ease: EASING.easeOut,
     },
   }),
