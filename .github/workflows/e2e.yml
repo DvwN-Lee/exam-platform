@@ -1,9 +1,9 @@
 # =============================================================================
 # E2E Tests (Quality Gate)
 # =============================================================================
-# PR: Smoke 테스트 (핵심 기능만)
-# Main Push: Full 테스트 (전체)
-# Manual: 선택적 실행
+# PR: Smoke 테스트 (~10개, 핵심 기능만)
+# Main Push: CI 테스트 (~100개, edge-cases/layout/validation 제외)
+# Manual: 선택적 실행 (smoke/ci/full)
 
 name: E2E Tests
 
@@ -17,10 +17,11 @@ on:
       test_scope:
         description: 'Test Scope'
         required: true
-        default: 'smoke'
+        default: 'ci'
         type: choice
         options:
           - smoke
+          - ci
           - full
 
 env:
@@ -143,10 +144,10 @@ jobs:
           if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
             echo "scope=$INPUT_SCOPE" >> "$GITHUB_OUTPUT"
             echo "Test scope (Manual): $INPUT_SCOPE"
-          # Main Push -> Full
+          # Main Push -> CI (edge-cases, layout, validation 제외)
           elif [ "$GIT_REF" == "refs/heads/main" ]; then
-            echo "scope=full" >> "$GITHUB_OUTPUT"
-            echo "Test scope (Main Push): full"
+            echo "scope=ci" >> "$GITHUB_OUTPUT"
+            echo "Test scope (Main Push): ci"
           # PR -> Smoke
           else
             echo "scope=smoke" >> "$GITHUB_OUTPUT"
@@ -162,6 +163,9 @@ jobs:
           if [ "$TEST_SCOPE" == "full" ]; then
             echo "Running Full E2E Tests..."
             npx playwright test --project=chromium
+          elif [ "$TEST_SCOPE" == "ci" ]; then
+            echo "Running CI E2E Tests (excluding edge-cases, layout, validation)..."
+            npx playwright test --project=chromium --config=playwright.ci.config.ts
           else
             echo "Running Smoke Tests..."
             npx playwright test --project=chromium --grep "@smoke"
