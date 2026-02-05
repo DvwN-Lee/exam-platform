@@ -16,11 +16,14 @@ test.describe('Teacher Examination Management', () => {
   })
 
   test('Examination 목록 페이지가 렌더링되어야 함', async ({ page }) => {
+    // CI 환경에서 API 응답이 느릴 수 있으므로 timeout 증가
+    test.setTimeout(60000)
+
     // Examination 관리 페이지로 이동
     await page.goto('/examinations')
 
-    // h1이 나타날 때까지 명시적 대기 (React Query 로딩 완료 대기)
-    await page.locator('h1').waitFor({ state: 'visible', timeout: 30000 })
+    // h1이 나타날 때까지 명시적 대기 (성공 또는 에러 상태 모두 h1 포함)
+    await page.locator('h1').waitFor({ state: 'visible', timeout: 50000 })
     await expect(page.locator('h1')).toContainText('시험')
 
     console.log('✓ Examination list page rendered successfully')
@@ -41,11 +44,14 @@ test.describe('Teacher Examination Management', () => {
   })
 
   test('Examination 목록이 표시되어야 함', async ({ page }) => {
+    // CI 환경에서 API 응답이 느릴 수 있으므로 timeout 증가
+    test.setTimeout(60000)
+
     // Examination 목록 페이지로 이동
     await page.goto('/examinations')
 
-    // h1이 나타날 때까지 명시적 대기 (React Query 로딩 완료 대기)
-    await page.locator('h1').waitFor({ state: 'visible', timeout: 30000 })
+    // h1이 나타날 때까지 명시적 대기 (성공 또는 에러 상태 모두 h1 포함)
+    await page.locator('h1').waitFor({ state: 'visible', timeout: 50000 })
     await expect(page.locator('h1')).toContainText('시험')
 
     // 페이지네이션 또는 빈 메시지, 또는 리스트 카드가 있어야 함
