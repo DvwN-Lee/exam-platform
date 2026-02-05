@@ -82,6 +82,8 @@ config:
   secureSSLRedirect: "False"
   sessionCookieSecure: "False"
   csrfCookieSecure: "False"
+  # Disable MongoDB (not used in this deployment)
+  mongodbHost: ""
 
 # -----------------------------------------------------------------------------
 # Secrets (disabled - using External Secrets)
