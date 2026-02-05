@@ -201,12 +201,12 @@ export function ExaminationListPage() {
                           )}
                         </div>
                         <div className="mt-2 text-sm text-muted-foreground">
-                          시험지: {examination.testpaper.name}
+                          시험지: {examination.testpaper?.name || '미지정'}
                         </div>
                         <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
                           <span>시작: {formatKoreanDateTime(examination.start_time)}</span>
                           <span>종료: {formatKoreanDateTime(examination.end_time)}</span>
-                          <span>생성자: {examination.creat_user.nick_name}</span>
+                          <span>생성자: {examination.creat_user?.nick_name || '-'}</span>
                         </div>
                       </div>
 
@@ -220,7 +220,7 @@ export function ExaminationListPage() {
                         >
                           상세
                         </Button>
-                        {user?.id === examination.creat_user.id && (
+                        {user?.id === examination.creat_user?.id && (
                           <>
                             <Button
                               size="sm"
