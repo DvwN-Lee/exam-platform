@@ -66,6 +66,8 @@ jobs:
           version: "latest"
           enable-cache: true
           cache-dependency-glob: "**/uv.lock"
+          cache-suffix: "e2e"
+          prune-cache: false
 
       - name: Set up Python
         run: uv python install ${{ env.PYTHON_VERSION }}
