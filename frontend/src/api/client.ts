@@ -79,6 +79,23 @@ function isDetailResponse(data: unknown): data is DetailResponse {
   )
 }
 
+/** DRF ValidationError 형식 { field_name: [error_message] } */
+type ValidationErrorResponse = Record<string, string[]>
+
+/**
+ * Type Guard: DRF ValidationError 형식 응답 여부 확인
+ * 예: { "start_time": ["시작 시간은 현재 시간 이후여야 합니다."] }
+ */
+function isValidationErrorResponse(data: unknown): data is ValidationErrorResponse {
+  if (typeof data !== 'object' || data === null) return false
+  // detail이나 error 키가 있으면 다른 형식
+  if ('detail' in data || 'error' in data) return false
+  // 모든 값이 string 배열인지 확인
+  return Object.values(data).every(
+    (value) => Array.isArray(value) && value.every((v) => typeof v === 'string')
+  )
+}
+
 /**
  * 정규화된 에러 응답 형식
  * Frontend에서 일관되게 사용할 수 있는 형식
@@ -109,6 +126,18 @@ function normalizeErrorResponse(data: unknown): NormalizedErrorResponse {
     return {
       ...data,
       detail: translateErrorMessage(data.detail),
+    }
+  }
+
+  // DRF ValidationError 형식 { field_name: [error_message] }
+  if (isValidationErrorResponse(data)) {
+    // 모든 필드의 에러 메시지를 쉼표로 연결
+    const messages = Object.values(data)
+      .flat()
+      .map((msg) => translateErrorMessage(msg))
+    return {
+      ...data,
+      detail: messages.join(', '),
     }
   }
 
