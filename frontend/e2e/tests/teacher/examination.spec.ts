@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
+import { loginAsTeacher } from '../../helpers/auth.helper'
 
 /**
  * Teacher Examination 관리 테스트
@@ -10,12 +11,8 @@ test.describe('Teacher Examination Management', () => {
 
   test.beforeEach(async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, { username: teacherUsername, password: teacherPassword })
+    await waitForLoadingComplete(page)
   })
 
   test('Examination 목록 페이지가 렌더링되어야 함', async ({ page }) => {
