@@ -45,8 +45,9 @@ export const CHART_STYLES = {
 
 /**
  * 애니메이션 설정
+ * 성능 최적화: 800ms -> 400ms (50% 단축)
  */
 export const CHART_ANIMATION = {
-  duration: 800,
+  duration: 400,
   easing: 'ease-out' as const,
 } as const
