@@ -159,7 +159,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30초 timeout (CI 환경 고려)
+  timeout: 20000, // 20초 timeout (테스트 timeout 30초 전에 에러 처리)
 })
 
 // Request interceptor - JWT 토큰 자동 추가
