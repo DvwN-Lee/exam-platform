@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
@@ -28,6 +29,23 @@ export function TeacherDashboard() {
     queryFn: dashboardApi.getTeacherDashboard,
   })
 
+  // PieChart 데이터 준비 (0값은 차트에서 숨기고 Legend에서만 표시)
+  // 성능 최적화: useMemo로 메모이제이션하여 불필요한 재계산 방지
+  // React Hooks 규칙 준수를 위해 early return 이전에 선언
+  const questionTypeData = useMemo<PieChartDataItem[]>(() => [
+    { name: '객관식', value: dashboard?.question_statistics?.questions_by_type?.xz ?? 0, type: 'xz' },
+    { name: '빈칸채우기', value: dashboard?.question_statistics?.questions_by_type?.tk ?? 0, type: 'tk' },
+    { name: '주관식', value: dashboard?.question_statistics?.questions_by_type?.pd ?? 0, type: 'pd' },
+  ], [dashboard?.question_statistics?.questions_by_type])
+
+  // BarChart 데이터 준비
+  // 성능 최적화: useMemo로 메모이제이션하여 불필요한 재계산 방지
+  const questionDifficultyData = useMemo<ChartDataItem[]>(() => [
+    { name: '쉬움', value: dashboard?.question_statistics?.questions_by_difficulty?.jd ?? 0, difficulty: 'jd' },
+    { name: '보통', value: dashboard?.question_statistics?.questions_by_difficulty?.zd ?? 0, difficulty: 'zd' },
+    { name: '어려움', value: dashboard?.question_statistics?.questions_by_difficulty?.kn ?? 0, difficulty: 'kn' },
+  ], [dashboard?.question_statistics?.questions_by_difficulty])
+
   if (isLoading) {
     return <LoadingPage message="대시보드를 불러오는 중..." fullScreen={false} />
   }
@@ -43,20 +61,6 @@ export function TeacherDashboard() {
       </div>
     )
   }
-
-  // PieChart 데이터 준비 (0값은 차트에서 숨기고 Legend에서만 표시)
-  const questionTypeData: PieChartDataItem[] = [
-    { name: '객관식', value: dashboard.question_statistics?.questions_by_type?.xz ?? 0, type: 'xz' },
-    { name: '빈칸채우기', value: dashboard.question_statistics?.questions_by_type?.tk ?? 0, type: 'tk' },
-    { name: '주관식', value: dashboard.question_statistics?.questions_by_type?.pd ?? 0, type: 'pd' },
-  ]
-
-  // BarChart 데이터 준비
-  const questionDifficultyData: ChartDataItem[] = [
-    { name: '쉬움', value: dashboard.question_statistics?.questions_by_difficulty?.jd ?? 0, difficulty: 'jd' },
-    { name: '보통', value: dashboard.question_statistics?.questions_by_difficulty?.zd ?? 0, difficulty: 'zd' },
-    { name: '어려움', value: dashboard.question_statistics?.questions_by_difficulty?.kn ?? 0, difficulty: 'kn' },
-  ]
 
   return (
     <div className="space-y-6">

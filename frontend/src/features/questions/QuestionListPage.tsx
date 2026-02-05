@@ -26,6 +26,10 @@ const questionDegreeLabels: Record<QuestionDegree, string> = {
   kn: '어려움',
 }
 
+// 성능 최적화: Object.entries()를 컴포넌트 외부에서 한 번만 실행
+const questionTypeOptions = Object.entries(questionTypeLabels) as [QuestionType, string][]
+const questionDegreeOptions = Object.entries(questionDegreeLabels) as [QuestionDegree, string][]
+
 export function QuestionListPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -104,7 +108,7 @@ export function QuestionListPage() {
               }
             >
               <option value="">전체 유형</option>
-              {Object.entries(questionTypeLabels).map(([key, label]) => (
+              {questionTypeOptions.map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
                 </option>
@@ -119,7 +123,7 @@ export function QuestionListPage() {
               }
             >
               <option value="">전체 난이도</option>
-              {Object.entries(questionDegreeLabels).map(([key, label]) => (
+              {questionDegreeOptions.map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
                 </option>
