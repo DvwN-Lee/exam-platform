@@ -20,8 +20,8 @@ test.describe('Teacher Examination Management', () => {
     await page.goto('/examinations')
     await waitForLoadingComplete(page)
 
-    // 페이지 제목 확인
-    await expect(page.locator('h1')).toContainText('시험')
+    // 페이지 제목이 나타날 때까지 대기 후 확인
+    await expect(page.locator('h1')).toContainText('시험', { timeout: 10000 })
 
     console.log('✓ Examination list page rendered successfully')
   })
@@ -44,6 +44,9 @@ test.describe('Teacher Examination Management', () => {
     // Examination 목록 페이지로 이동
     await page.goto('/examinations')
     await waitForLoadingComplete(page)
+
+    // 페이지 제목이 나타날 때까지 대기
+    await expect(page.locator('h1')).toContainText('시험', { timeout: 10000 })
 
     // 페이지네이션 또는 빈 메시지, 또는 리스트 카드가 있어야 함
     const hasContent =
