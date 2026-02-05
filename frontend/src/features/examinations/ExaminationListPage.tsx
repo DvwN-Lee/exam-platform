@@ -26,7 +26,7 @@ export function ExaminationListPage() {
   const [filters, setFilters] = useState<ExaminationFilters>({})
   const [searchText, setSearchText] = useState('')
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['examinations', filters],
     queryFn: () => examinationApi.getExaminations(filters),
   })
@@ -64,6 +64,30 @@ export function ExaminationListPage() {
 
   if (isLoading) {
     return <LoadingPage message="시험 목록을 불러오는 중..." />
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">시험 일정</h1>
+              <p className="text-muted-foreground text-destructive">
+                시험 목록을 불러오는데 실패했습니다.
+                {error instanceof Error && `: ${error.message}`}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => refetch()}>다시 시도</Button>
+            <Button variant="outline" onClick={() => navigate({ to: '/dashboard' })}>
+              대시보드로 이동
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
