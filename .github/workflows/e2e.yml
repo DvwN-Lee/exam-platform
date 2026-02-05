@@ -1,0 +1,176 @@
+# =============================================================================
+# E2E Tests (Quality Gate)
+# =============================================================================
+# PR: Smoke 테스트 (핵심 기능만)
+# Main Push: Full 테스트 (전체)
+# Manual: 선택적 실행
+
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Test Scope'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - full
+
+env:
+  PYTHON_VERSION: "3.14"
+  NODE_VERSION: "22"
+
+jobs:
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: examuser
+          POSTGRES_PASSWORD: exampass
+          POSTGRES_DB: examdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "**/uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Backend dependencies
+        working-directory: ./examonline
+        run: uv sync --extra dev
+
+      - name: Run migrations
+        working-directory: ./examonline
+        env:
+          POSTGRES_DB: examdb
+          POSTGRES_USER: examuser
+          POSTGRES_PASSWORD: exampass
+          DJANGO_SETTINGS_MODULE: config.local
+          E2E_MOCK_TIME_ENABLED: "true"
+          REDIS_URL: redis://localhost:6379/0
+        run: uv run python manage.py migrate
+
+      - name: Create test subjects
+        working-directory: ./examonline
+        env:
+          POSTGRES_DB: examdb
+          POSTGRES_USER: examuser
+          POSTGRES_PASSWORD: exampass
+          DJANGO_SETTINGS_MODULE: config.local
+          E2E_MOCK_TIME_ENABLED: "true"
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          uv run python manage.py shell -c "
+          from user.models import SubjectInfo
+          subjects = ['수학', '과학', '영어', '국어', '사회']
+          for name in subjects:
+              SubjectInfo.objects.get_or_create(subject_name=name)
+          print(f'Created {SubjectInfo.objects.count()} subjects')
+          "
+
+      - name: Start Backend server
+        working-directory: ./examonline
+        env:
+          POSTGRES_DB: examdb
+          POSTGRES_USER: examuser
+          POSTGRES_PASSWORD: exampass
+          DJANGO_SETTINGS_MODULE: config.local
+          E2E_TEST_API_ENABLED: "true"
+          E2E_MOCK_TIME_ENABLED: "true"
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          uv run python manage.py runserver &
+          sleep 10
+          curl -s http://localhost:8000/api/v1/health/ || echo "Health check skipped"
+
+      - name: Install Frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Determine test scope
+        id: test-scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
+          INPUT_SCOPE: ${{ inputs.test_scope }}
+        run: |
+          # Manual Dispatch
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            echo "scope=$INPUT_SCOPE" >> "$GITHUB_OUTPUT"
+            echo "Test scope (Manual): $INPUT_SCOPE"
+          # Main Push -> Full
+          elif [ "$GIT_REF" == "refs/heads/main" ]; then
+            echo "scope=full" >> "$GITHUB_OUTPUT"
+            echo "Test scope (Main Push): full"
+          # PR -> Smoke
+          else
+            echo "scope=smoke" >> "$GITHUB_OUTPUT"
+            echo "Test scope (PR): smoke"
+          fi
+
+      - name: Run E2E tests
+        working-directory: ./frontend
+        env:
+          VITE_API_BASE_URL: http://localhost:8000/api/v1
+          TEST_SCOPE: ${{ steps.test-scope.outputs.scope }}
+        run: |
+          if [ "$TEST_SCOPE" == "full" ]; then
+            echo "Running Full E2E Tests..."
+            npx playwright test --project=chromium
+          else
+            echo "Running Smoke Tests..."
+            npx playwright test --project=chromium --grep "@smoke"
+          fi
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
