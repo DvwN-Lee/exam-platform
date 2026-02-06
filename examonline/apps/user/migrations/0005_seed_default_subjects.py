@@ -10,9 +10,7 @@ def seed_subjects(apps, schema_editor):
 
 def remove_subjects(apps, schema_editor):
     SubjectInfo = apps.get_model("user", "SubjectInfo")
-    SubjectInfo.objects.filter(
-        subject_name__in=["수학", "영어", "과학", "국어", "사회"]
-    ).delete()
+    SubjectInfo.objects.filter(subject_name__in=["수학", "영어", "과학", "국어", "사회"]).delete()
 
 
 class Migration(migrations.Migration):
