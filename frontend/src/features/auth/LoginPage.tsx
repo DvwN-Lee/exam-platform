@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -13,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { GraduationCap, User, BookOpen } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { DURATION, EASING, STAGGER } from '@/lib/animations'
 
 const loginSchema = z.object({
@@ -23,12 +22,10 @@ const loginSchema = z.object({
 })
 
 type LoginForm = z.infer<typeof loginSchema>
-type UserRole = 'student' | 'teacher'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
-  const [selectedRole, setSelectedRole] = useState<UserRole>('student')
 
   const {
     register,
@@ -50,7 +47,7 @@ export function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      setAuth(data.user, data.access, data.refresh)
+      setAuth(data.user, data.access)
       navigate({ to: '/dashboard' })
     },
     onError: (error: unknown) => {
@@ -123,42 +120,6 @@ export function LoginPage() {
           <motion.div className="mb-8" variants={itemVariants}>
             <h1 className="mb-2 text-3xl font-bold text-foreground">환영합니다</h1>
             <p className="text-muted-foreground">계정에 로그인하여 시작하세요</p>
-          </motion.div>
-
-          {/* Role Selector */}
-          <motion.div className="mb-8 flex gap-4" role="radiogroup" aria-label="사용자 유형 선택" variants={itemVariants}>
-            <motion.button
-              type="button"
-              role="radio"
-              aria-checked={selectedRole === 'student'}
-              onClick={() => setSelectedRole('student')}
-              className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
-                selectedRole === 'student'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-transparent bg-accent hover:border-primary-light'
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <GraduationCap className="size-8 text-primary" />
-              <span className="text-[0.9375rem] font-semibold text-foreground">학생</span>
-            </motion.button>
-            <motion.button
-              type="button"
-              role="radio"
-              aria-checked={selectedRole === 'teacher'}
-              onClick={() => setSelectedRole('teacher')}
-              className={`flex flex-1 flex-col items-center gap-2 rounded-[16px] border-2 p-4 transition-all ${
-                selectedRole === 'teacher'
-                  ? 'border-primary bg-primary/10'
-                  : 'border-transparent bg-accent hover:border-primary-light'
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <User className="size-8 text-primary" />
-              <span className="text-[0.9375rem] font-semibold text-foreground">교사</span>
-            </motion.button>
           </motion.div>
 
           {/* Login Form */}

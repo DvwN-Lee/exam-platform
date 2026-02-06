@@ -31,7 +31,6 @@ describe("authApi", () => {
         http.post(`${API_BASE_URL}/auth/token/`, () => {
           return HttpResponse.json({
             access: "mock-access-token",
-            refresh: "mock-refresh-token",
             user: mockUser,
           });
         })
@@ -43,7 +42,6 @@ describe("authApi", () => {
       });
 
       expect(result.access).toBe("mock-access-token");
-      expect(result.refresh).toBe("mock-refresh-token");
       expect(result.user).toEqual(mockUser);
     });
 
@@ -229,32 +227,4 @@ describe("authApi", () => {
     });
   });
 
-  describe("refreshToken", () => {
-    it("유효한 refresh token으로 새 access token을 받는다", async () => {
-      server.use(
-        http.post(`${API_BASE_URL}/auth/token/refresh/`, () => {
-          return HttpResponse.json({ access: "new-access-token" });
-        })
-      );
-
-      const result = await authApi.refreshToken("valid-refresh-token");
-
-      expect(result.access).toBe("new-access-token");
-    });
-
-    it("유효하지 않은 refresh token으로 갱신에 실패한다", async () => {
-      server.use(
-        http.post(`${API_BASE_URL}/auth/token/refresh/`, () => {
-          return HttpResponse.json(
-            { detail: "Token is invalid or expired" },
-            { status: 401 }
-          );
-        })
-      );
-
-      await expect(
-        authApi.refreshToken("invalid-refresh-token")
-      ).rejects.toThrow();
-    });
-  });
 });

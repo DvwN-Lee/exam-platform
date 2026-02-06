@@ -26,7 +26,6 @@ describe("useAuthStore", () => {
     useAuthStore.setState({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
     });
@@ -40,7 +39,6 @@ describe("useAuthStore", () => {
 
       expect(state.user).toBeNull();
       expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(true);
     });
@@ -50,28 +48,23 @@ describe("useAuthStore", () => {
     it("인증 정보를 설정한다", () => {
       const { setAuth } = useAuthStore.getState();
 
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       const state = useAuthStore.getState();
       expect(state.user).toEqual(mockUser);
       expect(state.accessToken).toBe("access-token");
-      expect(state.refreshToken).toBe("refresh-token");
       expect(state.isAuthenticated).toBe(true);
       expect(state.isLoading).toBe(false);
     });
 
-    it("localStorage에 토큰을 저장한다", () => {
+    it("localStorage에 access token을 저장한다", () => {
       const { setAuth } = useAuthStore.getState();
 
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "access_token",
         "access-token"
-      );
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        "refresh_token",
-        "refresh-token"
       );
     });
   });
@@ -79,7 +72,7 @@ describe("useAuthStore", () => {
   describe("setUser", () => {
     it("사용자 정보만 업데이트한다", () => {
       const { setAuth, setUser } = useAuthStore.getState();
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       const updatedUser = { ...mockUser, nick_name: "Updated Name" };
       setUser(updatedUser);
@@ -91,30 +84,25 @@ describe("useAuthStore", () => {
   });
 
   describe("setTokens", () => {
-    it("토큰만 업데이트한다", () => {
+    it("access token만 업데이트한다", () => {
       const { setAuth, setTokens } = useAuthStore.getState();
-      setAuth(mockUser, "old-access", "old-refresh");
+      setAuth(mockUser, "old-access");
 
-      setTokens("new-access", "new-refresh");
+      setTokens("new-access");
 
       const state = useAuthStore.getState();
       expect(state.accessToken).toBe("new-access");
-      expect(state.refreshToken).toBe("new-refresh");
       expect(state.user).toEqual(mockUser);
     });
 
-    it("localStorage에 새 토큰을 저장한다", () => {
+    it("localStorage에 새 access token을 저장한다", () => {
       const { setTokens } = useAuthStore.getState();
 
-      setTokens("new-access", "new-refresh");
+      setTokens("new-access");
 
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "access_token",
         "new-access"
-      );
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        "refresh_token",
-        "new-refresh"
       );
     });
   });
@@ -122,35 +110,32 @@ describe("useAuthStore", () => {
   describe("logout", () => {
     it("인증 상태를 초기화한다", () => {
       const { setAuth, logout } = useAuthStore.getState();
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       logout();
 
       const state = useAuthStore.getState();
       expect(state.user).toBeNull();
       expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
     });
 
-    it("localStorage에서 토큰을 삭제한다", () => {
+    it("localStorage에서 access token을 삭제한다", () => {
       const { setAuth, logout } = useAuthStore.getState();
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       logout();
 
       expect(localStorage.removeItem).toHaveBeenCalledWith("access_token");
-      expect(localStorage.removeItem).toHaveBeenCalledWith("refresh_token");
     });
   });
 
   describe("initializeAuth", () => {
-    it("localStorage에 토큰이 있으면 인증 상태로 초기화한다", () => {
+    it("localStorage에 access token이 있으면 인증 상태로 초기화한다", () => {
       (localStorage.getItem as ReturnType<typeof vi.fn>)
         .mockImplementation((key: string) => {
           if (key === "access_token") return "stored-access";
-          if (key === "refresh_token") return "stored-refresh";
           return null;
         });
 
@@ -159,12 +144,11 @@ describe("useAuthStore", () => {
 
       const state = useAuthStore.getState();
       expect(state.accessToken).toBe("stored-access");
-      expect(state.refreshToken).toBe("stored-refresh");
       expect(state.isAuthenticated).toBe(true);
       expect(state.isLoading).toBe(false);
     });
 
-    it("localStorage에 토큰이 없으면 미인증 상태로 초기화한다", () => {
+    it("localStorage에 access token이 없으면 미인증 상태로 초기화한다", () => {
       (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(null);
 
       const { initializeAuth } = useAuthStore.getState();
@@ -172,37 +156,6 @@ describe("useAuthStore", () => {
 
       const state = useAuthStore.getState();
       expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
-      expect(state.isAuthenticated).toBe(false);
-      expect(state.isLoading).toBe(false);
-    });
-
-    it("accessToken만 있고 refreshToken이 없으면 미인증 상태다", () => {
-      (localStorage.getItem as ReturnType<typeof vi.fn>)
-        .mockImplementation((key: string) => {
-          if (key === "access_token") return "stored-access";
-          return null;
-        });
-
-      const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
-
-      const state = useAuthStore.getState();
-      expect(state.isAuthenticated).toBe(false);
-      expect(state.isLoading).toBe(false);
-    });
-
-    it("refreshToken만 있고 accessToken이 없으면 미인증 상태다", () => {
-      (localStorage.getItem as ReturnType<typeof vi.fn>)
-        .mockImplementation((key: string) => {
-          if (key === "refresh_token") return "stored-refresh";
-          return null;
-        });
-
-      const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
-
-      const state = useAuthStore.getState();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
     });
@@ -236,7 +189,7 @@ describe("useAuthStore", () => {
       const { setAuth } = useAuthStore.getState();
 
       expect(() =>
-        setAuth(mockUser, "access-token", "refresh-token")
+        setAuth(mockUser, "access-token")
       ).not.toThrow();
 
       const state = useAuthStore.getState();

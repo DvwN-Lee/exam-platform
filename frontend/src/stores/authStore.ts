@@ -36,9 +36,9 @@ function safeRemoveItem(key: string): void {
 }
 
 interface AuthStore extends AuthState {
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void
+  setAuth: (user: User, accessToken: string) => void
   setUser: (user: User) => void
-  setTokens: (accessToken: string, refreshToken: string) => void
+  setTokens: (accessToken: string) => void
   logout: () => void
   initializeAuth: () => void
 }
@@ -48,17 +48,14 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
 
-      setAuth: (user, accessToken, refreshToken) => {
+      setAuth: (user, accessToken) => {
         safeSetItem('access_token', accessToken)
-        safeSetItem('refresh_token', refreshToken)
         set({
           user,
           accessToken,
-          refreshToken,
           isAuthenticated: true,
           isLoading: false,
         })
@@ -68,19 +65,16 @@ export const useAuthStore = create<AuthStore>()(
         set({ user })
       },
 
-      setTokens: (accessToken, refreshToken) => {
+      setTokens: (accessToken) => {
         safeSetItem('access_token', accessToken)
-        safeSetItem('refresh_token', refreshToken)
-        set({ accessToken, refreshToken })
+        set({ accessToken })
       },
 
       logout: () => {
         safeRemoveItem('access_token')
-        safeRemoveItem('refresh_token')
         set({
           user: null,
           accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
         })
@@ -88,12 +82,10 @@ export const useAuthStore = create<AuthStore>()(
 
       initializeAuth: () => {
         const accessToken = safeGetItem('access_token')
-        const refreshToken = safeGetItem('refresh_token')
 
-        if (accessToken && refreshToken) {
+        if (accessToken) {
           set({
             accessToken,
-            refreshToken,
             isAuthenticated: true,
             isLoading: false,
           })

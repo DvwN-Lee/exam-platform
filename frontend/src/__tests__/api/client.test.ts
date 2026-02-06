@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "../mocks/server";
 import apiClient from "@/api/client";
@@ -107,27 +107,10 @@ describe("apiClient", () => {
   });
 
   describe("Response Interceptor - 토큰 갱신", () => {
-    const originalLocation = window.location;
-
-    beforeEach(() => {
-      Object.defineProperty(window, "location", {
-        value: { href: "" },
-        writable: true,
-      });
-    });
-
-    afterEach(() => {
-      Object.defineProperty(window, "location", {
-        value: originalLocation,
-        writable: true,
-      });
-    });
-
     // Note: axios interceptor에서 직접 axios.post를 호출하므로 MSW와의 통합이 복잡함
     // 이 테스트는 E2E 테스트에서 검증하는 것이 적합함
-    it.skip("401 에러 시 refresh token으로 토큰을 갱신하고 원래 요청을 재시도한다", async () => {
+    it.skip("401 에러 시 HttpOnly Cookie를 통해 토큰을 갱신하고 원래 요청을 재시도한다", async () => {
       localStorage.setItem("access_token", "expired-token");
-      localStorage.setItem("refresh_token", "valid-refresh-token");
 
       let requestCount = 0;
 
@@ -161,7 +144,7 @@ describe("apiClient", () => {
       expect(localStorage.getItem("access_token")).toBe("new-access-token");
     });
 
-    it("refresh token이 없으면 로그인 페이지로 리다이렉트하지 않는다 (401만 반환)", async () => {
+    it("Cookie 기반 refresh 실패 시 auth:session-expired 이벤트를 dispatch한다", async () => {
       localStorage.setItem("access_token", "expired-token");
 
       server.use(
@@ -170,16 +153,29 @@ describe("apiClient", () => {
             { detail: "Token is invalid or expired" },
             { status: 401 }
           );
+        }),
+        http.post(`${API_BASE_URL}/auth/token/refresh/`, () => {
+          return HttpResponse.json(
+            { detail: "Token is invalid or expired" },
+            { status: 401 }
+          );
         })
       );
 
+      const eventSpy = vi.fn();
+      window.addEventListener("auth:session-expired", eventSpy);
+
       await expect(apiClient.get("/protected")).rejects.toThrow();
+
+      expect(eventSpy).toHaveBeenCalled();
+      expect(localStorage.getItem("access_token")).toBeNull();
+
+      window.removeEventListener("auth:session-expired", eventSpy);
     });
 
     // Note: axios interceptor에서 직접 axios.post를 호출하므로 MSW와의 통합이 복잡함
-    it.skip("토큰 갱신 실패 시 localStorage를 정리하고 로그인 페이지로 리다이렉트한다", async () => {
+    it.skip("토큰 갱신 실패 시 localStorage를 정리하고 auth:session-expired 이벤트를 dispatch한다", async () => {
       localStorage.setItem("access_token", "expired-token");
-      localStorage.setItem("refresh_token", "invalid-refresh-token");
 
       server.use(
         http.get(`${API_BASE_URL}/protected`, () => {
@@ -199,13 +195,10 @@ describe("apiClient", () => {
       await expect(apiClient.get("/protected")).rejects.toThrow();
 
       expect(localStorage.getItem("access_token")).toBeNull();
-      expect(localStorage.getItem("refresh_token")).toBeNull();
-      expect(window.location.href).toBe("/login");
     });
 
     it("인증 API 엔드포인트는 토큰 갱신 로직을 건너뛴다 (/auth/token)", async () => {
       localStorage.setItem("access_token", "some-token");
-      localStorage.setItem("refresh_token", "some-refresh");
 
       let refreshCalled = false;
 
@@ -234,7 +227,6 @@ describe("apiClient", () => {
 
     it("회원가입 API는 토큰 갱신 로직을 건너뛴다 (/auth/register)", async () => {
       localStorage.setItem("access_token", "some-token");
-      localStorage.setItem("refresh_token", "some-refresh");
 
       let refreshCalled = false;
 

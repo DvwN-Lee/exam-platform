@@ -38,7 +38,6 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access: string
-  refresh: string
   user: User
 }
 
@@ -75,7 +74,6 @@ export interface ChangePasswordRequest {
 export interface AuthState {
   user: User | null
   accessToken: string | null
-  refreshToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
 }

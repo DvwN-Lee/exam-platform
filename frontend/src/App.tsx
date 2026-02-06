@@ -370,6 +370,14 @@ function App() {
     initializeAuth()
   }, [initializeAuth])
 
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      router.navigate({ to: '/login' })
+    }
+    window.addEventListener('auth:session-expired', handleSessionExpired)
+    return () => window.removeEventListener('auth:session-expired', handleSessionExpired)
+  }, [])
+
   return (
     <>
       <RouterProvider router={router} />
