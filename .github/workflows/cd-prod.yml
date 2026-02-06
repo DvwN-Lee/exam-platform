@@ -2,40 +2,42 @@
 # CD Pipeline - Production Environment
 # =============================================================================
 # Trigger: Manual (workflow_dispatch)
-# Target: GKE Prod Cluster
-# Registry: Google Artifact Registry
-# Requires: GitHub Environment approval
+# Target: GKE Prod Cluster (ArgoCD managed)
+# Registry: Google Artifact Registry (prod-exam-platform)
+# Deploy: Build images -> Push to GAR -> Update ArgoCD image tags -> Sync
 
 name: CD - Production
 
 on:
   workflow_dispatch:
     inputs:
-      image_tag:
-        description: 'Image tag to deploy (e.g., staging-v1.2.3)'
-        required: true
-        type: string
-      skip_confirmation:
-        description: 'Skip deployment confirmation (for automation)'
+      deploy_backend:
+        description: 'Backend 배포 포함'
         required: false
         type: boolean
-        default: false
+        default: true
+      deploy_frontend:
+        description: 'Frontend 배포 포함'
+        required: false
+        type: boolean
+        default: true
 
 env:
   GCP_REGION: asia-northeast3
   GAR_LOCATION: asia-northeast3-docker.pkg.dev
-  REPOSITORY: exam-platform
+  REPOSITORY: prod-exam-platform
   BACKEND_IMAGE: backend
   FRONTEND_IMAGE: frontend
   GKE_ZONE: asia-northeast3-a
-  NAMESPACE: exam-prod
+  NAMESPACE: exam-platform-prod
+  ARGOCD_APP: exam-prod
 
 jobs:
   # ===========================================================================
-  # Pre-deployment Validation
+  # Build & Push Images
   # ===========================================================================
-  validate:
-    name: Validate Image
+  build:
+    name: Build and Push Images
     runs-on: ubuntu-latest
 
     permissions:
@@ -43,10 +45,13 @@ jobs:
       id-token: write
 
     outputs:
-      backend_exists: ${{ steps.check.outputs.backend_exists }}
-      frontend_exists: ${{ steps.check.outputs.frontend_exists }}
+      image_tag: ${{ steps.tags.outputs.image_tag }}
+      short_sha: ${{ steps.tags.outputs.short_sha }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -58,64 +63,63 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Check image existence
-        id: check
-        env:
-          IMAGE_TAG: ${{ inputs.image_tag }}
-          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      - name: Configure Docker for Artifact Registry
         run: |
-          BACKEND_IMG="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${BACKEND_IMAGE}:${IMAGE_TAG}"
-          FRONTEND_IMG="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${FRONTEND_IMAGE}:${IMAGE_TAG}"
+          gcloud auth configure-docker ${{ env.GAR_LOCATION }} --quiet
 
-          if gcloud artifacts docker images describe "$BACKEND_IMG" > /dev/null 2>&1; then
-            echo "backend_exists=true" >> "$GITHUB_OUTPUT"
-            echo "Backend image exists: $BACKEND_IMG"
-          else
-            echo "backend_exists=false" >> "$GITHUB_OUTPUT"
-            echo "Backend image NOT found: $BACKEND_IMG"
-          fi
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-          if gcloud artifacts docker images describe "$FRONTEND_IMG" > /dev/null 2>&1; then
-            echo "frontend_exists=true" >> "$GITHUB_OUTPUT"
-            echo "Frontend image exists: $FRONTEND_IMG"
-          else
-            echo "frontend_exists=false" >> "$GITHUB_OUTPUT"
-            echo "Frontend image NOT found: $FRONTEND_IMG"
-          fi
-
-      - name: Fail if images not found
-        env:
-          BACKEND_EXISTS: ${{ steps.check.outputs.backend_exists }}
-          FRONTEND_EXISTS: ${{ steps.check.outputs.frontend_exists }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
+      - name: Set image tags
+        id: tags
         run: |
-          if [ "$BACKEND_EXISTS" != "true" ] || [ "$FRONTEND_EXISTS" != "true" ]; then
-            echo "Error: One or more images not found for tag: ${IMAGE_TAG}"
-            echo "Backend exists: ${BACKEND_EXISTS}"
-            echo "Frontend exists: ${FRONTEND_EXISTS}"
-            exit 1
-          fi
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Backend image
+        if: ${{ inputs.deploy_backend }}
+        uses: docker/build-push-action@v6
+        env:
+          IMAGE_TAG: ${{ steps.tags.outputs.image_tag }}
+        with:
+          context: ./examonline
+          file: ./examonline/Dockerfile
+          push: true
+          tags: |
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Frontend image
+        if: ${{ inputs.deploy_frontend }}
+        uses: docker/build-push-action@v6
+        env:
+          IMAGE_TAG: ${{ steps.tags.outputs.image_tag }}
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.GAR_LOCATION }}/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # ===========================================================================
-  # Production Deployment (Requires Approval)
+  # Deploy via ArgoCD
   # ===========================================================================
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [validate]
-    environment: production
+    needs: [build]
 
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # =========================================================================
-      # GCP Authentication
-      # =========================================================================
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -127,9 +131,6 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # =========================================================================
-      # GKE Deployment
-      # =========================================================================
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
@@ -137,56 +138,94 @@ jobs:
           location: ${{ env.GKE_ZONE }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'v3.14.0'
-
-      - name: Deploy with Helm
+      - name: Update ArgoCD image tags
         env:
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
           PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          DEPLOY_BACKEND: ${{ inputs.deploy_backend }}
+          DEPLOY_FRONTEND: ${{ inputs.deploy_frontend }}
         run: |
-          helm upgrade --install exam-platform ./charts/exam-platform \
-            --namespace "$NAMESPACE" \
-            --create-namespace \
-            --values ./charts/exam-platform/values-prod.yaml \
-            --set backend.image.repository="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${BACKEND_IMAGE}" \
-            --set backend.image.tag="${IMAGE_TAG}" \
-            --set frontend.image.repository="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${FRONTEND_IMAGE}" \
-            --set frontend.image.tag="${IMAGE_TAG}" \
-            --atomic \
-            --timeout 10m \
-            --wait
+          PATCH='{"spec":{"source":{"helm":{"parameters":['
+          PARAMS=""
+
+          if [ "$DEPLOY_BACKEND" = "true" ]; then
+            PARAMS='{"name":"backend.image.tag","value":"'"${IMAGE_TAG}"'"}'
+            echo "Updating backend image tag to: ${IMAGE_TAG}"
+          fi
+
+          if [ "$DEPLOY_FRONTEND" = "true" ]; then
+            if [ -n "$PARAMS" ]; then
+              PARAMS="${PARAMS},"
+            fi
+            PARAMS="${PARAMS}"'{"name":"frontend.image.tag","value":"'"${IMAGE_TAG}"'"}'
+            echo "Updating frontend image tag to: ${IMAGE_TAG}"
+          fi
+
+          # repository parameter 유지
+          BACKEND_REPO="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${BACKEND_IMAGE}"
+          FRONTEND_REPO="${GAR_LOCATION}/${PROJECT_ID}/${REPOSITORY}/${FRONTEND_IMAGE}"
+          PARAMS="${PARAMS},"'{"name":"backend.image.repository","value":"'"${BACKEND_REPO}"'"}'
+          PARAMS="${PARAMS},"'{"name":"frontend.image.repository","value":"'"${FRONTEND_REPO}"'"}'
+
+          PATCH="${PATCH}${PARAMS}]}}}}"
+
+          kubectl -n argocd patch application "$ARGOCD_APP" --type=merge -p "$PATCH"
+          echo "ArgoCD application patched"
+
+      - name: Trigger ArgoCD sync
+        run: |
+          kubectl -n argocd patch application "$ARGOCD_APP" --type=merge \
+            -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}'
+
+          echo "Waiting for ArgoCD sync..."
+          sleep 15
+
+      - name: Wait for rollout
+        run: |
+          echo "Waiting for backend rollout..."
+          kubectl rollout status deployment/exam-prod-exam-platform-backend \
+            -n "$NAMESPACE" --timeout=5m || true
+
+          echo "Waiting for frontend rollout..."
+          kubectl rollout status deployment/exam-prod-exam-platform-frontend \
+            -n "$NAMESPACE" --timeout=5m || true
 
       - name: Verify deployment
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
         run: |
-          kubectl rollout status deployment/exam-platform-backend -n "$NAMESPACE" --timeout=5m
-          kubectl rollout status deployment/exam-platform-frontend -n "$NAMESPACE" --timeout=5m
-
-      - name: Get deployment info
-        run: |
-          echo "## Deployment Info" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Production Deployment Info" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Resource | Status |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|----------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Resource | Image Tag | Ready |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|----------|-----------|-------|" >> "$GITHUB_STEP_SUMMARY"
 
-          BACKEND_PODS=$(kubectl get pods -n "$NAMESPACE" -l app=exam-platform-backend -o jsonpath='{.items[*].status.phase}')
-          FRONTEND_PODS=$(kubectl get pods -n "$NAMESPACE" -l app=exam-platform-frontend -o jsonpath='{.items[*].status.phase}')
+          BACKEND_IMG=$(kubectl get deployment exam-prod-exam-platform-backend \
+            -n "$NAMESPACE" -o jsonpath='{.spec.template.spec.containers[0].image}')
+          FRONTEND_IMG=$(kubectl get deployment exam-prod-exam-platform-frontend \
+            -n "$NAMESPACE" -o jsonpath='{.spec.template.spec.containers[0].image}')
 
-          echo "| Backend Pods | $BACKEND_PODS |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Frontend Pods | $FRONTEND_PODS |" >> "$GITHUB_STEP_SUMMARY"
+          BACKEND_READY=$(kubectl get deployment exam-prod-exam-platform-backend \
+            -n "$NAMESPACE" -o jsonpath='{.status.readyReplicas}/{.spec.replicas}')
+          FRONTEND_READY=$(kubectl get deployment exam-prod-exam-platform-frontend \
+            -n "$NAMESPACE" -o jsonpath='{.status.readyReplicas}/{.spec.replicas}')
+
+          echo "| Backend | ${BACKEND_IMG##*:} | ${BACKEND_READY} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Frontend | ${FRONTEND_IMG##*:} | ${FRONTEND_READY} |" >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Backend: $BACKEND_IMG ($BACKEND_READY)"
+          echo "Frontend: $FRONTEND_IMG ($FRONTEND_READY)"
 
       # =========================================================================
       # Notification
       # =========================================================================
       - name: Send Slack notification (Success)
         if: success()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1.27.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
           ACTOR: ${{ github.actor }}
         with:
           payload: |
@@ -205,11 +244,12 @@ jobs:
 
       - name: Send Slack notification (Failure)
         if: failure()
+        continue-on-error: true
         uses: slackapi/slack-github-action@v1.27.0
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
           ACTOR: ${{ github.actor }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
@@ -222,69 +262,6 @@ jobs:
                   "text": {
                     "type": "mrkdwn",
                     "text": "*Production Deployment Failed*\n\nImage Tag: `${{ env.IMAGE_TAG }}`\nDeployed by: ${{ env.ACTOR }}\nWorkflow: ${{ env.RUN_URL }}"
-                  }
-                }
-              ]
-            }
-
-  # ===========================================================================
-  # Rollback Job (Manual trigger)
-  # ===========================================================================
-  rollback:
-    name: Rollback (if needed)
-    runs-on: ubuntu-latest
-    needs: [deploy]
-    if: failure()
-
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v2
-        with:
-          cluster_name: ${{ secrets.GKE_CLUSTER_PROD }}
-          location: ${{ env.GKE_ZONE }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Set up Helm
-        uses: azure/setup-helm@v4
-        with:
-          version: 'v3.14.0'
-
-      - name: Check Helm history
-        run: |
-          echo "## Helm Release History" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          helm history exam-platform -n "$NAMESPACE" >> "$GITHUB_STEP_SUMMARY" || echo "No history found"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-          echo "To rollback, run: helm rollback exam-platform [REVISION] -n $NAMESPACE"
-
-      - name: Send Slack notification (Rollback available)
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-          IMAGE_TAG: ${{ inputs.image_tag }}
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "text": "Production Rollback Available",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Production Rollback Available*\n\nFailed Image Tag: `${{ env.IMAGE_TAG }}`\nRun `helm rollback exam-platform [REVISION] -n exam-prod` to rollback"
                   }
                 }
               ]
