@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useAuthStore } from "@/stores/authStore";
 import type { User } from "@/types/auth";
+import axios from "axios";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
 
 const mockUser: User = {
   id: 1,
@@ -132,7 +139,22 @@ describe("useAuthStore", () => {
   });
 
   describe("initializeAuth", () => {
-    it("localStorage에 access token이 있으면 인증 상태로 초기화한다", () => {
+    it("access token이 없으면 미인증 상태로 초기화한다", async () => {
+      (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(null);
+
+      const { initializeAuth } = useAuthStore.getState();
+      await initializeAuth();
+
+      const state = useAuthStore.getState();
+      expect(state.accessToken).toBeNull();
+      expect(state.isAuthenticated).toBe(false);
+      expect(state.isLoading).toBe(false);
+    });
+
+    it("access token이 있고 user가 persist에서 복원된 경우 API 호출 없이 인증 상태로 설정한다", async () => {
+      // user를 먼저 설정 (persist 복원 시뮬레이션)
+      useAuthStore.setState({ user: mockUser });
+
       (localStorage.getItem as ReturnType<typeof vi.fn>)
         .mockImplementation((key: string) => {
           if (key === "access_token") return "stored-access";
@@ -140,29 +162,60 @@ describe("useAuthStore", () => {
         });
 
       const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
+      await initializeAuth();
 
       const state = useAuthStore.getState();
       expect(state.accessToken).toBe("stored-access");
       expect(state.isAuthenticated).toBe(true);
       expect(state.isLoading).toBe(false);
+      expect(state.user).toEqual(mockUser);
+      // API 호출이 발생하지 않아야 함
+      expect(axios.get).not.toHaveBeenCalled();
     });
 
-    it("localStorage에 access token이 없으면 미인증 상태로 초기화한다", () => {
-      (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(null);
+    it("access token이 있고 user가 null이면 Profile API로 user를 복원한다", async () => {
+      (localStorage.getItem as ReturnType<typeof vi.fn>)
+        .mockImplementation((key: string) => {
+          if (key === "access_token") return "stored-access";
+          return null;
+        });
+
+      vi.mocked(axios.get).mockResolvedValueOnce({ data: mockUser });
 
       const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
+      await initializeAuth();
 
       const state = useAuthStore.getState();
+      expect(state.user).toEqual(mockUser);
+      expect(state.accessToken).toBe("stored-access");
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isLoading).toBe(false);
+      expect(axios.get).toHaveBeenCalledTimes(1);
+    });
+
+    it("access token이 있고 user가 null이며 Profile API 실패 시 로그아웃 처리한다", async () => {
+      (localStorage.getItem as ReturnType<typeof vi.fn>)
+        .mockImplementation((key: string) => {
+          if (key === "access_token") return "invalid-token";
+          return null;
+        });
+
+      vi.mocked(axios.get).mockRejectedValueOnce(new Error("401 Unauthorized"));
+
+      const { initializeAuth } = useAuthStore.getState();
+      await initializeAuth();
+
+      const state = useAuthStore.getState();
+      expect(state.user).toBeNull();
       expect(state.accessToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
+      expect(localStorage.removeItem).toHaveBeenCalledWith("access_token");
     });
   });
 
   describe("localStorage 에러 처리", () => {
-    it("localStorage 접근 실패 시 에러 없이 처리된다", () => {
+    it("localStorage 접근 실패 시 에러 없이 처리된다", async () => {
       (localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation(
         () => {
           throw new Error("Storage access denied");
@@ -171,7 +224,7 @@ describe("useAuthStore", () => {
 
       const { initializeAuth } = useAuthStore.getState();
 
-      expect(() => initializeAuth()).not.toThrow();
+      await expect(initializeAuth()).resolves.toBeUndefined();
 
       const state = useAuthStore.getState();
       expect(state.isLoading).toBe(false);
