@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import axios from 'axios'
 import type { User, AuthState } from '@/types/auth'
 
 /**
@@ -36,11 +37,11 @@ function safeRemoveItem(key: string): void {
 }
 
 interface AuthStore extends AuthState {
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void
+  setAuth: (user: User, accessToken: string) => void
   setUser: (user: User) => void
-  setTokens: (accessToken: string, refreshToken: string) => void
+  setTokens: (accessToken: string) => void
   logout: () => void
-  initializeAuth: () => void
+  initializeAuth: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -48,17 +49,14 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
 
-      setAuth: (user, accessToken, refreshToken) => {
+      setAuth: (user, accessToken) => {
         safeSetItem('access_token', accessToken)
-        safeSetItem('refresh_token', refreshToken)
         set({
           user,
           accessToken,
-          refreshToken,
           isAuthenticated: true,
           isLoading: false,
         })
@@ -68,37 +66,61 @@ export const useAuthStore = create<AuthStore>()(
         set({ user })
       },
 
-      setTokens: (accessToken, refreshToken) => {
+      setTokens: (accessToken) => {
         safeSetItem('access_token', accessToken)
-        safeSetItem('refresh_token', refreshToken)
-        set({ accessToken, refreshToken })
+        set({ accessToken })
       },
 
       logout: () => {
         safeRemoveItem('access_token')
-        safeRemoveItem('refresh_token')
         set({
           user: null,
           accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
         })
       },
 
-      initializeAuth: () => {
+      initializeAuth: async () => {
         const accessToken = safeGetItem('access_token')
-        const refreshToken = safeGetItem('refresh_token')
 
-        if (accessToken && refreshToken) {
+        if (!accessToken) {
+          set({ isLoading: false })
+          return
+        }
+
+        // Zustand persist에서 user가 이미 복원된 경우 API 호출 없이 진행
+        const currentUser = useAuthStore.getState().user
+        if (currentUser) {
+          set({ accessToken, isAuthenticated: true, isLoading: false })
+          return
+        }
+
+        // user가 없으면 Profile API로 복원 시도
+        // 순환 참조 방지를 위해 bare axios 사용 (apiClient -> authStore 순환)
+        try {
+          const response = await axios.get<User>(
+            `${import.meta.env.VITE_API_BASE_URL}/users/me/`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              withCredentials: true,
+            }
+          )
           set({
+            user: response.data,
             accessToken,
-            refreshToken,
             isAuthenticated: true,
             isLoading: false,
           })
-        } else {
-          set({ isLoading: false })
+        } catch {
+          // Token 무효 → 로그아웃 처리
+          safeRemoveItem('access_token')
+          set({
+            user: null,
+            accessToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+          })
         }
       },
     }),

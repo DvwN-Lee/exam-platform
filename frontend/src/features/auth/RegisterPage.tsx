@@ -97,10 +97,13 @@ export function RegisterPage() {
   }, [userType])
 
   // 과목 목록 조회
-  const { data: subjects } = useQuery({
+  const { data: subjects, isLoading: isSubjectsLoading } = useQuery({
     queryKey: ['subjects'],
     queryFn: questionApi.getSubjects,
   })
+
+  const isTeacherRegistrationBlocked =
+    selectedUserType === 'teacher' && !isSubjectsLoading && (!subjects || subjects.length === 0)
 
   const registerMutation = useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
@@ -368,16 +371,24 @@ export function RegisterPage() {
                 </Label>
                 <select
                   id="subject_id"
+                  disabled={isSubjectsLoading || !subjects?.length}
                   {...register('subject_id', { valueAsNumber: true })}
-                  className="h-12 w-full rounded-[12px] border-2 border-input bg-background px-5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="h-12 w-full rounded-[12px] border-2 border-input bg-background px-5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <option value="">과목을 선택하세요</option>
+                  <option value="">
+                    {isSubjectsLoading ? '과목 목록 조회 중...' : '과목을 선택하세요'}
+                  </option>
                   {subjects?.map((subject) => (
                     <option key={subject.id} value={subject.id}>
                       {subject.subject_name}
                     </option>
                   ))}
                 </select>
+                {isTeacherRegistrationBlocked && (
+                  <p className="text-sm text-amber-600">
+                    등록된 과목이 없어 교사 회원가입이 불가능합니다. 관리자에게 문의하세요.
+                  </p>
+                )}
                 {errors.subject_id && (
                   <p className="text-sm text-destructive">{errors.subject_id.message}</p>
                 )}
@@ -388,7 +399,7 @@ export function RegisterPage() {
           <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
             <Button
               type="submit"
-              disabled={registerMutation.isPending}
+              disabled={registerMutation.isPending || isTeacherRegistrationBlocked}
               className="h-[3.375rem] w-full rounded-[12px] bg-primary text-base font-semibold text-white transition-all hover:bg-primary-dark hover:shadow-lg"
             >
               {registerMutation.isPending ? '가입 중...' : '회원가입'}

@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useAuthStore } from "@/stores/authStore";
 import type { User } from "@/types/auth";
+import axios from "axios";
+
+vi.mock("axios", () => ({
+  default: {
+    get: vi.fn(),
+  },
+}));
 
 const mockUser: User = {
   id: 1,
@@ -26,7 +33,6 @@ describe("useAuthStore", () => {
     useAuthStore.setState({
       user: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: true,
     });
@@ -40,7 +46,6 @@ describe("useAuthStore", () => {
 
       expect(state.user).toBeNull();
       expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(true);
     });
@@ -50,28 +55,23 @@ describe("useAuthStore", () => {
     it("인증 정보를 설정한다", () => {
       const { setAuth } = useAuthStore.getState();
 
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       const state = useAuthStore.getState();
       expect(state.user).toEqual(mockUser);
       expect(state.accessToken).toBe("access-token");
-      expect(state.refreshToken).toBe("refresh-token");
       expect(state.isAuthenticated).toBe(true);
       expect(state.isLoading).toBe(false);
     });
 
-    it("localStorage에 토큰을 저장한다", () => {
+    it("localStorage에 access token을 저장한다", () => {
       const { setAuth } = useAuthStore.getState();
 
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "access_token",
         "access-token"
-      );
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        "refresh_token",
-        "refresh-token"
       );
     });
   });
@@ -79,7 +79,7 @@ describe("useAuthStore", () => {
   describe("setUser", () => {
     it("사용자 정보만 업데이트한다", () => {
       const { setAuth, setUser } = useAuthStore.getState();
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       const updatedUser = { ...mockUser, nick_name: "Updated Name" };
       setUser(updatedUser);
@@ -91,30 +91,25 @@ describe("useAuthStore", () => {
   });
 
   describe("setTokens", () => {
-    it("토큰만 업데이트한다", () => {
+    it("access token만 업데이트한다", () => {
       const { setAuth, setTokens } = useAuthStore.getState();
-      setAuth(mockUser, "old-access", "old-refresh");
+      setAuth(mockUser, "old-access");
 
-      setTokens("new-access", "new-refresh");
+      setTokens("new-access");
 
       const state = useAuthStore.getState();
       expect(state.accessToken).toBe("new-access");
-      expect(state.refreshToken).toBe("new-refresh");
       expect(state.user).toEqual(mockUser);
     });
 
-    it("localStorage에 새 토큰을 저장한다", () => {
+    it("localStorage에 새 access token을 저장한다", () => {
       const { setTokens } = useAuthStore.getState();
 
-      setTokens("new-access", "new-refresh");
+      setTokens("new-access");
 
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "access_token",
         "new-access"
-      );
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        "refresh_token",
-        "new-refresh"
       );
     });
   });
@@ -122,62 +117,44 @@ describe("useAuthStore", () => {
   describe("logout", () => {
     it("인증 상태를 초기화한다", () => {
       const { setAuth, logout } = useAuthStore.getState();
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       logout();
 
       const state = useAuthStore.getState();
       expect(state.user).toBeNull();
       expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
     });
 
-    it("localStorage에서 토큰을 삭제한다", () => {
+    it("localStorage에서 access token을 삭제한다", () => {
       const { setAuth, logout } = useAuthStore.getState();
-      setAuth(mockUser, "access-token", "refresh-token");
+      setAuth(mockUser, "access-token");
 
       logout();
 
       expect(localStorage.removeItem).toHaveBeenCalledWith("access_token");
-      expect(localStorage.removeItem).toHaveBeenCalledWith("refresh_token");
     });
   });
 
   describe("initializeAuth", () => {
-    it("localStorage에 토큰이 있으면 인증 상태로 초기화한다", () => {
-      (localStorage.getItem as ReturnType<typeof vi.fn>)
-        .mockImplementation((key: string) => {
-          if (key === "access_token") return "stored-access";
-          if (key === "refresh_token") return "stored-refresh";
-          return null;
-        });
-
-      const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
-
-      const state = useAuthStore.getState();
-      expect(state.accessToken).toBe("stored-access");
-      expect(state.refreshToken).toBe("stored-refresh");
-      expect(state.isAuthenticated).toBe(true);
-      expect(state.isLoading).toBe(false);
-    });
-
-    it("localStorage에 토큰이 없으면 미인증 상태로 초기화한다", () => {
+    it("access token이 없으면 미인증 상태로 초기화한다", async () => {
       (localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue(null);
 
       const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
+      await initializeAuth();
 
       const state = useAuthStore.getState();
       expect(state.accessToken).toBeNull();
-      expect(state.refreshToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
     });
 
-    it("accessToken만 있고 refreshToken이 없으면 미인증 상태다", () => {
+    it("access token이 있고 user가 persist에서 복원된 경우 API 호출 없이 인증 상태로 설정한다", async () => {
+      // user를 먼저 설정 (persist 복원 시뮬레이션)
+      useAuthStore.setState({ user: mockUser });
+
       (localStorage.getItem as ReturnType<typeof vi.fn>)
         .mockImplementation((key: string) => {
           if (key === "access_token") return "stored-access";
@@ -185,31 +162,60 @@ describe("useAuthStore", () => {
         });
 
       const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
+      await initializeAuth();
 
       const state = useAuthStore.getState();
-      expect(state.isAuthenticated).toBe(false);
+      expect(state.accessToken).toBe("stored-access");
+      expect(state.isAuthenticated).toBe(true);
       expect(state.isLoading).toBe(false);
+      expect(state.user).toEqual(mockUser);
+      // API 호출이 발생하지 않아야 함
+      expect(axios.get).not.toHaveBeenCalled();
     });
 
-    it("refreshToken만 있고 accessToken이 없으면 미인증 상태다", () => {
+    it("access token이 있고 user가 null이면 Profile API로 user를 복원한다", async () => {
       (localStorage.getItem as ReturnType<typeof vi.fn>)
         .mockImplementation((key: string) => {
-          if (key === "refresh_token") return "stored-refresh";
+          if (key === "access_token") return "stored-access";
           return null;
         });
 
+      vi.mocked(axios.get).mockResolvedValueOnce({ data: mockUser });
+
       const { initializeAuth } = useAuthStore.getState();
-      initializeAuth();
+      await initializeAuth();
 
       const state = useAuthStore.getState();
+      expect(state.user).toEqual(mockUser);
+      expect(state.accessToken).toBe("stored-access");
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isLoading).toBe(false);
+      expect(axios.get).toHaveBeenCalledTimes(1);
+    });
+
+    it("access token이 있고 user가 null이며 Profile API 실패 시 로그아웃 처리한다", async () => {
+      (localStorage.getItem as ReturnType<typeof vi.fn>)
+        .mockImplementation((key: string) => {
+          if (key === "access_token") return "invalid-token";
+          return null;
+        });
+
+      vi.mocked(axios.get).mockRejectedValueOnce(new Error("401 Unauthorized"));
+
+      const { initializeAuth } = useAuthStore.getState();
+      await initializeAuth();
+
+      const state = useAuthStore.getState();
+      expect(state.user).toBeNull();
+      expect(state.accessToken).toBeNull();
       expect(state.isAuthenticated).toBe(false);
       expect(state.isLoading).toBe(false);
+      expect(localStorage.removeItem).toHaveBeenCalledWith("access_token");
     });
   });
 
   describe("localStorage 에러 처리", () => {
-    it("localStorage 접근 실패 시 에러 없이 처리된다", () => {
+    it("localStorage 접근 실패 시 에러 없이 처리된다", async () => {
       (localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation(
         () => {
           throw new Error("Storage access denied");
@@ -218,7 +224,7 @@ describe("useAuthStore", () => {
 
       const { initializeAuth } = useAuthStore.getState();
 
-      expect(() => initializeAuth()).not.toThrow();
+      await expect(initializeAuth()).resolves.toBeUndefined();
 
       const state = useAuthStore.getState();
       expect(state.isLoading).toBe(false);
@@ -236,7 +242,7 @@ describe("useAuthStore", () => {
       const { setAuth } = useAuthStore.getState();
 
       expect(() =>
-        setAuth(mockUser, "access-token", "refresh-token")
+        setAuth(mockUser, "access-token")
       ).not.toThrow();
 
       const state = useAuthStore.getState();

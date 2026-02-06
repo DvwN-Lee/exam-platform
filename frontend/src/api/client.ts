@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import { translateErrorMessage } from '@/utils/errorMessages'
+import { useAuthStore } from '@/stores/authStore'
 
 /**
  * LocalStorage 안전하게 읽기
@@ -23,17 +24,6 @@ function safeSetItem(key: string, value: string): boolean {
     return true
   } catch {
     return false
-  }
-}
-
-/**
- * LocalStorage 안전하게 삭제
- */
-function safeRemoveItem(key: string): void {
-  try {
-    localStorage.removeItem(key)
-  } catch {
-    // 무시
   }
 }
 
@@ -159,6 +149,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
   timeout: 20000, // 20초 timeout (테스트 timeout 30초 전에 에러 처리)
 })
 
@@ -191,15 +182,11 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = safeGetItem('refresh_token')
-        if (!refreshToken) {
-          throw new Error('No refresh token')
-        }
-
-        // 토큰 갱신 API 호출
+        // HttpOnly Cookie로 Refresh Token이 자동 전송됨
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/auth/token/refresh/`,
-          { refresh: refreshToken }
+          {},
+          { withCredentials: true }
         )
 
         const { access } = response.data
@@ -210,9 +197,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest)
       } catch (refreshError) {
         // 토큰 갱신 실패 시 로그아웃 처리
-        safeRemoveItem('access_token')
-        safeRemoveItem('refresh_token')
-        window.location.href = '/login'
+        useAuthStore.getState().logout()
+        window.dispatchEvent(new Event('auth:session-expired'))
         return Promise.reject(refreshError)
       }
     }

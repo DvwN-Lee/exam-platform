@@ -37,11 +37,4 @@ export const authApi = {
     )
     return response.data
   },
-
-  refreshToken: async (refreshToken: string): Promise<{ access: string }> => {
-    const response = await apiClient.post<{ access: string }>('/auth/token/refresh/', {
-      refresh: refreshToken,
-    })
-    return response.data
-  },
 }
