@@ -109,12 +109,12 @@ export function TeacherDashboard() {
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
                   {(dashboard.question_statistics?.trend ?? 0) > 0 && (
-                    <span className="text-green-600">
+                    <span className="text-green-600 dark:text-green-400">
                       ↑ 이번 달 {dashboard.question_statistics?.trend}개 추가
                     </span>
                   )}
                   {(dashboard.question_statistics?.trend ?? 0) < 0 && (
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-red-400">
                       ↓ 이번 달 {Math.abs(dashboard.question_statistics?.trend ?? 0)}개 감소
                     </span>
                   )}
@@ -147,12 +147,12 @@ export function TeacherDashboard() {
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
                   {(dashboard.testpaper_statistics?.trend ?? 0) > 0 && (
-                    <span className="text-green-600">
+                    <span className="text-green-600 dark:text-green-400">
                       ↑ 이번 달 {dashboard.testpaper_statistics?.trend}개 추가
                     </span>
                   )}
                   {(dashboard.testpaper_statistics?.trend ?? 0) < 0 && (
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-red-400">
                       ↓ 이번 달 {Math.abs(dashboard.testpaper_statistics?.trend ?? 0)}개 감소
                     </span>
                   )}
@@ -185,12 +185,12 @@ export function TeacherDashboard() {
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
                   {(dashboard.student_statistics?.submissions_trend ?? 0) > 0 && (
-                    <span className="text-green-600">
+                    <span className="text-green-600 dark:text-green-400">
                       ↑ 이번 달 {dashboard.student_statistics?.submissions_trend}명 응시
                     </span>
                   )}
                   {(dashboard.student_statistics?.submissions_trend ?? 0) < 0 && (
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-red-400">
                       ↓ 이번 달 {Math.abs(dashboard.student_statistics?.submissions_trend ?? 0)}명 감소
                     </span>
                   )}
@@ -218,17 +218,17 @@ export function TeacherDashboard() {
                 <div className="text-sm font-medium text-muted-foreground">
                   평균 점수
                 </div>
-                <div className="mt-2 text-3xl font-bold text-green-600">
+                <div className="mt-2 text-3xl font-bold text-primary">
                   {(dashboard.student_statistics?.average_score ?? 0).toFixed(1)}
                 </div>
                 <div className="mt-1 h-5 text-sm font-medium">
                   {(dashboard.student_statistics?.score_trend ?? 0) > 0 && (
-                    <span className="text-green-600">
+                    <span className="text-green-600 dark:text-green-400">
                       ↑ 이번 달 {(dashboard.student_statistics?.score_trend ?? 0).toFixed(1)}점 상승
                     </span>
                   )}
                   {(dashboard.student_statistics?.score_trend ?? 0) < 0 && (
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-red-400">
                       ↓ 이번 달 {Math.abs(dashboard.student_statistics?.score_trend ?? 0).toFixed(1)}점 하락
                     </span>
                   )}

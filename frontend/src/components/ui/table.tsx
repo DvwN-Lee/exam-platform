@@ -118,7 +118,7 @@ export {
 
 // 점수별 색상 유틸리티
 export function getScoreColor(score: number): string {
-  if (score >= 85) return 'text-green-600 font-semibold'
-  if (score >= 72) return 'text-orange-500 font-semibold'
-  return 'text-red-500 font-semibold'
+  if (score >= 85) return 'text-green-600 dark:text-green-400 font-semibold'
+  if (score >= 72) return 'text-orange-500 dark:text-orange-400 font-semibold'
+  return 'text-red-500 dark:text-red-400 font-semibold'
 }

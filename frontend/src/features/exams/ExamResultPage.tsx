@@ -62,7 +62,7 @@ export function ExamResultPage() {
                 </div>
                 <div
                   className={`mt-2 text-lg font-medium ${
-                    result.pass ? 'text-green-600' : 'text-destructive'
+                    result.pass ? 'text-green-600 dark:text-green-400' : 'text-destructive'
                   }`}
                 >
                   {result.pass ? '합격' : '불합격'}
@@ -94,7 +94,7 @@ export function ExamResultPage() {
           <StaggerItem>
             <div className="rounded-lg border bg-card p-4 h-full">
               <div className="text-sm text-muted-foreground">정답 수</div>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                 {submission.answers.filter((a) => a.is_correct).length}개
               </div>
             </div>
@@ -150,8 +150,8 @@ export function ExamResultPage() {
                   <div
                     className={`rounded-lg border p-4 ${
                       answer.is_correct
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-destructive bg-red-50 dark:bg-red-900/20'
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                        : 'border-destructive bg-red-50 dark:bg-red-900/30'
                     }`}
                   >
                     <div className="mb-2 flex items-start justify-between">
@@ -178,7 +178,7 @@ export function ExamResultPage() {
                         </div>
                         <div
                           className={`text-sm font-medium ${
-                            answer.is_correct ? 'text-green-600' : 'text-destructive'
+                            answer.is_correct ? 'text-green-600 dark:text-green-400' : 'text-destructive'
                           }`}
                         >
                           {answer.is_correct ? '정답' : '오답'}
@@ -206,13 +206,13 @@ export function ExamResultPage() {
                                     : isSelected
                                       ? 'border-destructive bg-red-100 dark:bg-red-900/30'
                                       : isCorrect
-                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
                                         : 'border-border'
                                 }`}
                               >
                                 <div className="flex items-center gap-2">
                                   {isSelected && <span>✓</span>}
-                                  {isCorrect && <span className="text-green-600">정답</span>}
+                                  {isCorrect && <span className="text-green-600 dark:text-green-400">정답</span>}
                                   <span>{option.option}</span>
                                 </div>
                               </div>

@@ -10,9 +10,9 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-white hover:bg-primary/90',
-        warning: 'bg-orange-500 text-white hover:bg-orange-500/90',
-        success: 'bg-green-600 text-white hover:bg-green-600/90',
-        error: 'bg-red-500 text-white hover:bg-red-500/90',
+        warning: 'bg-orange-500 dark:bg-orange-600 text-white hover:bg-orange-500/90 dark:hover:bg-orange-600/90',
+        success: 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-600/90 dark:hover:bg-green-700/90',
+        error: 'bg-red-500 dark:bg-red-600 text-white hover:bg-red-500/90 dark:hover:bg-red-600/90',
         primary: 'bg-primary/10 text-primary hover:bg-primary/20',
         secondary: [
           'bg-gray-100 dark:bg-gray-800',
@@ -25,17 +25,17 @@ const badgeVariants = cva(
           'hover:bg-gray-50 dark:hover:bg-gray-800',
         ].join(' '),
         'success-soft': [
-          'bg-green-100 dark:bg-green-900/20',
+          'bg-green-100 dark:bg-green-900/30',
           'text-green-700 dark:text-green-300',
           'hover:bg-green-200 dark:hover:bg-green-900/30',
         ].join(' '),
         'info-soft': [
-          'bg-blue-100 dark:bg-blue-900/20',
+          'bg-blue-100 dark:bg-blue-900/30',
           'text-blue-700 dark:text-blue-300',
           'hover:bg-blue-200 dark:hover:bg-blue-900/30',
         ].join(' '),
         'purple-soft': [
-          'bg-purple-100 dark:bg-purple-900/20',
+          'bg-purple-100 dark:bg-purple-900/30',
           'text-purple-700 dark:text-purple-300',
           'hover:bg-purple-200 dark:hover:bg-purple-900/30',
         ].join(' '),

@@ -22,9 +22,30 @@ export interface StudentListResponse {
   previous: string | null
 }
 
+export interface StudentStatistics {
+  total_exams_taken: number
+  average_score: number
+  pass_rate: number
+}
+
+export interface ExamHistoryItem {
+  exam_id: number
+  exam_name: string
+  subject_name: string | null
+  score: number
+  total_score: number
+  submitted_at: string | null
+}
+
+export interface StudentDetail extends Student {
+  statistics: StudentStatistics
+  exam_history: ExamHistoryItem[]
+}
+
 export interface StudentListParams {
   search?: string
   school?: string
   class?: string
   page?: number
+  ordering?: string
 }

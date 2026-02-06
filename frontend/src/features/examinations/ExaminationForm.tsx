@@ -1,44 +1,37 @@
 import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import { addHours, differenceInMinutes } from 'date-fns'
 import type { AxiosError } from 'axios'
 import { examinationApi, testPaperApi } from '@/api/testpaper'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LoadingPage } from '@/components/ui/loading'
-import {
-  DEFAULT_EXAM_START_OFFSET_MS,
-  DEFAULT_EXAM_END_OFFSET_MS,
-  MILLISECONDS_PER_MINUTE,
-} from '@/constants'
+import { DateTimePicker } from '@/components/ui/date-time-picker'
+import { MILLISECONDS_PER_MINUTE } from '@/constants'
 import type { Examination } from '@/types/testpaper'
 
 const examinationSchema = z
   .object({
     exam_name: z.string().min(1, '시험명을 입력해주세요'),
     testpaper_id: z.number().min(1, '시험지를 선택해주세요'),
-    start_time: z.string().min(1, '시작 시간을 입력해주세요'),
-    end_time: z.string().min(1, '종료 시간을 입력해주세요'),
+    start_time: z.date({ error: '시작 시간을 선택해주세요' }),
+    end_time: z.date({ error: '종료 시간을 선택해주세요' }),
     is_public: z.boolean(),
   })
-  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
+  .refine((data) => data.end_time > data.start_time, {
     message: '종료 시간은 시작 시간 이후여야 합니다',
     path: ['end_time'],
   })
-
-// 기본 시간값 생성 함수 (컴포넌트 외부에서 정의하여 순수성 유지)
-function getDefaultDateTimeValues() {
-  const now = Date.now()
-  return {
-    start_time: new Date(now + DEFAULT_EXAM_START_OFFSET_MS).toISOString().slice(0, 16),
-    end_time: new Date(now + DEFAULT_EXAM_END_OFFSET_MS).toISOString().slice(0, 16),
-  }
-}
+  .refine((data) => data.start_time > new Date(), {
+    message: '시작 시간은 현재 시간 이후여야 합니다',
+    path: ['start_time'],
+  })
 
 export type BackendFieldError = {
   [key: string]: string[] | string
@@ -112,16 +105,29 @@ export function ExaminationForm({
     register,
     handleSubmit,
     reset,
+    control,
+    watch,
     formState: { errors },
   } = useForm<ExaminationFormData>({
     resolver: zodResolver(examinationSchema),
     defaultValues: {
       exam_name: '',
       testpaper_id: 0,
-      ...getDefaultDateTimeValues(),
+      start_time: addHours(new Date(), 1),
+      end_time: addHours(new Date(), 2),
       is_public: false,
     },
   })
+
+  const startTime = watch('start_time')
+  const endTime = watch('end_time')
+
+  // Duration 계산
+  const durationMinutes =
+    startTime && endTime ? differenceInMinutes(endTime, startTime) : 0
+  const durationHours = Math.floor(durationMinutes / 60)
+  const durationRemainingMinutes = durationMinutes % 60
+  const isDurationValid = durationMinutes > 0
 
   // 기존 데이터 로드 시 폼 초기화
   useEffect(() => {
@@ -129,8 +135,8 @@ export function ExaminationForm({
       reset({
         exam_name: initialData.exam_name,
         testpaper_id: initialData.testpaper.id,
-        start_time: new Date(initialData.start_time).toISOString().slice(0, 16),
-        end_time: new Date(initialData.end_time).toISOString().slice(0, 16),
+        start_time: new Date(initialData.start_time),
+        end_time: new Date(initialData.end_time),
         is_public: initialData.is_public,
       })
     }
@@ -178,19 +184,17 @@ export function ExaminationForm({
     }
 
     // start_time과 end_time의 차이를 분 단위로 계산
-    const startTime = new Date(data.start_time)
-    const endTime = new Date(data.end_time)
-    const durationMinutes = Math.floor(
-      (endTime.getTime() - startTime.getTime()) / MILLISECONDS_PER_MINUTE
+    const submitDurationMinutes = Math.floor(
+      (data.end_time.getTime() - data.start_time.getTime()) / MILLISECONDS_PER_MINUTE
     )
 
     // Backend API 형식에 맞게 데이터 변환
     const backendData = {
       name: data.exam_name,
       subject_id: selectedTestPaper.subject.id,
-      start_time: startTime.toISOString(),
-      duration: durationMinutes,
-      exam_type: 'pt', // 기본값: 보통 ('pt'), 특수: 'ts'
+      start_time: data.start_time.toISOString(),
+      duration: submitDurationMinutes,
+      exam_type: 'pt',
       papers: [
         {
           paper_id: data.testpaper_id,
@@ -199,12 +203,11 @@ export function ExaminationForm({
     }
 
     if (examinationId) {
-      // Backend API 형식에 맞게 데이터 변환
       const updateData = {
         name: data.exam_name,
         subject_id: selectedTestPaper.subject.id,
-        start_time: startTime.toISOString(),
-        duration: durationMinutes,
+        start_time: data.start_time.toISOString(),
+        duration: submitDurationMinutes,
         exam_type: 'pt' as const,
       }
       updateMutation.mutate(updateData)
@@ -282,11 +285,17 @@ export function ExaminationForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="start_time">시작 시간</Label>
-              <Input
-                id="start_time"
-                type="datetime-local"
-                {...register('start_time')}
+              <Label>시작 시간</Label>
+              <Controller
+                name="start_time"
+                control={control}
+                render={({ field }) => (
+                  <DateTimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    minDate={new Date()}
+                  />
+                )}
               />
               {errors.start_time && (
                 <p className="text-sm text-destructive">
@@ -296,17 +305,35 @@ export function ExaminationForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="end_time">종료 시간</Label>
-              <Input
-                id="end_time"
-                type="datetime-local"
-                {...register('end_time')}
+              <Label>종료 시간</Label>
+              <Controller
+                name="end_time"
+                control={control}
+                render={({ field }) => (
+                  <DateTimePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                    minDate={startTime}
+                  />
+                )}
               />
               {errors.end_time && (
                 <p className="text-sm text-destructive">{errors.end_time.message}</p>
               )}
             </div>
           </div>
+
+          {isDurationValid && (
+            <div className="rounded-md border border-input bg-muted/50 px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                시험 시간:{' '}
+                <span className="font-medium text-foreground">
+                  {durationHours > 0 && `${durationHours}시간 `}
+                  {durationRemainingMinutes}분
+                </span>
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center space-x-2">
             <input

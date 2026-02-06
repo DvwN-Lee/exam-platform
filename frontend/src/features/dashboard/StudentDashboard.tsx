@@ -69,12 +69,12 @@ export function StudentDashboard() {
                   {dashboard.statistics?.total_exams_taken ?? 0}
                 </div>
                 {(dashboard.statistics?.exams_trend ?? 0) > 0 && (
-                  <div className="mt-1 text-sm font-medium text-green-600">
+                  <div className="mt-1 text-sm font-medium text-green-600 dark:text-green-400">
                     ↑ 이번 달 {dashboard.statistics?.exams_trend ?? 0}개 응시
                   </div>
                 )}
                 {(dashboard.statistics?.exams_trend ?? 0) < 0 && (
-                  <div className="mt-1 text-sm font-medium text-red-600">
+                  <div className="mt-1 text-sm font-medium text-red-600 dark:text-red-400">
                     ↓ 지난달 대비 {Math.abs(dashboard.statistics?.exams_trend ?? 0)}개 감소
                   </div>
                 )}
@@ -106,12 +106,12 @@ export function StudentDashboard() {
                   {(dashboard.statistics?.average_score ?? 0).toFixed(1)}점
                 </div>
                 {(dashboard.statistics?.avg_score_trend ?? 0) > 0 && (
-                  <div className="mt-1 text-sm font-medium text-green-600">
+                  <div className="mt-1 text-sm font-medium text-green-600 dark:text-green-400">
                     ↑ 이번 달 {(dashboard.statistics?.avg_score_trend ?? 0).toFixed(1)}점 상승
                   </div>
                 )}
                 {(dashboard.statistics?.avg_score_trend ?? 0) < 0 && (
-                  <div className="mt-1 text-sm font-medium text-red-600">
+                  <div className="mt-1 text-sm font-medium text-red-600 dark:text-red-400">
                     ↓ 이번 달 {Math.abs(dashboard.statistics?.avg_score_trend ?? 0).toFixed(1)}점 하락
                   </div>
                 )}
@@ -143,7 +143,7 @@ export function StudentDashboard() {
                   {dashboard.upcoming_exams?.length ?? 0}
                 </div>
                 {(dashboard.upcoming_exams?.length ?? 0) > 0 && dashboard.upcoming_exams?.[0] && (
-                  <div className="mt-1 text-sm font-medium text-orange-600">
+                  <div className="mt-1 text-sm font-medium text-orange-600 dark:text-orange-400">
                     다음 시험:{' '}
                     {new Date(
                       dashboard.upcoming_exams[0].start_time

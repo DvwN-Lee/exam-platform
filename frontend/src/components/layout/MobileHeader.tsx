@@ -6,7 +6,7 @@ export function MobileHeader() {
   const { toggle } = useSidebarStore()
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-20 flex h-16 items-center justify-between bg-white dark:bg-slate-900 px-4 shadow-sm md:hidden">
+    <header className="fixed left-0 right-0 top-0 z-20 flex h-16 items-center justify-between bg-card border-b border-border px-4 md:hidden">
       <Button
         variant="ghost"
         size="icon"

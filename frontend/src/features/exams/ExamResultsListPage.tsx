@@ -97,7 +97,7 @@ export function ExamResultsListPage() {
                             <span className="text-sm text-muted-foreground">
                               정답:{' '}
                             </span>
-                            <span className="text-lg font-bold text-green-600">
+                            <span className="text-lg font-bold text-green-600 dark:text-green-400">
                               {correctCount} / {submission.answers.length}개
                             </span>
                           </div>
@@ -128,7 +128,7 @@ export function ExamResultsListPage() {
                           <div
                             className={`mt-1 text-sm font-medium ${
                               scorePercentage >= 60
-                                ? 'text-green-600'
+                                ? 'text-green-600 dark:text-green-400'
                                 : 'text-destructive'
                             }`}
                           >

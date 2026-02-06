@@ -95,7 +95,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-600 transition-all duration-300',
+          'fixed left-0 top-0 z-40 h-screen bg-card border-r border-border transition-all duration-300',
           // Mobile: 숨김/슬라이드
           isOpen ? 'translate-x-0' : '-translate-x-full',
           'md:translate-x-0',
@@ -168,7 +168,7 @@ export function Sidebar() {
                         'relative flex items-center gap-3 rounded-xl px-4 py-3.5 font-medium transition-colors',
                         active
                           ? 'text-primary'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-primary/5 hover:text-primary',
+                          : 'text-muted-foreground hover:bg-primary/5 hover:text-primary',
                         'md:justify-center lg:justify-start',
                         isCollapsed && 'lg:justify-center'
                       )}
@@ -211,8 +211,8 @@ export function Sidebar() {
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    'w-full rounded-2xl bg-green-50 dark:bg-green-900/20 p-5 transition-colors',
-                    'hover:bg-green-100 dark:hover:bg-green-900/30',
+                    'w-full rounded-2xl bg-primary/5 p-5 transition-colors',
+                    'hover:bg-primary/10',
                     'focus:outline-none focus:ring-2 focus:ring-primary/20'
                   )}
                   aria-label="사용자 메뉴 열기"
@@ -234,16 +234,16 @@ export function Sidebar() {
                         isCollapsed && 'lg:hidden'
                       )}
                     >
-                      <h4 className="truncate text-[15px] font-semibold text-gray-900 dark:text-gray-100">
+                      <h4 className="truncate text-[15px] font-semibold text-foreground">
                         {user?.nick_name || '사용자'}
                       </h4>
-                      <p className="truncate text-[13px] text-gray-600 dark:text-gray-400">
+                      <p className="truncate text-[13px] text-muted-foreground">
                         {userTypeLabels[user?.user_type || ''] || '사용자'}
                       </p>
                     </div>
                     <ChevronUp
                       className={cn(
-                        'h-4 w-4 text-gray-500',
+                        'h-4 w-4 text-muted-foreground',
                         'md:hidden lg:block',
                         isCollapsed && 'lg:hidden'
                       )}

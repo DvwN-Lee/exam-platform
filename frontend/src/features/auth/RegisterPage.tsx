@@ -92,6 +92,10 @@ export function RegisterPage() {
 
   const userType = watch('user_type')
 
+  // Submit 시 최상단 에러 필드 하나만 메시지 표시
+  const FIELD_ORDER = ['username', 'email', 'nick_name', 'password', 'password2', 'student_name', 'teacher_name', 'subject_id'] as const
+  const firstErrorField = FIELD_ORDER.find((field) => errors[field])
+
   useEffect(() => {
     setSelectedUserType(userType)
   }, [userType])
@@ -256,8 +260,8 @@ export function RegisterPage() {
               className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('username')}
             />
-            {errors.username && (
-              <p className="text-sm text-destructive">{errors.username.message}</p>
+            {firstErrorField === 'username' && (
+              <p className="text-sm text-destructive">{errors.username?.message}</p>
             )}
           </div>
 
@@ -272,8 +276,8 @@ export function RegisterPage() {
               className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('email')}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+            {firstErrorField === 'email' && (
+              <p className="text-sm text-destructive">{errors.email?.message}</p>
             )}
           </div>
 
@@ -288,8 +292,8 @@ export function RegisterPage() {
               className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('nick_name')}
             />
-            {errors.nick_name && (
-              <p className="text-sm text-destructive">{errors.nick_name.message}</p>
+            {firstErrorField === 'nick_name' && (
+              <p className="text-sm text-destructive">{errors.nick_name?.message}</p>
             )}
           </div>
 
@@ -304,8 +308,8 @@ export function RegisterPage() {
               className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('password')}
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+            {firstErrorField === 'password' && (
+              <p className="text-sm text-destructive">{errors.password?.message}</p>
             )}
           </div>
 
@@ -320,9 +324,9 @@ export function RegisterPage() {
               className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
               {...register('password2')}
             />
-            {errors.password2 && (
+            {firstErrorField === 'password2' && (
               <p className="text-sm text-destructive">
-                {errors.password2.message}
+                {errors.password2?.message}
               </p>
             )}
           </div>
@@ -341,8 +345,8 @@ export function RegisterPage() {
                 className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                 {...register('student_name')}
               />
-              {errors.student_name && (
-                <p className="text-sm text-destructive">{errors.student_name.message}</p>
+              {firstErrorField === 'student_name' && (
+                <p className="text-sm text-destructive">{errors.student_name?.message}</p>
               )}
             </div>
           )}
@@ -360,8 +364,8 @@ export function RegisterPage() {
                   className="h-12 rounded-[12px] border-2 px-5 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                   {...register('teacher_name')}
                 />
-                {errors.teacher_name && (
-                  <p className="text-sm text-destructive">{errors.teacher_name.message}</p>
+                {firstErrorField === 'teacher_name' && (
+                  <p className="text-sm text-destructive">{errors.teacher_name?.message}</p>
                 )}
               </div>
 
@@ -372,7 +376,9 @@ export function RegisterPage() {
                 <select
                   id="subject_id"
                   disabled={isSubjectsLoading || !subjects?.length}
-                  {...register('subject_id', { valueAsNumber: true })}
+                  {...register('subject_id', {
+                    setValueAs: (v: string) => (v === '' ? undefined : Number(v)),
+                  })}
                   className="h-12 w-full rounded-[12px] border-2 border-input bg-background px-5 text-base transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">
@@ -389,8 +395,8 @@ export function RegisterPage() {
                     등록된 과목이 없어 교사 회원가입이 불가능합니다. 관리자에게 문의하세요.
                   </p>
                 )}
-                {errors.subject_id && (
-                  <p className="text-sm text-destructive">{errors.subject_id.message}</p>
+                {firstErrorField === 'subject_id' && (
+                  <p className="text-sm text-destructive">{errors.subject_id?.message}</p>
                 )}
               </div>
             </>
@@ -427,8 +433,8 @@ export function RegisterPage() {
         transition={{ duration: DURATION.slow, ease: EASING.easeOut, delay: 0.3 }}
       >
         {/* Decorative circles */}
-        <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white opacity-10" />
-        <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white opacity-5" />
+        <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white/10" />
+        <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white/5" />
 
         {/* Illustration content */}
         <div className="relative z-10 text-center">

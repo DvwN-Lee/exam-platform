@@ -132,7 +132,7 @@ export function AnalyticsPage() {
               </div>
               <div className="relative">
                 <div className="text-sm font-medium text-muted-foreground">평균 점수</div>
-                <div className="mt-2 text-3xl font-bold text-green-600">
+                <div className="mt-2 text-3xl font-bold text-primary">
                   {data?.student_statistics?.average_score?.toFixed(1) || '0.0'}점
                 </div>
               </div>

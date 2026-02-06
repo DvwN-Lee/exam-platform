@@ -10,8 +10,6 @@ import { LoadingPage } from '@/components/ui/loading'
 interface ProfileData {
   nick_name: string
   email: string
-  mobile?: string
-  gender?: 'male' | 'female'
 }
 
 export function ProfileSettings() {
@@ -22,8 +20,6 @@ export function ProfileSettings() {
   const [formData, setFormData] = useState<ProfileData>({
     nick_name: user?.nick_name || '',
     email: user?.email || '',
-    mobile: '',
-    gender: 'female',
   })
 
   // 프로필 조회
@@ -43,8 +39,6 @@ export function ProfileSettings() {
       setFormData({
         nick_name: profileData.nick_name,
         email: profileData.email,
-        mobile: profileData.mobile || '',
-        gender: profileData.gender || 'female',
       })
     }
   }, [profileData])
@@ -67,6 +61,7 @@ export function ProfileSettings() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (updateMutation.isPending) return
     updateMutation.mutate(formData)
   }
 
@@ -101,7 +96,7 @@ export function ProfileSettings() {
               setFormData({ ...formData, nick_name: e.target.value })
             }
             disabled={!isEditing}
-            className="mt-1 w-full rounded-md border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
           />
         </div>
 
@@ -114,44 +109,38 @@ export function ProfileSettings() {
               setFormData({ ...formData, email: e.target.value })
             }
             disabled={!isEditing}
-            className="mt-1 w-full rounded-md border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium">전화번호</label>
-          <input
-            type="tel"
-            value={formData.mobile}
-            onChange={(e) =>
-              setFormData({ ...formData, mobile: e.target.value })
-            }
-            disabled={!isEditing}
-            placeholder="010-1234-5678"
-            className="mt-1 w-full rounded-md border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
-          />
-        </div>
+        {isEditing && (
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={updateMutation.isPending}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {updateMutation.isPending ? '저장 중...' : '저장'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(false)
+                setFormData({
+                  nick_name: profileData?.nick_name || '',
+                  email: profileData?.email || '',
+                })
+              }}
+              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            >
+              취소
+            </button>
+          </div>
+        )}
+        </form>
 
-        <div>
-          <label className="block text-sm font-medium">성별</label>
-          <select
-            value={formData.gender}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                gender: e.target.value as 'male' | 'female',
-              })
-            }
-            disabled={!isEditing}
-            className="mt-1 w-full rounded-md border px-3 py-2 disabled:bg-muted disabled:text-muted-foreground"
-          >
-            <option value="female">여성</option>
-            <option value="male">남성</option>
-          </select>
-        </div>
-
-        <div className="flex gap-2">
-          {!isEditing ? (
+        {!isEditing && (
+          <div className="mt-4">
             <button
               type="button"
               onClick={() => setIsEditing(true)}
@@ -159,34 +148,8 @@ export function ProfileSettings() {
             >
               수정하기
             </button>
-          ) : (
-            <>
-              <button
-                type="submit"
-                disabled={updateMutation.isPending}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {updateMutation.isPending ? '저장 중...' : '저장'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false)
-                  setFormData({
-                    nick_name: profileData?.nick_name || '',
-                    email: profileData?.email || '',
-                    mobile: profileData?.mobile || '',
-                    gender: profileData?.gender || 'female',
-                  })
-                }}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                취소
-              </button>
-            </>
-          )}
-        </div>
-        </form>
+          </div>
+        )}
       </FadeIn>
     </div>
   )

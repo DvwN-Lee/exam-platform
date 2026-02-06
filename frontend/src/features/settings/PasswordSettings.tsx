@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { ShieldCheck, KeyRound, RefreshCw, Ban } from 'lucide-react'
 import apiClient from '@/api/client'
 import { getErrorMessage } from '@/utils/error'
 import { FadeIn } from '@/components/animation'
@@ -124,13 +125,40 @@ export function PasswordSettings() {
       </FadeIn>
 
       <FadeIn type="slideUp" delay={0.2}>
-        <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
-          <h3 className="font-medium text-blue-900 dark:text-blue-100">보안 팁</h3>
-          <ul className="mt-2 space-y-1 text-sm text-blue-700 dark:text-blue-300">
-            <li>• 다른 사이트와 동일한 비밀번호를 사용하지 마세요</li>
-            <li>• 개인정보(생일, 전화번호 등)를 비밀번호로 사용하지 마세요</li>
-            <li>• 주기적으로 비밀번호를 변경하세요 (3개월마다 권장)</li>
-          </ul>
+        <div className="rounded-lg border bg-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">비밀번호 보안 가이드</h3>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">고유한 비밀번호 사용</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  다른 사이트와 동일한 비밀번호를 사용하지 마세요
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <Ban className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">개인정보 사용 금지</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  생일, 전화번호 등 추측 가능한 정보를 피하세요
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 rounded-md border p-3">
+              <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">주기적 변경</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  3개월마다 비밀번호를 변경하는 것을 권장합니다
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </FadeIn>
     </div>

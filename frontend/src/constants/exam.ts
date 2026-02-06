@@ -19,9 +19,3 @@ export const URGENT_TIME_THRESHOLD_SECONDS = 300
 
 /** 합격 점수 기준 (%) */
 export const PASS_SCORE_THRESHOLD = 60
-
-/** 기본 시험 시작 시간 Offset (ms) - 현재로부터 1시간 후 */
-export const DEFAULT_EXAM_START_OFFSET_MS = 3600000
-
-/** 기본 시험 종료 시간 Offset (ms) - 현재로부터 2시간 후 */
-export const DEFAULT_EXAM_END_OFFSET_MS = 7200000

@@ -255,7 +255,7 @@ export function ExamTakePage() {
                       index === currentQuestionIndex
                         ? 'border-primary bg-primary text-primary-foreground'
                         : answers.has(q.id)
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                         : 'border-border hover:bg-accent'
                     }`}
                   >
@@ -269,7 +269,7 @@ export function ExamTakePage() {
                   <span>현재 문제</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded border-2 border-green-500 bg-green-50 dark:bg-green-900/20"></div>
+                  <div className="h-4 w-4 rounded border-2 border-green-500 bg-green-50 dark:bg-green-900/30"></div>
                   <span>답변 완료</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export function ExamTakePage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span>답변 완료</span>
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-green-600 dark:text-green-400">
                   {answers.size}개
                 </span>
               </div>

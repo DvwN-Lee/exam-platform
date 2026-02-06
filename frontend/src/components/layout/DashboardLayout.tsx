@@ -13,7 +13,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isCollapsed } = useSidebarStore()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-slate-700">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
       <MobileHeader />
 

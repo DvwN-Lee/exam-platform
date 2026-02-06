@@ -241,8 +241,8 @@ export function LoginPage() {
           transition={{ duration: DURATION.slow, ease: EASING.easeOut, delay: 0.3 }}
         >
           {/* Decorative circles */}
-          <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white opacity-10" />
-          <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white opacity-5" />
+          <div className="absolute -right-24 -top-24 size-72 rounded-full bg-white/10" />
+          <div className="absolute -bottom-20 -left-20 size-60 rounded-full bg-white/5" />
 
           {/* Illustration content */}
           <div className="relative z-10 text-center">

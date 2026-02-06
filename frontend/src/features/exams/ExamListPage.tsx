@@ -135,14 +135,14 @@ export function ExamListPage() {
 
                           {status === 'ongoing' && (
                             <div
-                              className={`font-medium ${timeInfo.isUrgent ? 'text-red-600' : 'text-green-600'}`}
+                              className={`font-medium ${timeInfo.isUrgent ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}
                             >
                               {timeInfo.text}
                             </div>
                           )}
 
                           {status === 'upcoming' && (
-                            <div className="font-medium text-blue-600">
+                            <div className="font-medium text-blue-600 dark:text-blue-400">
                               {formatKoreanDate(exam.start_time)} 시작 예정
                             </div>
                           )}

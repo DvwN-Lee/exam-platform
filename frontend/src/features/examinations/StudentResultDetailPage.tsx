@@ -213,7 +213,7 @@ export function StudentResultDetailPage() {
                       {question.correct_answer && (
                         <div className="flex gap-2">
                           <span className="text-muted-foreground">정답:</span>
-                          <span className="font-medium text-green-600">
+                          <span className="font-medium text-green-600 dark:text-green-400">
                             {question.correct_answer}
                           </span>
                         </div>

@@ -5,11 +5,11 @@ interface StatisticsCardsProps {
 }
 
 const CARD_COLORS = {
-  blue: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
-  green: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300',
-  red: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300',
-  purple: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
-  orange: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300',
+  blue: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+  red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+  purple: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  orange: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300',
 } as const
 
 export function StatisticsCards({ statistics }: StatisticsCardsProps) {

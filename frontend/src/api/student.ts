@@ -3,7 +3,7 @@
  */
 
 import apiClient from './client'
-import type { Student, StudentListResponse, StudentListParams } from '../types/student'
+import type { StudentDetail, StudentListResponse, StudentListParams } from '../types/student'
 
 /**
  * 학생 목록 조회 (교사 전용)
@@ -16,7 +16,7 @@ export const getStudents = async (params?: StudentListParams): Promise<StudentLi
 /**
  * 학생 상세 조회 (교사 전용)
  */
-export const getStudent = async (id: number): Promise<Student> => {
-  const response = await apiClient.get<Student>(`/students/${id}/`)
+export const getStudent = async (id: number): Promise<StudentDetail> => {
+  const response = await apiClient.get<StudentDetail>(`/students/${id}/`)
   return response.data
 }

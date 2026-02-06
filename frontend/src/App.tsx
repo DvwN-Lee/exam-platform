@@ -18,6 +18,7 @@ import { ExaminationDetailPage } from './features/examinations/ExaminationDetail
 import { ExamResultsListPage as TeacherExamResultsListPage } from './features/examinations/ExamResultsListPage'
 import { StudentResultDetailPage } from './features/examinations/StudentResultDetailPage'
 import { StudentListPage } from './features/students/StudentListPage'
+import { StudentDetailPage } from './features/students/StudentDetailPage'
 import { AnalyticsPage } from './features/analytics/AnalyticsPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 import { ExamListPage } from './features/exams/ExamListPage'
@@ -256,6 +257,18 @@ const studentsRoute = createRoute({
   component: StudentListPage,
 })
 
+const studentDetailRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/students/$id',
+  beforeLoad: () => {
+    const user = useAuthStore.getState().user
+    if (user?.user_type !== 'teacher') {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
+  component: StudentDetailPage,
+})
+
 const analyticsRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
   path: '/analytics',
@@ -347,6 +360,7 @@ const routeTree = rootRoute.addChildren([
     examinationResultsRoute,
     examinationStudentResultRoute,
     studentsRoute,
+    studentDetailRoute,
     analyticsRoute,
     // Student routes
     examsRoute,

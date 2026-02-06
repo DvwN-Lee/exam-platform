@@ -5,7 +5,7 @@ User API views.
 from django.conf import settings
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, extend_schema_view
-from rest_framework import generics, status, viewsets
+from rest_framework import filters, generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -13,6 +13,7 @@ from user.api.serializers import (
     CustomTokenObtainPairSerializer,
     PasswordChangeSerializer,
     StudentDashboardSerializer,
+    StudentDetailSerializer,
     StudentListSerializer,
     SubjectSerializer,
     TeacherDashboardSerializer,
@@ -252,7 +253,11 @@ class TeacherDashboardView(generics.RetrieveAPIView):
 
 @extend_schema_view(
     list=extend_schema(tags=["students"], summary="학생 목록 조회"),
-    retrieve=extend_schema(tags=["students"], summary="학생 상세 조회"),
+    retrieve=extend_schema(
+        tags=["students"],
+        summary="학생 상세 조회",
+        responses={200: StudentDetailSerializer},
+    ),
 )
 class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -263,16 +268,20 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
 
     serializer_class = StudentListSerializer
     permission_classes = [IsAuthenticated, IsTeacher]
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ["date_joined", "studentsinfo__student_name"]
+    ordering = ["-date_joined"]
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return StudentDetailSerializer
+        return StudentListSerializer
 
     def get_queryset(self):
         """
         학생 목록 조회 (검색/필터 지원).
         """
-        queryset = (
-            UserProfile.objects.filter(user_type="student")
-            .select_related("studentsinfo")
-            .order_by("-date_joined")
-        )
+        queryset = UserProfile.objects.filter(user_type="student").select_related("studentsinfo")
 
         # 검색 (이름, 학번, 이메일)
         search = self.request.query_params.get("search", None)
@@ -295,3 +304,71 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(studentsinfo__student_class__icontains=class_name)
 
         return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        """
+        학생 상세 조회 (통계 + 시험 이력 포함).
+        """
+        instance = self.get_object()
+
+        # 기본 학생 정보 직렬화 (StudentListSerializer로 모델 필드만 추출)
+        data = dict(StudentListSerializer(instance).data)
+
+        # StudentDashboardService를 재사용하여 통계/시험 이력 조회
+        try:
+            student_info = StudentsInfo.objects.get(user=instance)
+        except StudentsInfo.DoesNotExist:
+            data["statistics"] = {
+                "total_exams_taken": 0,
+                "average_score": 0.0,
+                "pass_rate": 0.0,
+            }
+            data["exam_history"] = []
+            return Response(data)
+
+        service = StudentDashboardService(student_info)
+        submissions_qs = service._get_submissions()
+        submissions_list = list(submissions_qs)
+
+        # 등록된 시험 ID 목록
+        from examination.models import ExamStudentsInfo
+
+        enrolled_exam_ids = list(
+            ExamStudentsInfo.objects.filter(student=student_info).values_list(
+                "exam_id", flat=True
+            )
+        )
+
+        # 통계 계산
+        stats = service._get_statistics(submissions_list, enrolled_exam_ids)
+        data["statistics"] = {
+            "total_exams_taken": stats["total_exams_taken"],
+            "average_score": stats["average_score"],
+            "pass_rate": stats["pass_rate"],
+        }
+
+        # 시험 이력 구성 (최근 20건)
+        recent_submissions = sorted(
+            submissions_list, key=lambda x: x.submit_time or x.create_time, reverse=True
+        )[:20]
+
+        exam_history = []
+        for sub in recent_submissions:
+            exam_history.append(
+                {
+                    "exam_id": sub.exam.id if sub.exam else None,
+                    "exam_name": sub.exam.name if sub.exam else "",
+                    "subject_name": (
+                        sub.exam.subject.subject_name
+                        if sub.exam and sub.exam.subject
+                        else None
+                    ),
+                    "score": sub.test_score,
+                    "total_score": sub.test_paper.total_score if sub.test_paper else 0,
+                    "submitted_at": sub.submit_time.isoformat() if sub.submit_time else None,
+                }
+            )
+
+        data["exam_history"] = exam_history
+
+        return Response(data)

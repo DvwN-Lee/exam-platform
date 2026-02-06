@@ -349,3 +349,16 @@ class StudentListSerializer(serializers.ModelSerializer):
             "date_joined",
         ]
         read_only_fields = fields
+
+
+class StudentDetailSerializer(StudentListSerializer):
+    """
+    Student detail serializer for teachers.
+    교사가 개별 학생의 통계 및 시험 이력을 조회할 때 사용하는 serializer.
+    """
+
+    statistics = serializers.DictField(read_only=True)
+    exam_history = serializers.ListField(child=serializers.DictField(), read_only=True)
+
+    class Meta(StudentListSerializer.Meta):
+        fields = StudentListSerializer.Meta.fields + ["statistics", "exam_history"]
