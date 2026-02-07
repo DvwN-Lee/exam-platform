@@ -59,6 +59,11 @@ test.describe('Form Validation', () => {
       // 학생 역할 선택
       await page.click('button:has-text("학생")')
 
+      // password 에러를 firstErrorField로 만들기 위해 선행 필드 채우기
+      await page.fill('#username', 'validuser123')
+      await page.fill('#email', 'valid@example.com')
+      await page.fill('#nick_name', '테스트유저')
+
       // 짧은 Password 입력
       await page.fill('#password', '1234')
       await page.click('button:has-text("회원가입")')
@@ -76,6 +81,11 @@ test.describe('Form Validation', () => {
 
       // 학생 역할 선택
       await page.click('button:has-text("학생")')
+
+      // password2 에러를 firstErrorField로 만들기 위해 선행 필드 채우기
+      await page.fill('#username', 'validuser123')
+      await page.fill('#email', 'valid@example.com')
+      await page.fill('#nick_name', '테스트유저')
 
       // Password 불일치 입력
       await page.fill('#password', 'test12345678')

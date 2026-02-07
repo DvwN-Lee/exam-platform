@@ -171,22 +171,7 @@ test.describe('Teacher Examination Management', () => {
 
       await page.selectOption('#testpaper_id', { index: 1 }) // 첫 번째 실제 시험지
 
-      // 시작/종료 시간 설정 (현재 시간 기준)
-      const now = new Date()
-      const startTime = new Date(now.getTime() + 10 * 60000) // 10분 후
-      const endTime = new Date(now.getTime() + 70 * 60000) // 70분 후 (1시간 10분)
-
-      const formatDateTimeLocal = (date: Date) => {
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const hours = String(date.getHours()).padStart(2, '0')
-        const minutes = String(date.getMinutes()).padStart(2, '0')
-        return `${year}-${month}-${day}T${hours}:${minutes}`
-      }
-
-      await page.fill('#start_time', formatDateTimeLocal(startTime))
-      await page.fill('#end_time', formatDateTimeLocal(endTime))
+      // DateTimePicker 기본값 사용 (start: now+1h, end: now+2h)
 
       // 공개 시험으로 설정
       await page.check('#is_public')
