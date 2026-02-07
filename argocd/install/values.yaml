@@ -12,7 +12,7 @@ global:
 # Server Configuration
 # -----------------------------------------------------------------------------
 server:
-  replicas: 2
+  replicas: 1
 
   ingress:
     enabled: true
@@ -40,7 +40,7 @@ server:
 # Repository Server
 # -----------------------------------------------------------------------------
 repoServer:
-  replicas: 2
+  replicas: 1
 
   # Secret 변경 시 Pod 재시작을 위한 annotation
   podAnnotations:
@@ -77,10 +77,10 @@ controller:
 # Redis HA
 # -----------------------------------------------------------------------------
 redis-ha:
-  enabled: true
+  enabled: false
 
 redis:
-  enabled: false
+  enabled: true
 
 # -----------------------------------------------------------------------------
 # Configs

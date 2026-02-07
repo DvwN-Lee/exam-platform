@@ -21,7 +21,7 @@ services_cidr       = "10.201.0.0/20"
 cluster_name       = "exam-cluster"
 node_machine_type  = "e2-standard-2"
 initial_node_count = 3
-min_node_count     = 3
+min_node_count     = 1
 max_node_count     = 10
 
 master_authorized_cidrs = [
