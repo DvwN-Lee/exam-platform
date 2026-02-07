@@ -28,7 +28,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
   test.describe('1. 모바일 반응형', () => {
     test('모바일 viewport에서 sidebar가 정상 작동', async ({ page }) => {
       await test.step('Step 1: Login', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)
@@ -47,7 +46,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
   test.describe('2. Overlay 동작', () => {
     test('Sidebar 열 때 overlay 표시되고 클릭 시 닫힘', async ({ page }) => {
       await test.step('Step 1: Login', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)
@@ -69,7 +67,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
   test.describe('3. 드롭다운 기능', () => {
     test('모바일에서 프로필 버튼 탭 시 드롭다운 표시', async ({ page }) => {
       await test.step('Step 1: Login', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)
@@ -87,7 +84,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
 
     test('드롭다운 너비 240px 확인', async ({ page }) => {
       await test.step('Step 1: Login and open dropdown', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)
@@ -105,7 +101,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
 
     test('테마 전환 정상 작동', async ({ page }) => {
       await test.step('Step 1: Login', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)
@@ -124,7 +119,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
   test.describe('4. 터치 상호작용', () => {
     test('모든 메뉴 항목 터치 가능', async ({ page }) => {
       await test.step('Step 1: Login and open dropdown', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)
@@ -153,7 +147,6 @@ test.describe('Sidebar UI Improvements - Mobile', () => {
   test.describe('5. 포지셔닝', () => {
     test('드롭다운이 viewport 밖으로 넘어가지 않음', async ({ page }) => {
       await test.step('Step 1: Login and open dropdown', async () => {
-        await page.click(selectors.auth.login.teacherRoleButton)
         await page.fill(selectors.auth.login.usernameInput, testTeacher!.user.username)
         await page.fill(selectors.auth.login.passwordInput, testTeacher!.user.password)
         await page.click(selectors.auth.login.submitButton)

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { loginAsStudent, loginAsTeacher } from '../../helpers/auth.helper'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 
 /**
@@ -12,11 +13,10 @@ test.describe('RBAC Tests', () => {
 
   test('Student는 Teacher 전용 페이지에 접근할 수 없어야 함', async ({ page }) => {
     // Student로 로그인
-    await page.goto('/login')
-    await page.fill('input[id="username"]', studentUsername)
-    await page.fill('input[id="password"]', studentPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsStudent(page, {
+      username: studentUsername,
+      password: studentPassword,
+    })
 
     // Question 관리 페이지 접근 시도
     await page.goto('/questions')
@@ -35,12 +35,10 @@ test.describe('RBAC Tests', () => {
 
   test('Teacher는 Student Dashboard를 볼 수 있어야 함', async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // Dashboard 접근
     await page.goto('/dashboard')

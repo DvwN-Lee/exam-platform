@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { loginAsTeacher } from '../../helpers/auth.helper'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 
 /**
@@ -9,12 +10,10 @@ test.describe('Error Cases', () => {
   const teacherPassword = process.env.E2E_TEACHER_PASSWORD || 'test12345678'
 
   test('존재하지 않는 페이지 접근 시 404 처리', async ({ page }) => {
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // 존재하지 않는 페이지로 이동
     const response = await page.goto('/nonexistent-page-12345')
@@ -50,12 +49,10 @@ test.describe('Error Cases', () => {
 
   test('빈 필드로 폼 제출 시 유효성 검사', async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // Question 생성 페이지로 이동
     await page.goto('/questions/new')
@@ -73,12 +70,10 @@ test.describe('Error Cases', () => {
 
   test('잘못된 형식의 입력값 처리', async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // Question 생성 페이지로 이동
     await page.goto('/questions/new')

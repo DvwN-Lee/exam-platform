@@ -34,34 +34,6 @@ test.describe('Login Page', () => {
     await expect(page.locator(selectors.auth.login.passwordInput)).toBeVisible()
     await expect(page.locator(selectors.auth.login.submitButton)).toBeVisible()
     await expect(page.locator(selectors.auth.login.registerLink)).toBeVisible()
-
-    // 역할 선택 버튼 확인
-    await expect(page.locator(selectors.auth.login.studentRoleButton)).toBeVisible()
-    await expect(page.locator(selectors.auth.login.teacherRoleButton)).toBeVisible()
-  })
-
-  test('Student 역할이 기본 선택되어야 함', async ({ page }) => {
-    const studentButton = page.locator(selectors.auth.login.studentRoleButton)
-
-    // 기본 선택 상태 확인 (border-primary 클래스가 있는지 확인)
-    await expect(studentButton).toHaveClass(/border-primary/)
-  })
-
-  test('역할 선택 버튼이 동작해야 함', async ({ page }) => {
-    const studentButton = page.locator(selectors.auth.login.studentRoleButton)
-    const teacherButton = page.locator(selectors.auth.login.teacherRoleButton)
-
-    // Teacher 버튼 클릭
-    await teacherButton.click()
-
-    // Teacher 버튼이 선택되었는지 확인
-    await expect(teacherButton).toHaveClass(/border-primary/)
-
-    // Student 버튼 다시 클릭
-    await studentButton.click()
-
-    // Student 버튼이 선택되었는지 확인
-    await expect(studentButton).toHaveClass(/border-primary/)
   })
 
   test('유효한 Student 자격증명으로 로그인 성공해야 함 @smoke', async ({ page }) => {
@@ -79,9 +51,6 @@ test.describe('Login Page', () => {
   })
 
   test('유효한 Teacher 자격증명으로 로그인 성공해야 함', async ({ page }) => {
-    // Teacher 역할 선택
-    await page.click(selectors.auth.login.teacherRoleButton)
-
     // 동적으로 생성된 Teacher 계정으로 로그인
     await loginAsTeacher(page, {
       username: testTeacher!.user.username,

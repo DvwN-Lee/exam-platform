@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { loginAsTeacher } from '../../helpers/auth.helper'
 import { apiGetSubjects } from '../../helpers/api.helper'
 import { waitForLoadingComplete } from '../../helpers/assertions.helper'
 
@@ -22,15 +23,10 @@ test.describe('Teacher Question Management', () => {
 
   test('Question 목록 페이지가 렌더링되어야 함', async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/')
-
-    // 기존 계정으로 로그인 (setup에서 생성한 계정이 아닌 기존 테스트 계정 사용)
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // Question 관리 페이지로 이동
     await page.goto('/questions')
@@ -47,12 +43,10 @@ test.describe('Teacher Question Management', () => {
 
   test('Question 생성 페이지가 렌더링되어야 함', async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // Question 생성 페이지로 이동
     await page.goto('/questions/new')
@@ -72,12 +66,10 @@ test.describe('Teacher Question Management', () => {
 
   test('검색 및 필터링 기능이 동작해야 함', async ({ page }) => {
     // Teacher로 로그인
-    await page.goto('/login')
-    await page.click('button:has-text("교사")')
-    await page.fill('input[id="username"]', teacherUsername)
-    await page.fill('input[id="password"]', teacherPassword)
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard')
+    await loginAsTeacher(page, {
+      username: teacherUsername,
+      password: teacherPassword,
+    })
 
     // Question 목록 페이지로 이동
     await page.goto('/questions')

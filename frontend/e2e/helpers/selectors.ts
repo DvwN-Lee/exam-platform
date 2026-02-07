@@ -11,8 +11,6 @@ export const selectors = {
       submitButton: 'button[type="submit"]',
       registerLink: 'button:has-text("회원가입")',
       rememberCheckbox: 'input[id="remember"]',
-      studentRoleButton: 'button:has-text("학생")',
-      teacherRoleButton: 'button:has-text("교사")',
     },
     register: {
       usernameInput: 'input[id="username"]',
