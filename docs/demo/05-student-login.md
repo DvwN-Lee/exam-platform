@@ -12,24 +12,20 @@
 
 우측 상단의 프로필 메뉴에서 **로그아웃**을 클릭한다.
 
-![로그아웃](./screenshots/14-logout.png)
-
 ### 2. 로그인 페이지 접속
 
 **URL:** `/login`
 
-### 3. 역할 선택
+![로그인 페이지](./screenshots/05-student-login.png)
 
-- **역할 선택:** 학생 (Student)
-
-### 4. 계정 정보 입력
+### 3. 계정 정보 입력
 
 | 필드 | 값 |
 |------|-----|
 | Username | demo_student1 |
 | Password | demo1234! |
 
-### 5. 로그인 버튼 클릭
+### 4. 로그인 버튼 클릭
 
 로그인 버튼을 클릭하여 인증을 완료한다.
 
@@ -42,7 +38,7 @@
   - 시험 목록
   - 내 결과
 
-![학생 Dashboard](./screenshots/15-student-dashboard.png)
+![학생 Dashboard](./screenshots/05-student-dashboard.png)
 
 ---
 

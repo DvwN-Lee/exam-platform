@@ -18,7 +18,6 @@
 
 | 필드 | 값 |
 |------|-----|
-| 역할 | 교사 (Teacher) |
 | Username | demo_teacher |
 | Password | demo1234! |
 
@@ -32,7 +31,7 @@
 
 "2026년 1학기 수학 시험"의 **결과 보기** 버튼을 클릭한다.
 
-![시험 결과 목록](./screenshots/24-exam-results.png)
+![시험 목록](./screenshots/08-teacher-exam-list.png)
 
 ### 5. 학생별 결과 확인
 
@@ -42,7 +41,7 @@
 |------|------|--------|-----------|
 | demo_student1 | 30/30 | 100% | (제출 시간) |
 
-![학생별 결과](./screenshots/25-student-results.png)
+![학생별 결과](./screenshots/08-teacher-exam-results.png)
 
 ### 6. 상세 결과 확인
 
@@ -56,7 +55,7 @@
 | 부분집합 개수 | 32 | 32 | 정답 | 10점 | 10점 |
 | 등차수열 제10항 | 29 | 29 | 정답 | 10점 | 10점 |
 
-![상세 결과](./screenshots/26-result-detail-teacher.png)
+![교사 Dashboard](./screenshots/08-teacher-dashboard-after.png)
 
 ---
 
@@ -70,7 +69,7 @@
 
 ## 데모 완료
 
-축하합니다! Exam Platform의 전체 데모를 성공적으로 완료했습니다.
+전체 데모 시나리오를 완료했다.
 
 ### 데모에서 확인한 기능
 

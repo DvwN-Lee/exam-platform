@@ -62,7 +62,7 @@ kubectl exec -it deployment/exam-prod-exam-platform-backend \
 
 ### 2. 접속 환경
 
-- **URL:** https://exam.idongju.com
+- **URL:** https://exam-platform.me
 - **지원 브라우저:** Chrome, Firefox, Safari (최신 버전)
 
 ---

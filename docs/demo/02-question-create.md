@@ -14,7 +14,7 @@
 
 좌측 메뉴에서 "문제 관리"를 클릭하거나 직접 URL로 접속한다.
 
-![문제 관리 페이지](./screenshots/03-question-list.png)
+![문제 관리 페이지](./screenshots/02-question-list.png)
 
 ### 2. 문제 1 생성: 객관식 (인수분해)
 
@@ -36,7 +36,7 @@
 
 **정답:** 1번 (첫 번째 보기)
 
-![문제 1 생성](./screenshots/04-question-create-1.png)
+![문제 1 생성](./screenshots/02-question-create-1.png)
 
 ### 3. 문제 2 생성: 객관식 (집합)
 
@@ -58,7 +58,7 @@
 
 **정답:** 3번 (세 번째 보기)
 
-![문제 2 생성](./screenshots/05-question-create-2.png)
+![문제 2 생성](./screenshots/02-question-create-2.png)
 
 ### 4. 문제 3 생성: 빈칸채우기 (등차수열)
 
@@ -74,7 +74,7 @@
 
 **정답:** 29
 
-![문제 3 생성](./screenshots/06-question-create-3.png)
+![문제 3 생성](./screenshots/02-question-create-3.png)
 
 ---
 
@@ -82,8 +82,6 @@
 
 - 문제 목록에 3개의 문제가 표시됨
 - 각 문제의 과목, 유형, 난이도, 배점 확인 가능
-
-![문제 목록 완료](./screenshots/07-question-list-complete.png)
 
 ---
 

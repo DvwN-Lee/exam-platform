@@ -14,8 +14,6 @@
 
 좌측 메뉴에서 "시험 관리"를 클릭하거나 직접 URL로 접속한다.
 
-![시험 관리 페이지](./screenshots/11-exam-list.png)
-
 ### 2. 새 시험 생성
 
 **새 시험** 버튼을 클릭한다.
@@ -34,7 +32,7 @@
 - 시작 시간을 현재보다 이전으로 설정하면 즉시 응시 가능
 - 종료 시간을 충분히 여유있게 설정
 
-![시험 생성 폼](./screenshots/12-exam-create-form.png)
+![시험 생성 폼](./screenshots/04-exam-create.png)
 
 ### 4. 저장
 
@@ -48,8 +46,6 @@
 - 시험지: 수학 기초 테스트
 - 상태: 진행 중 (In Progress)
 - 공개 여부: 공개
-
-![시험 생성 완료](./screenshots/13-exam-complete.png)
 
 ---
 

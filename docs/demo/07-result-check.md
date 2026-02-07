@@ -14,7 +14,7 @@
 
 **URL:** `/exams/:id/result`
 
-![결과 페이지](./screenshots/22-result-page.png)
+![결과 페이지](./screenshots/07-exam-result.png)
 
 ### 2. 점수 확인
 
@@ -32,8 +32,6 @@
 | 문제 1 (인수분해) | (x+3)(x+4) | (x+3)(x+4) | 정답 | 10점 |
 | 문제 2 (집합) | 32 | 32 | 정답 | 10점 |
 | 문제 3 (등차수열) | 29 | 29 | 정답 | 10점 |
-
-![문제별 결과](./screenshots/23-result-detail.png)
 
 ---
 

@@ -12,20 +12,16 @@
 
 **URL:** `/login`
 
-![로그인 페이지](./screenshots/01-login-page.png)
+![로그인 페이지](./screenshots/01-teacher-login.png)
 
-### 2. 역할 선택
-
-- **역할 선택:** 교사 (Teacher)
-
-### 3. 계정 정보 입력
+### 2. 계정 정보 입력
 
 | 필드 | 값 |
 |------|-----|
 | Username | demo_teacher |
 | Password | demo1234! |
 
-### 4. 로그인 버튼 클릭
+### 3. 로그인 버튼 클릭
 
 로그인 버튼을 클릭하여 인증을 완료한다.
 
@@ -40,7 +36,7 @@
   - 시험 관리
   - 결과 확인
 
-![교사 Dashboard](./screenshots/02-teacher-dashboard.png)
+![교사 Dashboard](./screenshots/01-teacher-dashboard.png)
 
 ---
 
