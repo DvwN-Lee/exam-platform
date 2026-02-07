@@ -442,37 +442,7 @@ Repository 인증 정보는 Terraform `kubernetes_secret`으로 관리하며, He
 
 ---
 
-## 13. Infrastructure Security Review 결과 요약
-
-2026-02 기준 전체 인프라 코드(`terraform/`, `argocd/`, `charts/`, `.github/workflows/`)에 대한 Security Review를 수행하였다.
-
-### 검토 항목
-
-- Hardcoded Secrets/Credentials
-- IAM/RBAC 과잉 권한
-- Network 보안 (Private Cluster, NetworkPolicy, Metadata Server 차단)
-- 암호화 설정 (TLS/SSL, 저장 시 암호화)
-- CI/CD Pipeline Injection
-- Terraform State 노출
-
-### 결과
-
-**Actionable Vulnerability: 0건**
-
-검토된 주요 후보와 기각 사유:
-
-| 후보 | 기각 사유 |
-|------|-----------|
-| Admin IP 하드코딩 (`terraform.tfvars`) | IP 주소는 Credential이 아닌 Network 설정값. GKE는 TLS 인증으로 보호됨 |
-| Bootstrap `terraform.tfstate` commit | GCS Bucket 메타데이터만 포함. Secret/Password 미포함 |
-| NetworkPolicy Metadata Server IPv6 우회 | GKE Metadata Server는 IPv4 전용. DNS Rebinding도 L3 NetworkPolicy에서 차단됨 |
-| Node `cloud-platform` OAuth Scope | Workload Identity 활성화 상태에서 GCP 권장 설정. Pod는 Node Credential 미사용 |
-| ArgoCD bcrypt cost=10 | 업계 표준 기본값. 16자 Random Password + bcrypt 조합은 brute-force 불가 |
-| DB Password in Terraform State | GCS Remote Backend + UBLA. Secret Manager 이중 관리 |
-| Redis TLS 인증서 검증 미수행 | GCP Memorystore `SERVER_AUTHENTICATION` 모드 권장 설정. Private VPC 내부 통신 |
-| GCP Project ID 하드코딩 | Project ID는 Public Identifier. 운영 편의 문제이며 보안 취약점 아님 |
-
-### 확인된 인프라 보안 제어
+## 13. Infrastructure 보안 제어 요약
 
 | 영역 | 구현 현황 |
 |------|-----------|
