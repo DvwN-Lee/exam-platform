@@ -10,7 +10,6 @@ import {
   isDarkModeActive,
   openUserProfileDropdown,
   selectThemeFromDropdown,
-  getIconStrokeWidth,
 } from '../../helpers/theme.helper'
 
 let testTeacher: Awaited<ReturnType<typeof createAndLoginTeacher>> | null = null
