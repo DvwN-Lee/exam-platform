@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import filters, generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from user.api.serializers import (
     CustomTokenObtainPairSerializer,
@@ -39,6 +40,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     - Access token은 응답 body에 포함 (기존 방식 유지)
     """
 
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
     serializer_class = CustomTokenObtainPairSerializer
 
     def finalize_response(self, request, response, *args, **kwargs):
@@ -67,6 +70,9 @@ class CustomTokenRefreshView(TokenRefreshView):
     HttpOnly Cookie에서 refresh token을 읽어 새로운 access token을 발급합니다.
     하위 호환성: request body에 refresh token이 있으면 우선 사용
     """
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
 
     def post(self, request, *args, **kwargs):
         """
@@ -104,6 +110,8 @@ class UserRegistrationView(generics.CreateAPIView):
     user_type에 따라 학생 또는 교사로 회원가입합니다.
     """
 
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
     queryset = UserProfile.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]

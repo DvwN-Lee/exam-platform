@@ -497,7 +497,7 @@ class ManualGradeSerializer(serializers.Serializer):
 
     question_id = serializers.IntegerField()
     score = serializers.IntegerField(min_value=0)
-    comment = serializers.CharField(required=False, allow_blank=True)
+    comment = XSSSanitizedCharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
         """배점 검증"""

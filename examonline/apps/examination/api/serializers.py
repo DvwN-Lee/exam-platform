@@ -514,6 +514,26 @@ class SaveDraftSerializer(serializers.Serializer):
         """답안 형식 검증"""
         if not isinstance(value, dict):
             raise serializers.ValidationError("answers는 객체(object) 형식이어야 합니다.")
+
+        ALLOWED_KEYS = {"answer", "selected_options", "is_correct", "score"}
+
+        for question_id, answer_data in value.items():
+            if not str(question_id).isdigit():
+                raise serializers.ValidationError(
+                    f"답안 Key는 문제 ID(숫자)여야 합니다: {question_id}"
+                )
+
+            if not isinstance(answer_data, dict):
+                raise serializers.ValidationError(
+                    f"문제 {question_id}의 답안은 객체 형식이어야 합니다."
+                )
+
+            unexpected_keys = set(answer_data.keys()) - ALLOWED_KEYS
+            if unexpected_keys:
+                raise serializers.ValidationError(
+                    f"문제 {question_id}에 허용되지 않는 필드가 있습니다: {unexpected_keys}"
+                )
+
         return value
 
 
