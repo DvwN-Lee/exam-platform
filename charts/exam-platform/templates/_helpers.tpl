@@ -143,7 +143,7 @@ Backend image
 {{- define "exam-platform.backend.image" -}}
 {{- $registry := .Values.global.imageRegistry | default "" -}}
 {{- $repository := .Values.backend.image.repository -}}
-{{- $tag := .Values.backend.image.tag | default .Chart.AppVersion -}}
+{{- $tag := .Values.backend.image.tag | default .Chart.AppVersion | toString -}}
 {{- if $registry }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
 {{- else }}
@@ -157,7 +157,7 @@ Frontend image
 {{- define "exam-platform.frontend.image" -}}
 {{- $registry := .Values.global.imageRegistry | default "" -}}
 {{- $repository := .Values.frontend.image.repository -}}
-{{- $tag := .Values.frontend.image.tag | default .Chart.AppVersion -}}
+{{- $tag := .Values.frontend.image.tag | default .Chart.AppVersion | toString -}}
 {{- if $registry }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
 {{- else }}
