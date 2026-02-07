@@ -259,55 +259,21 @@ Production에서 Stack trace, Internal 경로 등 민감 정보가 Client에 노
 
 ---
 
-## 11. Security Review 결과 요약
-
-2025-02 기준 Backend 전체 Security Review를 수행하였다.
-
-### 검토 항목
-
-- SQL Injection, Command Injection, Path Traversal
-- Authentication Bypass, Privilege Escalation
-- Hardcoded Secrets, 취약 암호화
-- Deserialization, XSS, eval/exec
-- Sensitive Data Logging, API Data Leakage
-
-### 결과
-
-**Actionable Vulnerability: 0건**
-
-검토된 주요 후보와 기각 사유:
-
-| 후보 | 기각 사유 |
-|------|-----------|
-| `SaveDraftSerializer` 답안 JSON XSS | React JSX 자동 Escape. 추가로 JSON Schema 검증 구현 완료 |
-| `ManualGradeSerializer` comment XSS | `XSSSanitizedCharField` 적용 완료. React 자동 Escape와 이중 방어 |
-| Manual Grade score 조작 | `validate()` 메서드에서 question max score 검증. Race condition은 이론적 수준 |
-| JSON Field Schema 미검증 | DOS/Resource Exhaustion 범주. Django `DATA_UPLOAD_MAX_MEMORY_SIZE` 2.5MB 제한 |
-
-### 확인된 보안 패턴
+## 11. Backend 보안 제어 요약
 
 | 영역 | 구현 현황 |
 |------|-----------|
 | Authentication | JWT + HttpOnly Refresh Token Cookie |
-| XSS Prevention | `XSSSanitizedCharField` + React 자동 Escape |
+| Rate Limiting | DRF Throttling 전역 적용 + Login/Register `auth` Scope (10/min) |
+| XSS Prevention | `XSSSanitizedCharField` 전 Serializer 적용 + React 자동 Escape |
+| Input Validation | JSON Schema 검증 (`SaveDraftSerializer`) + File Upload 3단계 검증 |
 | CSRF Protection | Django Middleware + SameSite Cookie |
 | SQL Injection | Django ORM 전용 (raw query 0건) |
 | Password | PBKDF2 Hashing + 4종 Validator |
 | Permission | Role 기반 Custom Permission Class |
-| File Upload | Extension + Size + MIME Type 3단계 검증 |
 | Secret Management | 환경 변수 기반 (Production 필수) |
 | HTTPS/TLS | HSTS + SSL Redirect |
 | Error Handling | Production에서 민감 정보 비노출 |
-
-### 개선 권장 사항 (구현 완료)
-
-아래 항목은 현재 취약점은 아니나, Defense-in-depth 관점에서 권장되어 구현을 완료하였다.
-
-| 항목 | 이전 상태 | 적용 내용 | 상태 |
-|------|-----------|-----------|------|
-| Rate Limiting | 미설정 | DRF Throttling 전역 적용 + Login/Register `auth` Scope (10/min) | 완료 |
-| `SaveDraftSerializer` 답안 검증 | Type 검증만 수행 | Key(숫자)/Value(dict)/허용 Key 제한 Schema 검증 추가 | 완료 |
-| `ManualGradeSerializer` comment | 일반 `CharField` | `XSSSanitizedCharField` 적용 | 완료 |
 
 ---
 
