@@ -251,7 +251,7 @@ jobs:
 
       - name: Port Forward Frontend
         run: |
-          kubectl port-forward svc/exam-test-frontend 3000:80 &
+          kubectl port-forward svc/exam-test-exam-platform-frontend 3000:80 -n exam-platform &
           sleep 5
 
       - name: Run Smoke Tests
