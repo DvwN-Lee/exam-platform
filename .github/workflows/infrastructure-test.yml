@@ -119,6 +119,9 @@ jobs:
       - name: Helm Lint - Prod Values
         run: helm lint charts/exam-platform -f charts/exam-platform/values-prod.yaml
 
+      - name: Helm Lint - E2E Values
+        run: helm lint charts/exam-platform -f charts/exam-platform/values-e2e.yaml
+
   helm-template-tests:
     name: Helm Template Tests
     runs-on: ubuntu-latest
@@ -199,9 +202,6 @@ jobs:
     runs-on: ubuntu-latest
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
     needs: integration-tests
-    # NOTE: placeholder 이미지(nginx-unprivileged)는 port 8080을 사용하므로
-    # chart의 hardcoded port (80, 8000)와 불일치. 실패해도 workflow는 통과.
-    continue-on-error: true
     defaults:
       run:
         working-directory: frontend
@@ -210,6 +210,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Docker 이미지 빌드
+      - name: Build Backend Image
+        run: docker build -t examonline/backend:e2e-test ../examonline
+
+      - name: Build Frontend Image
+        run: docker build -t examonline/frontend:e2e-test ../frontend
+
+      # Node.js + Playwright 설치
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -223,6 +231,7 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
+      # Helm + Kind 설정
       - name: Setup Helm
         uses: azure/setup-helm@v4
         with:
@@ -234,21 +243,72 @@ jobs:
           cluster_name: exam-e2e
           wait: 120s
 
+      # Kind에 이미지 로드
+      - name: Load Images into Kind
+        run: |
+          kind load docker-image examonline/backend:e2e-test --name exam-e2e
+          kind load docker-image examonline/frontend:e2e-test --name exam-e2e
+
+      # PostgreSQL + Redis 배포
+      - name: Deploy PostgreSQL and Redis
+        run: |
+          kubectl create namespace exam-platform
+
+          kubectl run postgres \
+            --image=postgres:18 \
+            --env="POSTGRES_USER=examuser" \
+            --env="POSTGRES_PASSWORD=exampass" \
+            --env="POSTGRES_DB=examdb" \
+            --port=5432 \
+            -n exam-platform
+          kubectl expose pod postgres --port=5432 -n exam-platform
+
+          kubectl run redis \
+            --image=redis:7 \
+            --port=6379 \
+            -n exam-platform
+          kubectl expose pod redis --port=6379 -n exam-platform
+
+          kubectl wait --for=condition=Ready pod/postgres -n exam-platform --timeout=120s
+          kubectl wait --for=condition=Ready pod/redis -n exam-platform --timeout=60s
+
+          for i in $(seq 1 12); do
+            if kubectl exec postgres -n exam-platform -- pg_isready -U examuser 2>/dev/null; then
+              echo "PostgreSQL is ready (attempt $i)"
+              break
+            fi
+            echo "Waiting for PostgreSQL... (attempt $i/12)"
+            sleep 5
+          done
+
+      # Application 배포
       - name: Deploy Application
         run: |
           helm install exam-test ../charts/exam-platform \
-            --set backend.image.repository=nginxinc/nginx-unprivileged \
-            --set backend.image.tag=alpine \
-            --set frontend.image.repository=nginxinc/nginx-unprivileged \
-            --set frontend.image.tag=alpine \
-            --set backend.replicaCount=1 \
-            --set frontend.replicaCount=1 \
-            --set backend.livenessProbe.enabled=false \
-            --set backend.readinessProbe.enabled=false \
-            --set frontend.livenessProbe.enabled=false \
-            --set frontend.readinessProbe.enabled=false \
+            -f ../charts/exam-platform/values-e2e.yaml \
+            -n exam-platform \
             --wait --timeout 5m
 
+      # Backend 기동 확인
+      - name: Verify Backend Health
+        run: |
+          kubectl wait --for=condition=Ready \
+            pod -l app.kubernetes.io/component=backend \
+            -n exam-platform --timeout=180s
+
+          kubectl port-forward svc/exam-test-exam-platform-backend 8000:8000 -n exam-platform &
+          sleep 3
+          for i in $(seq 1 6); do
+            if curl -s http://localhost:8000/api/v1/health/ | grep -q "ok\|healthy"; then
+              echo "Backend health check passed (attempt $i)"
+              break
+            fi
+            echo "Waiting for backend health... (attempt $i/6)"
+            sleep 5
+          done
+          kill %1 2>/dev/null || true
+
+      # Frontend Port Forward + Smoke Tests
       - name: Port Forward Frontend
         run: |
           kubectl port-forward svc/exam-test-exam-platform-frontend 3000:80 -n exam-platform &
@@ -257,7 +317,20 @@ jobs:
       - name: Run Smoke Tests
         env:
           PLAYWRIGHT_BASE_URL: 'http://localhost:3000'
-        run: npx playwright test smoke/ --project=chromium
+        run: npx playwright test --config=playwright.smoke.config.ts
+
+      # 실패 시 디버그 정보 수집
+      - name: Debug Info on Failure
+        if: failure()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -n exam-platform -o wide
+          echo "=== Backend Logs ==="
+          kubectl logs -l app.kubernetes.io/component=backend -n exam-platform --tail=50 || true
+          echo "=== Frontend Logs ==="
+          kubectl logs -l app.kubernetes.io/component=frontend -n exam-platform --tail=50 || true
+          echo "=== Events ==="
+          kubectl get events -n exam-platform --sort-by='.lastTimestamp' | tail -20
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
