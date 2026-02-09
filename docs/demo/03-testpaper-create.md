@@ -47,6 +47,6 @@
 
 ---
 
-## 다음 단계
+## Navigation
 
-[Step 4: 시험 생성](./04-exam-create.md)
+[이전: Step 2 - 문제 생성](./02-question-create.md) | [다음: Step 4 - 시험 생성](./04-exam-create.md)

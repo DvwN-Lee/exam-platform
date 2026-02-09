@@ -86,7 +86,6 @@
 
 ---
 
-## 관련 문서
+## Navigation
 
-- [README.md](./README.md) - 데모 개요
-- [Step 1: 교사 로그인](./01-teacher-login.md)
+[이전: Step 7 - 학생 결과 확인](./07-result-check.md) | [목록으로 돌아가기](./README.md)

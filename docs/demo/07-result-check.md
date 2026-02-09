@@ -43,6 +43,6 @@
 
 ---
 
-## 다음 단계
+## Navigation
 
-[Step 8: 교사 결과 확인](./08-teacher-review.md)
+[이전: Step 6 - 시험 응시](./06-exam-take.md) | [다음: Step 8 - 교사 결과 확인](./08-teacher-review.md)

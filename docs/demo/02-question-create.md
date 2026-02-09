@@ -85,6 +85,6 @@
 
 ---
 
-## 다음 단계
+## Navigation
 
-[Step 3: 시험지 생성](./03-testpaper-create.md)
+[이전: Step 1 - 교사 로그인](./01-teacher-login.md) | [다음: Step 3 - 시험지 생성](./03-testpaper-create.md)

@@ -57,6 +57,6 @@
 
 ---
 
-## 다음 단계
+## Navigation
 
-[Step 5: 학생 로그인](./05-student-login.md)
+[이전: Step 3 - 시험지 생성](./03-testpaper-create.md) | [다음: Step 5 - 학생 로그인](./05-student-login.md)

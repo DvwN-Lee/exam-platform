@@ -42,6 +42,6 @@
 
 ---
 
-## 다음 단계
+## Navigation
 
-[Step 6: 시험 응시](./06-exam-take.md)
+[이전: Step 4 - 시험 생성](./04-exam-create.md) | [다음: Step 6 - 시험 응시](./06-exam-take.md)

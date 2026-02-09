@@ -79,6 +79,6 @@
 
 ---
 
-## 다음 단계
+## Navigation
 
-[Step 7: 결과 확인](./07-result-check.md)
+[이전: Step 5 - 학생 로그인](./05-student-login.md) | [다음: Step 7 - 결과 확인](./07-result-check.md)
