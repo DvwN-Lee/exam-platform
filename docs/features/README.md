@@ -2,7 +2,7 @@
 
 ## 개요
 
-OnlineExam-v2 Frontend 기능 모듈 문서.
+exam-platform Frontend 기능 모듈 문서.
 
 ## Feature 문서
 
@@ -95,7 +95,7 @@ frontend/src/
 
 | 영역 | 기술 |
 |------|------|
-| 프레임워크 | React 18 + TypeScript |
+| 프레임워크 | React 19 + TypeScript |
 | 라우팅 | TanStack Router |
 | 상태 관리 | Zustand (클라이언트), TanStack Query (서버) |
 | 폼 처리 | React Hook Form + Zod |

@@ -4,7 +4,7 @@ Django 기반 온라인 시험 관리 시스템의 Backend API 서버.
 
 ## 기술 스택
 
-- **Framework**: Django 5.2 LTS, Django REST Framework
+- **Framework**: Django 5.2 LTS, Django REST Framework 3.16
 - **Language**: Python 3.14
 - **Primary DB**: PostgreSQL 18
 - **Secondary DB**: MongoDB 8.0
@@ -104,7 +104,7 @@ examonline/
 ### Test Coverage
 
 ```
-268 passed in 36.94s
+957 passed
 Coverage: 95%
 ```
 

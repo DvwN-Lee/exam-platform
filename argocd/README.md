@@ -133,7 +133,7 @@ Root App이 변경을 감지하고 자동으로 새 Application을 생성합니�
 |------|-----------|-------------|-----------|
 | Dev | exam-dev | Automated | Yes |
 | Staging | exam-staging | Automated | Yes |
-| Prod | exam-prod | Manual | No |
+| Prod | exam-platform-prod | Automated | Yes |
 
 ### 상태 확인
 
@@ -156,7 +156,7 @@ argocd app get exam-prod
 # Dev 환경 sync
 argocd app sync exam-dev
 
-# Production 환경 sync (수동 승인 필요)
+# Production 환경 sync (Auto Sync 활성화됨, 수동도 가능)
 argocd app sync exam-prod
 ```
 

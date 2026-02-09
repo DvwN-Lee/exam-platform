@@ -23,7 +23,8 @@ terraform/
 │   ├── gcs-state-bucket/     # Terraform State Bucket
 │   └── gar/                  # Artifact Registry
 └── environments/
-    └── gcp-staging/          # GCP Staging 환경
+    ├── gcp-staging/          # GCP Staging 환경
+    └── gcp-prod/             # GCP Production 환경
 ```
 
 ## 사전 요구사항
@@ -60,7 +61,17 @@ terraform apply -var-file=terraform.tfvars
 | `cloudsql` | Cloud SQL | PostgreSQL Instance, Database, User, Password |
 | `memorystore` | Memorystore | Redis Instance |
 | `gcs` | Cloud Storage | Bucket, Lifecycle, IAM |
+| `gcs-state-bucket` | Terraform State Bucket | GCS Bucket, Versioning, UBLA |
 | `gar` | Artifact Registry | Docker Repository |
+
+### 3. Production 환경 배포
+
+```bash
+cd terraform/environments/gcp-prod
+terraform init
+terraform plan -var-file=terraform.tfvars
+terraform apply -var-file=terraform.tfvars
+```
 
 ## 민감 정보 관리
 
