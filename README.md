@@ -45,8 +45,10 @@
 
 ### 보안
 - JWT + HttpOnly Cookie (XSS 방지)
-- CORS 설정
-- Input Validation (Zod)
+- XSS Sanitization (bleach + regex)
+- CORS / CSRF / HSTS / Secure Cookie
+- Input Validation (Zod + DRF Serializer)
+- File Upload 3단계 검증 (Extension + Size + MIME Type)
 
 ### 테스트 주도 개발
 - Backend: 957개 테스트 함수, 95% 커버리지
@@ -56,7 +58,7 @@
 ## Project Structure
 
 ```
-OnlineExam-v2/
+exam-platform/
 ├── examonline/              # Django Backend
 │   ├── apps/
 │   │   ├── user/            # 사용자 관리 + Service Layer
@@ -73,19 +75,32 @@ OnlineExam-v2/
 │   │   ├── api/             # API 클라이언트
 │   │   └── stores/          # 상태 관리
 │   └── e2e/                 # Playwright 테스트
+├── terraform/               # GCP Infrastructure as Code
+│   ├── modules/             # 재사용 Terraform Module
+│   └── environments/        # 환경별 설정 (staging, prod)
+├── argocd/                  # ArgoCD GitOps (App of Apps)
+│   ├── applications/        # 환경별 Application Overlay
+│   ├── install/             # ArgoCD Helm Values
+│   └── add-ons/             # External Secrets 등
+├── charts/exam-platform/    # Helm Chart
+│   ├── templates/           # K8s Manifest Template
+│   └── values-*.yaml        # 환경별 Values
+├── .github/workflows/       # CI/CD Pipeline
 └── docs/                    # 프로젝트 문서
     └── features/            # 기능별 상세 문서
 ```
 
 ## Getting Started
 
-### Prerequisites
+### Local Development
+
+#### Prerequisites
 - Python 3.14+
 - Node.js 22+
 - Docker & Docker Compose
 - uv (Python package manager)
 
-### Quick Start
+#### Quick Start
 
 ```bash
 # 1. Clone repository
@@ -107,11 +122,47 @@ npm install
 npm run dev
 ```
 
-### Access URLs
+#### Local Access URLs
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000/api/v1/
 - API Docs (Swagger): http://localhost:8000/api/docs/
 - API Docs (ReDoc): http://localhost:8000/api/redoc/
+
+### Cloud (GKE Production)
+
+Production 환경은 GCP GKE Cluster에 배포되며, ArgoCD GitOps로 관리한다.
+
+#### Prerequisites
+- `gcloud` CLI 인증 완료
+- GKE Cluster 접근 권한 (Master Authorized Networks에 등록된 IP)
+- `kubectl`, `helm` 설치
+
+#### Cluster 접속
+
+```bash
+# GKE Cluster 인증 정보 획득
+gcloud container clusters get-credentials prod-exam-cluster \
+  --zone asia-northeast3-a \
+  --project <PROJECT_ID>
+
+# Cluster 상태 확인
+kubectl get nodes
+kubectl get pods -n exam-platform-prod
+```
+
+#### Cloud Access URLs
+
+| URL | 설명 | 비고 |
+|-----|------|------|
+| `https://exam-platform.me` | Production Frontend | NGINX Ingress + Let's Encrypt TLS |
+| `https://exam-platform.me/api/v1/` | Production API | Backend (Gunicorn) |
+
+**DNS 및 Ingress 구성:**
+- Domain `exam-platform.me`의 A Record를 Terraform으로 생성한 Static IP(`google_compute_address`)에 연결하여 서비스를 제공했다.
+- NGINX Ingress Controller가 `/api`, `/admin` 요청을 Backend Service로, `/` 요청을 Frontend Service로 라우팅한다.
+- TLS 인증서는 cert-manager + Let's Encrypt(`letsencrypt-prod` ClusterIssuer)를 통해 자동 발급 및 갱신된다.
+
+> **참고:** 프로젝트 완료 후 GCP 및 DNS 연결 해제로 인해 `exam-platform.me`는 현재 접속이 불가하다. 서비스 재개 시 GKE Cluster 복구, DNS A Record 재연결이 필요하다.
 
 ## Testing
 
@@ -165,9 +216,42 @@ npx playwright test    # E2E tests
 - [Feature Documentation](docs/features/README.md)
 - [Animation System](docs/features/animation-system.md)
 
-### Code Review
-- [Backend Code Review](refactor/backend-code-review.md)
-- [Frontend Code Review](refactor/frontend-code-review.md)
+### Infrastructure
+- [Terraform README](terraform/README.md)
+- [ArgoCD README](argocd/README.md)
+- [Security Architecture](docs/security.md)
+
+## Infrastructure
+
+### GCP (Google Cloud Platform)
+
+| 구성 요소 | 서비스 | 설정 |
+|-----------|--------|------|
+| Cluster | GKE (e2-standard-2) | Private Nodes, Workload Identity, Shielded Nodes |
+| Database | Cloud SQL (PostgreSQL 16) | Private IP, ENCRYPTED_ONLY SSL, PITR |
+| Cache | Memorystore (Redis 7.0) | AUTH + Transit Encryption |
+| Registry | Artifact Registry | 환경별 Repository 분리 |
+| Secret | Secret Manager + External Secrets Operator | Workload Identity 기반 |
+| Storage | Cloud Storage | Terraform State + Application Assets |
+
+### CI/CD
+
+| Pipeline | Trigger | 배포 방식 |
+|----------|---------|----------|
+| CI | Push / PR (main, develop, feature/*, release/*) | ruff + mypy + pytest + Docker Build |
+| CD Dev | CI 성공 (main) | Helm Upgrade (atomic) |
+| CD Staging | CI 성공 (release/*) | Helm Upgrade (atomic) |
+| CD Production | 수동 (workflow_dispatch) | ArgoCD Image Tag Patch |
+
+### GitOps (ArgoCD)
+
+App of Apps 패턴으로 Application 배포를 관리한다.
+
+| 환경 | Namespace | Sync Policy |
+|------|-----------|-------------|
+| Dev | exam-dev | Automated (prune, selfHeal) |
+| Staging | exam-staging | Automated (prune, selfHeal) |
+| Production | exam-platform-prod | Automated (prune, selfHeal) |
 
 ## Development Phases
 
@@ -178,7 +262,7 @@ npx playwright test    # E2E tests
 | 3 | Question Management API | Done |
 | 4 | Examination System API | Done |
 | 5 | Frontend Development (React 19) | Done |
-| 6 | DevOps & Deployment | In Progress |
+| 6 | DevOps & Deployment (GKE, ArgoCD, CI/CD) | Done |
 
 ## License
 
