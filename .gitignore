@@ -21,6 +21,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# Node
+**/node_modules/
+
 # Virtual Environment
 venv/
 ENV/
@@ -60,6 +63,8 @@ db.sqlite3-journal
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
+.coverage\ *
 htmlcov/
 
 # Frontend Testing
