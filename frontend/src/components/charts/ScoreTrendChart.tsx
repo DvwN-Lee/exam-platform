@@ -106,6 +106,8 @@ export function ScoreTrendChart({
             isAnimationActive={true}
             animationDuration={200}
             contentStyle={styles.tooltip}
+            labelStyle={styles.tooltipLabel}
+            itemStyle={styles.tooltipItem}
             content={({ active, payload }) => {
               if (!active || !payload || payload.length === 0) return null
 

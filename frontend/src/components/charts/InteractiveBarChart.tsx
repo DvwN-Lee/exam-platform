@@ -149,6 +149,8 @@ export function InteractiveBarChart({
               fill: 'rgba(16, 185, 129, 0.1)',
             }}
             contentStyle={styles.tooltip}
+            labelStyle={styles.tooltipLabel}
+            itemStyle={styles.tooltipItem}
             formatter={(value) => [`${value}${unit}`, '값']}
           />
           <Bar

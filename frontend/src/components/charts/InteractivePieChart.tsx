@@ -192,6 +192,8 @@ export function InteractivePieChart({
               isAnimationActive={true}
               animationDuration={200}
               contentStyle={styles.tooltip}
+              labelStyle={styles.tooltipLabel}
+              itemStyle={styles.tooltipItem}
               formatter={(_, name) => {
                 const item = processedData.find((d) => d.name === name)
                 return [`${item?.actualValue ?? 0}개`, name]

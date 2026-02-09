@@ -12,6 +12,8 @@ export interface ChartTheme {
   }
   styles: {
     tooltip: React.CSSProperties
+    tooltipLabel: React.CSSProperties
+    tooltipItem: React.CSSProperties
     axis: {
       tick: { fill: string; fontSize: number }
       tickLine: { stroke: string }
@@ -47,6 +49,12 @@ export function useChartTheme(): ChartTheme {
             ? '0 4px 6px -1px rgb(0 0 0 / 0.3)'
             : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
           padding: '8px 12px',
+          color: isDark ? 'rgb(243, 244, 246)' : 'rgb(31, 41, 55)',
+        },
+        tooltipLabel: {
+          color: isDark ? 'rgb(243, 244, 246)' : 'rgb(31, 41, 55)',
+        },
+        tooltipItem: {
           color: isDark ? 'rgb(243, 244, 246)' : 'rgb(31, 41, 55)',
         },
         axis: {
