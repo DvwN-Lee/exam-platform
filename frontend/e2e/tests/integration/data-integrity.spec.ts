@@ -13,7 +13,6 @@ import { createAndLoginTeacher } from '../../helpers/data-factory.helper'
  * 데이터 정합성 검증 E2E 테스트
  *
  * UI에서 데이터 액션 수행 후 Backend에서 실제 데이터가 변경되었는지 검증
- * Gemini 코드 리뷰에서 지적된 "E2E 테스트 깊이 부족" 문제 해결
  */
 test.describe('Data Integrity Verification', () => {
   let teacherToken: string
