@@ -10,8 +10,26 @@ name: E2E Tests
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.png'
+      - '.gitignore'
+      - 'LICENSE*'
+      - 'ui-mockup/**'
+      - 'ui-mockups/**'
+      - '.serena/**'
   pull_request:
     branches: [main, develop]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.png'
+      - '.gitignore'
+      - 'LICENSE*'
+      - 'ui-mockup/**'
+      - 'ui-mockups/**'
+      - '.serena/**'
   workflow_dispatch:
     inputs:
       test_scope:

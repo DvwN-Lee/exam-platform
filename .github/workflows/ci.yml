@@ -15,10 +15,28 @@ on:
       - develop
       - 'feature/**'
       - 'release/**'
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.png'
+      - '.gitignore'
+      - 'LICENSE*'
+      - 'ui-mockup/**'
+      - 'ui-mockups/**'
+      - '.serena/**'
   pull_request:
     branches:
       - main
       - develop
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.png'
+      - '.gitignore'
+      - 'LICENSE*'
+      - 'ui-mockup/**'
+      - 'ui-mockups/**'
+      - '.serena/**'
 
 env:
   PYTHON_VERSION: "3.14"

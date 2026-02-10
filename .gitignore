@@ -53,6 +53,7 @@ db.sqlite3-journal
 # AI Tools
 .claude/
 .gemini/
+.serena/
 
 # uv
 .uv/
