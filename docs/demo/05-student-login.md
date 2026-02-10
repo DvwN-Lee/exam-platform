@@ -22,7 +22,7 @@
 
 | 필드 | 값 |
 |------|-----|
-| Username | demo_student1 |
+| 아이디 | demo_student1 |
 | Password | demo1234! |
 
 ### 4. 로그인 버튼 클릭
@@ -34,9 +34,11 @@
 ## 예상 결과
 
 - 로그인 성공 후 학생 Dashboard로 이동
-- 상단 네비게이션에 학생 메뉴 표시:
-  - 시험 목록
-  - 내 결과
+- 좌측 메뉴에 학생 메뉴 표시:
+  - 대시보드
+  - 내 시험
+  - 성적 조회
+  - 설정
 
 ![학생 Dashboard](./screenshots/05-student-dashboard.png)
 

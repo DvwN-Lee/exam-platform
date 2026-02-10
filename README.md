@@ -2,6 +2,10 @@
 
 레거시 온라인 시험 시스템(Django 2.1)을 최신 기술 스택(Django 5.2 + React 19)으로 리팩터링하고, 95% 테스트 커버리지를 달성한 풀스택 프로젝트
 
+![Exam Platform Dashboard](docs/demo/screenshots/08-teacher-dashboard-after.png)
+
+> **Demo 시나리오:** 교사 로그인부터 시험 생성, 학생 응시, 결과 확인까지의 전체 흐름을 Screenshot과 함께 확인할 수 있다. [Demo 문서 바로가기](docs/demo/README.md)
+
 ## Migration Story
 
 | Before | After |

@@ -20,9 +20,9 @@ Exam Platform의 전체 기능을 시연하는 데모 시나리오이다. 교사
 
 ## 데모 계정
 
-| 역할 | Username | Password | 비고 |
-|------|----------|----------|------|
-| 교사 | demo_teacher | demo1234! | 김교사 |
+| 역할 | 아이디 | Password | 비고 |
+|------|--------|----------|------|
+| 교사 | demoteacher01 | demo1234! | 김교사 |
 | 학생 | demo_student1 | demo1234! | 학생1 |
 
 ---
@@ -55,7 +55,7 @@ kubectl exec -it deployment/exam-prod-exam-platform-backend \
 ```
 
 **생성되는 데이터:**
-- 교사 계정: demo_teacher / demo1234!
+- 교사 계정: demoteacher01 / demo1234!
 - 학생 계정: demo_student1~5 / demo1234!
 - 과목: 수학, 영어, 과학, 국어, 사회
 - 샘플 문제 8개
@@ -69,9 +69,9 @@ kubectl exec -it deployment/exam-prod-exam-platform-backend \
 
 ## 데모 문제 세트
 
-이 데모에서 생성할 문제 목록이다.
+이 데모에서 생성할 문제 목록이다. 생성 순서와 시험지 내 배치 순서는 다를 수 있다.
 
-### 문제 1: 객관식 (수학 - 인수분해)
+### 객관식 (수학 - 인수분해)
 
 | 항목 | 값 |
 |------|-----|
@@ -83,7 +83,7 @@ kubectl exec -it deployment/exam-prod-exam-platform-backend \
 | 보기 | (1) (x+3)(x+4), (2) (x+2)(x+6), (3) (x+1)(x+12), (4) (x-3)(x-4) |
 | 정답 | (1) |
 
-### 문제 2: 객관식 (수학 - 집합)
+### 객관식 (수학 - 집합)
 
 | 항목 | 값 |
 |------|-----|
@@ -95,7 +95,7 @@ kubectl exec -it deployment/exam-prod-exam-platform-backend \
 | 보기 | (1) 16, (2) 25, (3) 32, (4) 64 |
 | 정답 | (3) |
 
-### 문제 3: 빈칸채우기 (수학 - 등차수열)
+### 빈칸채우기 (수학 - 등차수열)
 
 | 항목 | 값 |
 |------|-----|
@@ -117,6 +117,6 @@ kubectl exec -it deployment/exam-prod-exam-platform-backend \
 | 시험지 생성 | "수학 기초 테스트" 시험지 생성 (30점 만점) |
 | 시험 생성 | "2026년 1학기 수학 시험" 생성 |
 | 학생 로그인 | 학생 Dashboard 표시 |
-| 시험 응시 | 3문제 모두 정답 제출 |
-| 결과 확인 | 30/30점 (100%) 표시 |
+| 시험 응시 | 3문제 답안 제출 (정답 2개, 오답 1개) |
+| 결과 확인 | 20/30점 (66.7%) 표시 |
 | 교사 리뷰 | 학생별 상세 결과 확인 |

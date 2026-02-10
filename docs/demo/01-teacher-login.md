@@ -18,7 +18,7 @@
 
 | 필드 | 값 |
 |------|-----|
-| Username | demo_teacher |
+| 아이디 | demoteacher01 |
 | Password | demo1234! |
 
 ### 3. 로그인 버튼 클릭
@@ -30,11 +30,14 @@
 ## 예상 결과
 
 - 로그인 성공 후 교사 Dashboard로 이동
-- 상단 네비게이션에 교사 메뉴 표시:
+- 좌측 메뉴에 교사 메뉴 표시:
+  - 대시보드
   - 문제 관리
   - 시험지 관리
   - 시험 관리
-  - 결과 확인
+  - 학생 관리
+  - 통계 분석
+  - 설정
 
 ![교사 Dashboard](./screenshots/01-teacher-dashboard.png)
 
