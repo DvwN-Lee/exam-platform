@@ -158,8 +158,8 @@ kubectl get pods -n exam-platform-prod
 
 | URL | 설명 | 비고 |
 |-----|------|------|
-| `https://exam-platform.me` | Production Frontend | NGINX Ingress + Let's Encrypt TLS |
-| `https://exam-platform.me/api/v1/` | Production API | Backend (Gunicorn) |
+| ~~`https://exam-platform.me`~~ | Production Frontend | NGINX Ingress + Let's Encrypt TLS |
+| ~~`https://exam-platform.me/api/v1/`~~ | Production API | Backend (Gunicorn) |
 
 **DNS 및 Ingress 구성:**
 - Domain `exam-platform.me`의 A Record를 Terraform으로 생성한 Static IP(`google_compute_address`)에 연결하여 서비스를 제공했다.
