@@ -66,6 +66,36 @@ Password는 Django 기본 PBKDF2 Algorithm으로 hashing되며, `user.set_passwo
 
 DRF Default Permission은 `IsAuthenticated`로 설정되어, 모든 API Endpoint에 인증이 필수이다.
 
+### View-Level 권한 검사
+
+Permission Class 외에 View 내부에서 추가적인 소유권 검증을 수행하는 Endpoint:
+
+| View | Endpoint | 검증 로직 |
+|------|----------|-----------|
+| `ScoresViewSet.exam_scores` | `GET /api/v1/scores/exam/{id}/` | `exam.create_user == request.user` |
+| `ScoresViewSet.exam_statistics` | `GET /api/v1/scores/exam/{id}/statistics/` | `exam.create_user == request.user` |
+| `ScoresViewSet.student_score_detail` | `GET /api/v1/scores/exam/{id}/student/{id}/` | `exam.create_user == request.user` |
+| `ScoresViewSet.manual_grade` | `POST /api/v1/scores/{id}/grade/` | `score.exam` 존재 여부 + `score.exam.create_user == request.user` |
+
+`manual_grade`는 `score.exam`이 NULL인 경우에도 접근을 차단한다. `TestScores` Model의 `exam` 필드가 `null=True`로 정의되어 있으므로, NULL 검사를 선행하여 IDOR을 방지한다.
+
+```python
+# apps/testpaper/api/scores_views.py
+if not score.exam or score.exam.create_user != request.user:
+    return Response({"detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
+```
+
+### Teacher 간 데이터 격리
+
+`StudentListViewSet`은 현재 Teacher가 출제한 시험에 등록된 학생만 반환한다.
+
+| 메서드 | 격리 방식 |
+|--------|-----------|
+| `get_queryset()` | Teacher의 시험에 등록된 Student만 조회 (`ExamStudentsInfo` 기반 필터링) |
+| `retrieve()` | Teacher의 시험에 대한 Submission만 반환 (`exam_id__in=teacher_exam_ids`) |
+
+이를 통해 Teacher A는 Teacher B가 출제한 시험의 학생 정보 및 성적에 접근할 수 없다.
+
 ---
 
 ## 3. Input Validation (입력 검증)

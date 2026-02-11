@@ -5,6 +5,7 @@ User API views.
 from django.conf import settings
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from examination.models import ExaminationInfo, ExamStudentsInfo
 from rest_framework import filters, generics, status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -288,8 +289,22 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """
         학생 목록 조회 (검색/필터 지원).
+
+        현재 Teacher가 출제한 시험에 등록된 학생만 반환하여 Teacher 간 데이터 격리.
         """
-        queryset = UserProfile.objects.filter(user_type="student").select_related("studentsinfo")
+        # Teacher가 출제한 시험에 등록된 학생만 조회
+        teacher_exam_ids = ExaminationInfo.objects.filter(
+            create_user=self.request.user
+        ).values_list("id", flat=True)
+        enrolled_student_user_ids = (
+            ExamStudentsInfo.objects.filter(exam_id__in=teacher_exam_ids)
+            .values_list("student__user_id", flat=True)
+            .distinct()
+        )
+
+        queryset = UserProfile.objects.filter(
+            user_type="student", id__in=enrolled_student_user_ids
+        ).select_related("studentsinfo")
 
         # 검색 (이름, 학번, 이메일)
         search = self.request.query_params.get("search", None)
@@ -316,13 +331,14 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """
         학생 상세 조회 (통계 + 시험 이력 포함).
+
+        현재 Teacher가 출제한 시험에 대한 데이터만 반환.
         """
         instance = self.get_object()
 
         # 기본 학생 정보 직렬화 (StudentListSerializer로 모델 필드만 추출)
         data = dict(StudentListSerializer(instance).data)
 
-        # StudentDashboardService를 재사용하여 통계/시험 이력 조회
         try:
             student_info = StudentsInfo.objects.get(user=instance)
         except StudentsInfo.DoesNotExist:
@@ -334,20 +350,26 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
             data["exam_history"] = []
             return Response(data)
 
-        service = StudentDashboardService(student_info)
-        submissions_qs = service._get_submissions()
-        submissions_list = list(submissions_qs)
-
-        # 등록된 시험 ID 목록
-        from examination.models import ExamStudentsInfo
-
-        enrolled_exam_ids = list(
-            ExamStudentsInfo.objects.filter(student=student_info).values_list(
-                "exam_id", flat=True
-            )
+        # 현재 Teacher가 출제한 시험 ID로 제한
+        teacher_exam_ids = list(
+            ExaminationInfo.objects.filter(
+                create_user=request.user
+            ).values_list("id", flat=True)
         )
 
-        # 통계 계산
+        # Teacher 소속 시험에 대한 제출 내역만 조회
+        service = StudentDashboardService(student_info)
+        submissions_qs = service._get_submissions().filter(exam_id__in=teacher_exam_ids)
+        submissions_list = list(submissions_qs)
+
+        # Teacher 소속 시험에 등록된 시험 ID만 조회
+        enrolled_exam_ids = list(
+            ExamStudentsInfo.objects.filter(
+                student=student_info, exam_id__in=teacher_exam_ids
+            ).values_list("exam_id", flat=True)
+        )
+
+        # 통계 계산 (Teacher 소속 시험 범위만)
         stats = service._get_statistics(submissions_list, enrolled_exam_ids)
         data["statistics"] = {
             "total_exams_taken": stats["total_exams_taken"],
@@ -355,7 +377,7 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
             "pass_rate": stats["pass_rate"],
         }
 
-        # 시험 이력 구성 (최근 20건)
+        # 시험 이력 구성 (최근 20건, Teacher 소속 시험만)
         recent_submissions = sorted(
             submissions_list, key=lambda x: x.submit_time or x.create_time, reverse=True
         )[:20]

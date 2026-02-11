@@ -1387,6 +1387,88 @@ Services:
 
 ---
 
+### 8.4 Backend Unit Test Rate Limiting 실패
+
+**증상:**
+```bash
+$ uv run python -m pytest -v --no-cov
+FAILED apps/user/api/test_user.py::TestAuthentication::test_login_success
+  assert 429 == 200
+FAILED apps/user/api/test_user.py::TestUserRegistration::test_register_teacher_success
+  assert 429 == 201
+ERROR apps/test_api_edge_cases.py::TestQuestionDeleteEdgeCases::test_delete_own_question
+  KeyError: 'access'
+
+==================== 14 failed, 281 passed, 8 errors ====================
+```
+- 14건 FAILED: 인증/회원가입 Endpoint에서 429 Too Many Requests 반환
+- 8건 ERROR: setup fixture에서 token 획득 실패 (`response.data["access"]` KeyError)
+
+**원인:**
+- DRF `ScopedRateThrottle`의 `auth` Scope(10/minute)가 테스트 간 Cache를 공유
+- 여러 테스트가 `/api/v1/auth/token/`, `/api/v1/auth/register/`를 호출하면서 분당 한도 초과
+- CI `test-backend` job에 Redis Service가 미정의되어 Cache Backend 연결 실패 가능
+
+**해결:**
+
+`examonline/conftest.py` 생성:
+```python
+import pytest
+from django.core.cache import cache
+
+@pytest.fixture(autouse=True)
+def _test_cache(settings):
+    """테스트 환경: In-Memory Cache 사용 + Throttle Counter 격리"""
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+    cache.clear()
+    yield
+    cache.clear()
+```
+
+- `LocMemCache`: Redis 의존성 제거 (CI 환경 호환)
+- `cache.clear()`: 테스트 전후 Throttle Counter 초기화
+
+**검증 결과:**
+```bash
+$ uv run python -m pytest -v --no-cov
+============================= 303 passed in 33.74s =============================
+```
+
+---
+
+### 8.5 PostgreSQL CREATEDB 권한 누락 (로컬 환경)
+
+**증상:**
+```bash
+$ uv run python -m pytest
+E   django.db.utils.ProgrammingError: permission denied to create database
+```
+- Django test runner가 `test_examonline` Database 생성 시도 시 권한 부족
+
+**원인:**
+- 로컬 PostgreSQL의 `examuser` 계정에 `CREATEDB` 권한 미부여
+- CI 환경에서는 PostgreSQL Service Container가 `POSTGRES_USER`를 superuser로 생성하여 문제 없음
+
+**해결:**
+```sql
+-- superuser로 접속 후 실행
+ALTER USER examuser CREATEDB;
+```
+
+**검증 결과:**
+```bash
+$ psql -U <superuser> -d postgres -c "\du examuser"
+ Role name | Attributes
+-----------+------------
+ examuser  | Create DB
+```
+
+---
+
 ## 부록: 디버깅 명령어 모음
 
 ### Kubernetes

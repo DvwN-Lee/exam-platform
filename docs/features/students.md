@@ -110,6 +110,15 @@ interface StudentListResponse {
 }
 ```
 
+### Backend 데이터 격리
+
+`StudentListViewSet`은 현재 Teacher가 출제한 시험에 등록된 학생만 반환한다. Teacher A는 Teacher B의 학생 정보 및 시험 이력에 접근할 수 없다.
+
+| 메서드 | 동작 |
+|--------|------|
+| `get_queryset()` | Teacher의 시험(`ExaminationInfo`)에 등록된(`ExamStudentsInfo`) Student만 조회 |
+| `retrieve()` | 해당 Teacher 시험에 대한 Submission, 통계, 시험 이력만 반환 |
+
 ## 라우팅
 
 | 경로 | 컴포넌트 | 접근 권한 |

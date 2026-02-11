@@ -262,8 +262,8 @@ class ScoresViewSet(viewsets.ViewSet):
                 {"detail": "성적을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        # 시험 작성자만 채점 가능
-        if score.exam and score.exam.create_user != request.user:
+        # 시험 작성자만 채점 가능 (exam이 NULL인 경우에도 접근 차단)
+        if not score.exam or score.exam.create_user != request.user:
             return Response({"detail": "권한이 없습니다."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = ManualGradeSerializer(data=request.data, context={"test_score": score})
