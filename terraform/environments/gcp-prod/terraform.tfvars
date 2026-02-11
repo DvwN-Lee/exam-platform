@@ -25,18 +25,7 @@ min_node_count     = 1
 max_node_count     = 10
 
 master_authorized_cidrs = [
-  {
-    cidr_block   = "112.150.249.93/32"
-    display_name = "Admin IP"
-  },
-  {
-    cidr_block   = "221.153.70.15/32"
-    display_name = "Admin IP 2"
-  },
-  {
-    cidr_block   = "112.218.39.251/32"
-    display_name = "Current Machine"
-  }
+  # 운영 환경에서는 관리자 IP를 환경 변수 또는 Secret Manager로 관리
 ]
 
 # -----------------------------------------------------------------------------
