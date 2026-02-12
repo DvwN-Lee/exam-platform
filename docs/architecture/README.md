@@ -529,7 +529,7 @@ graph TB
 | Release Channel | REGULAR | REGULAR |
 | Private Nodes | Yes | Yes |
 | Machine Type | e2-standard-2 | e2-standard-2 |
-| Node 수 (Min/Max) | 2 / 5 | 2 / 5 |
+| Node 수 (Min/Max) | 1 / 5 | 1 / 10 |
 | Disk | pd-standard 50GB | pd-standard 50GB |
 | Network Policy | Calico | Calico |
 | Shielded GKE | Yes | Yes |
@@ -806,7 +806,10 @@ graph LR
 
 | 문서 | 설명 |
 |------|------|
-| [`docs/security.md`](./security.md) | Backend 보안 상세 |
-| [`docs/features/`](./features/) | 기능별 상세 문서 |
-| [`docs/troubleshooting.md`](./troubleshooting.md) | 트러블슈팅 가이드 |
-| [`docs/STAGING_DEPLOYMENT.md`](./STAGING_DEPLOYMENT.md) | Staging 배포 가이드 |
+| [`docs/security.md`](../security.md) | Backend 보안 상세 |
+| [`docs/features/`](../features/) | 기능별 상세 문서 |
+| [`docs/troubleshooting.md`](../troubleshooting.md) | 트러블슈팅 가이드 |
+| [`docs/STAGING_DEPLOYMENT.md`](../STAGING_DEPLOYMENT.md) | Staging 배포 가이드 |
+| [`docs/architecture/adr/`](./adr/README.md) | Architecture Decision Records |
+| [`docs/secret-management.md`](../secret-management.md) | Secret Management 운영 가이드 |
+| [`docs/operational-changes.md`](../operational-changes.md) | Operational Changes Log |

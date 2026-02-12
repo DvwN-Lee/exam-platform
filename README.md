@@ -210,6 +210,11 @@ npx playwright test    # E2E tests
 
 ## Documentation
 
+### Architecture
+- [Architecture Overview](docs/architecture/README.md)
+- [Architecture Decision Records](docs/architecture/adr/README.md)
+- [Secret Management](docs/secret-management.md)
+
 ### Backend
 - [Backend README](examonline/README.md)
 - [Troubleshooting Guide](examonline/docs/troubleshooting.md)
