@@ -88,13 +88,13 @@ const testPaperSchema = z.object({
 ### 시험지 목록 조회
 
 ```
-GET /api/v1/testpapers/
+GET /testpapers/
 ```
 
 ### 시험지 상세 조회
 
 ```
-GET /api/v1/testpapers/{id}/
+GET /testpapers/{id}
 ```
 
 **Response:**
@@ -121,7 +121,7 @@ GET /api/v1/testpapers/{id}/
 ### 시험지 생성
 
 ```
-POST /api/v1/testpapers/
+POST /testpapers/
 ```
 
 **Request:**
@@ -139,13 +139,34 @@ POST /api/v1/testpapers/
 ### 시험지 수정
 
 ```
-PUT /api/v1/testpapers/{id}/
+PATCH /testpapers/{id}
 ```
 
 ### 시험지 삭제
 
 ```
-DELETE /api/v1/testpapers/{id}/
+DELETE /testpapers/{id}
+```
+
+### 시험지에 문제 추가
+
+```
+POST /testpapers/{id}/add_questions/
+```
+
+**Request:**
+```json
+{
+  "questions": [
+    { "test_question_id": 1, "score": 10, "order": 1 }
+  ]
+}
+```
+
+### 시험지에서 문제 제거
+
+```
+DELETE /testpapers/{id}/remove-question/{questionId}/
 ```
 
 ## 데이터 타입

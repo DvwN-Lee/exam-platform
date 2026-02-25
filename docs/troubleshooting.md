@@ -1378,7 +1378,7 @@ services:
 # GitHub Actions Service 상태
 Services:
   redis: redis:7-alpine (healthy)
-  postgres: postgres:15-alpine (healthy)
+  postgres: postgres:18 (healthy)
   backend: exam-platform-backend (healthy)
 
 # E2E 테스트 통과

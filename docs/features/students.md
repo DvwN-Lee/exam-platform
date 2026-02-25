@@ -2,13 +2,14 @@
 
 ## 개요
 
-학생 관리 기능. 교사가 학생 목록을 조회하고 검색한다.
+학생 관리 기능. 교사가 학생 목록을 조회하고 검색하며, 개별 학생의 시험 이력과 통계를 확인한다.
 
 ## 구조
 
 ```
 features/students/
-└── StudentListPage.tsx  # 학생 목록
+├── StudentListPage.tsx    # 학생 목록
+└── StudentDetailPage.tsx  # 학생 상세 (프로필, 통계, 시험 이력)
 ```
 
 ## 컴포넌트
@@ -31,6 +32,7 @@ features/students/
 - 학생 목록 조회
 - 이름/아이디/이메일 검색
 - 페이지네이션
+- 학생 클릭 시 상세 페이지 이동
 
 #### 필터 상태
 
@@ -41,12 +43,44 @@ const [filters, setFilters] = useState({
 })
 ```
 
+### StudentDetailPage
+
+개별 학생의 상세 정보를 표시한다.
+
+#### 프로필 정보
+
+- 이름 (`student_name`)
+- 학번 (`student_id`)
+- 이메일 (`email`)
+- 학교 (`student_school`)
+- 반 (`student_class`)
+- 가입일 (`date_joined`)
+
+#### 통계 카드
+
+| 항목 | 필드 | 설명 |
+|------|------|------|
+| 응시 횟수 | `statistics.total_exams_taken` | 응시한 시험 수 |
+| 평균 점수 | `statistics.average_score` | 평균 점수 |
+| 합격률 | `statistics.pass_rate` | 합격 비율 (%) |
+
+#### 시험 이력 테이블
+
+| 컬럼 | 설명 |
+|------|------|
+| 시험명 | `exam_name` |
+| 과목 | `subject_name` |
+| 점수 | `score` |
+| 총점 | `total_score` |
+| 득점률 | 계산값 (%) |
+| 제출일 | `submitted_at` |
+
 ## API 연동
 
 ### 학생 목록 조회
 
 ```
-GET /api/v1/students/
+GET /students/
 ```
 
 **Query Parameters:**
@@ -74,6 +108,40 @@ GET /api/v1/students/
 }
 ```
 
+### 학생 상세 조회
+
+```
+GET /students/{id}/
+```
+
+**Response:**
+```json
+{
+  "username": "student1",
+  "student_name": "홍길동",
+  "student_id": "20240001",
+  "email": "student1@example.com",
+  "student_school": "OO고등학교",
+  "student_class": "1-3",
+  "date_joined": "2024-01-01T00:00:00Z",
+  "statistics": {
+    "total_exams_taken": 5,
+    "average_score": 82.5,
+    "pass_rate": 80
+  },
+  "exam_history": [
+    {
+      "exam_id": 1,
+      "exam_name": "중간고사",
+      "subject_name": "수학",
+      "score": 85,
+      "total_score": 100,
+      "submitted_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
 ## 데이터 타입
 
 ```typescript
@@ -83,6 +151,22 @@ interface Student {
   nick_name: string
   email: string
   created_at: string
+}
+
+interface StudentDetail {
+  username: string
+  student_name: string
+  student_id: string
+  email: string
+  student_school: string
+  student_class: string
+  date_joined: string
+  statistics: {
+    total_exams_taken: number
+    average_score: number
+    pass_rate: number
+  }
+  exam_history: ExamHistoryItem[]
 }
 
 interface StudentListResponse {
@@ -96,19 +180,6 @@ interface StudentListResponse {
 ## 접근 권한
 
 이 페이지는 교사(teacher) 사용자만 접근 가능하다.
-
-```typescript
-// 라우터 설정
-{
-  path: '/students',
-  component: StudentListPage,
-  beforeLoad: () => {
-    if (user?.user_type !== 'teacher') {
-      throw redirect({ to: '/' })
-    }
-  }
-}
-```
 
 ### Backend 데이터 격리
 
@@ -124,3 +195,4 @@ interface StudentListResponse {
 | 경로 | 컴포넌트 | 접근 권한 |
 |------|----------|-----------|
 | `/students` | StudentListPage | 교사만 |
+| `/students/:id` | StudentDetailPage | 교사만 |

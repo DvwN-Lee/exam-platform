@@ -8,14 +8,14 @@
 
 ### LoadingSpinner
 
-원형 스피너 컴포넌트.
+원형 스피너 컴포넌트. Lucide `Loader2` 아이콘을 사용한다.
 
 ```tsx
 import { LoadingSpinner } from '@/components/ui/loading'
 
-<LoadingSpinner size="sm" />  // 16px
-<LoadingSpinner size="md" />  // 24px (기본)
-<LoadingSpinner size="lg" />  // 32px
+<LoadingSpinner size="sm" />  // h-4 w-4
+<LoadingSpinner size="md" />  // h-6 w-6 (기본)
+<LoadingSpinner size="lg" />  // h-10 w-10
 ```
 
 ### LoadingPage
@@ -25,9 +25,9 @@ import { LoadingSpinner } from '@/components/ui/loading'
 ```tsx
 import { LoadingPage } from '@/components/ui/loading'
 
-if (isLoading) {
-  return <LoadingPage />
-}
+<LoadingPage />                           // 기본 메시지, fullScreen
+<LoadingPage message="불러오는 중..." />   // 커스텀 메시지
+<LoadingPage fullScreen={false} />         // 컨테이너 내 로딩
 ```
 
 ## Skeleton
@@ -58,6 +58,9 @@ import { FileText } from 'lucide-react'
     onClick: () => navigate('/questions/new')
   }}
 />
+
+// compact 모드 (텍스트만 표시)
+<EmptyState compact title="데이터가 없습니다." />
 ```
 
 ### Props
@@ -68,6 +71,7 @@ import { FileText } from 'lucide-react'
 | `title` | `string` | O | 제목 |
 | `description` | `string` | X | 설명 텍스트 |
 | `action` | `{ label, onClick }` | X | 액션 버튼 |
+| `compact` | `boolean` | X | compact 모드 (텍스트만 표시, 기본 false) |
 
 ## Layout Components
 
@@ -132,16 +136,15 @@ import {
 
 ### getScoreColor
 
-점수에 따른 색상 클래스 반환.
+점수(득점률 %)에 따른 색상 클래스 반환.
 
 ```tsx
 import { getScoreColor } from '@/components/ui/table'
 
-<span className={getScoreColor(85)}>85점</span>
-// 90+ : text-green-600
-// 80+ : text-blue-600
-// 70+ : text-yellow-600
-// 70- : text-red-600
+<span className={getScoreColor(85)}>85%</span>
+// 85+ : text-green-600 (dark: text-green-400) font-semibold
+// 72+ : text-orange-500 (dark: text-orange-400) font-semibold
+// 72- : text-red-500 (dark: text-red-400) font-semibold
 ```
 
 ## 스타일 가이드

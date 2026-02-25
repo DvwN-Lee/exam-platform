@@ -484,12 +484,12 @@ sequenceDiagram
 
 ```mermaid
 graph TB
-    subgraph VPC["VPC (10.1.0.0/16)"]
-        subgraph PublicSubnet["Public Subnet (10.1.1.0/24)"]
+    subgraph VPC["VPC"]
+        subgraph PublicSubnet["Public Subnet"]
             CloudNAT["Cloud NAT"]
         end
 
-        subgraph PrivateSubnet["Private Subnet (10.1.2.0/24)"]
+        subgraph PrivateSubnet["Private Subnet"]
             subgraph GKECluster["GKE Cluster (Private)"]
                 subgraph ControlPlane["Control Plane (172.16.0.0/28)"]
                     Master["API Server"]
@@ -500,7 +500,7 @@ graph TB
                     Node2["Node 2<br/>(e2-standard-2)"]
                 end
 
-                subgraph PodNetwork["Pod Network (10.100.0.0/16)"]
+                subgraph PodNetwork["Pod Network"]
                     IngressCtrl["Ingress Controller"]
                     FE["Frontend Pod"]
                     BE["Backend Pod"]
@@ -556,13 +556,13 @@ terraform/
 
 **Network 설정**
 
-| 항목 | CIDR |
-|------|------|
-| Public Subnet | 10.1.1.0/24 |
-| Private Subnet | 10.1.2.0/24 |
-| GKE Pod (Secondary) | 10.100.0.0/16 |
-| GKE Service (Secondary) | 10.101.0.0/20 |
-| Master Control Plane | 172.16.0.0/28 |
+| 항목 | Staging | Production |
+|------|---------|------------|
+| Public Subnet | 10.1.1.0/24 | 10.2.1.0/24 |
+| Private Subnet | 10.1.2.0/24 | 10.2.2.0/24 |
+| GKE Pod (Secondary) | 10.100.0.0/16 | 10.200.0.0/16 |
+| GKE Service (Secondary) | 10.101.0.0/20 | 10.201.0.0/20 |
+| Master Control Plane | 172.16.0.0/28 | 172.16.0.0/28 |
 
 ### 5.3 Helm Chart 구조
 
@@ -625,7 +625,7 @@ graph TD
 | 설정 | 값 |
 |------|-----|
 | Auto-Sync | Enabled (Prune + SelfHeal) |
-| Retry | 5회 (Exponential Backoff, 5s~3m) |
+| Retry | 3회 (Exponential Backoff, 10s~5m) |
 | Revision History Limit | 20 |
 | Repository | SSH Deploy Key (Secret Manager) |
 
@@ -683,7 +683,7 @@ graph LR
 | Tool | uv (Python 3.14) | Node 22 + npm |
 
 **Trigger 조건**
-- Push: `main`, `develop`, `feature/*`, `release/*` Branch
+- Push: `main`, `develop`, `feature/**`, `release/**` Branch
 - PR: `main`, `develop` Branch 대상
 - `dorny/paths-filter`로 변경 감지 후 해당 Component만 실행
 

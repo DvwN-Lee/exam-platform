@@ -4,8 +4,8 @@
 
 ## 기술 스택
 
-- **Framework**: React 19 + TypeScript 5.x
-- **Build Tool**: Vite 7.x
+- **Framework**: React 19 + TypeScript 5.9
+- **Build Tool**: Vite 7.2
 - **Routing**: TanStack Router
 - **State Management**: Zustand
 - **Data Fetching**: TanStack Query (React Query)
@@ -19,7 +19,7 @@
 
 ### 필수 요구사항
 
-- Node.js 20+
+- Node.js 22+
 - npm 10+
 
 ### 설치 및 실행
@@ -47,13 +47,16 @@ frontend/
 │   ├── components/       # 재사용 UI 컴포넌트
 │   │   ├── animation/    # Framer Motion 애니메이션
 │   │   ├── auth/         # 인증 관련 컴포넌트
+│   │   ├── charts/       # 차트 컴포넌트
 │   │   ├── layout/       # 레이아웃 컴포넌트
 │   │   └── ui/           # shadcn/ui 컴포넌트
 │   ├── constants/        # 상수 정의
+│   │   ├── chart.ts
+│   │   ├── exam.ts
 │   │   ├── examination.ts
 │   │   ├── question.ts
 │   │   ├── theme.ts
-│   │   └── time.ts
+│   │   └── validation.ts
 │   ├── features/         # 페이지별 기능 모듈
 │   │   ├── analytics/    # 분석 대시보드
 │   │   ├── auth/         # 로그인/회원가입
@@ -65,6 +68,8 @@ frontend/
 │   │   ├── settings/     # 설정
 │   │   ├── students/     # 학생 관리
 │   │   └── testpapers/   # 시험지 관리
+│   ├── hooks/            # 커스텀 React 훅
+│   ├── lib/              # 유틸리티 라이브러리
 │   ├── stores/           # Zustand 상태 관리
 │   ├── types/            # TypeScript 타입 정의
 │   ├── utils/            # 유틸리티 함수
@@ -73,6 +78,7 @@ frontend/
 ├── public/
 ├── index.html
 ├── package.json
+├── playwright.config.ts  # Playwright E2E 설정
 ├── tailwind.config.js
 ├── tsconfig.json
 └── vite.config.ts
@@ -133,16 +139,27 @@ e2e/
 │   ├── auth.helper.ts    # 인증 헬퍼
 │   ├── assertions.helper.ts
 │   ├── data-factory.helper.ts
-│   └── selectors.ts      # DOM 선택자
+│   ├── selectors.ts      # DOM 선택자
+│   ├── theme.helper.ts   # 테마 헬퍼
+│   └── time.helper.ts    # 시간 헬퍼
 ├── tests/
 │   ├── auth/             # 인증 테스트
+│   ├── common/           # 공통 테스트
 │   ├── dashboard/        # 대시보드 테스트
-│   ├── teacher/          # 교사 기능 테스트
-│   ├── student/          # 학생 기능 테스트
+│   ├── edge-cases/       # 엣지 케이스 테스트
+│   ├── integration/      # 통합 테스트
+│   ├── layout/           # 레이아웃 테스트
+│   ├── profile/          # 프로필 테스트
 │   ├── security/         # 보안 테스트 (RBAC)
-│   └── edge-cases/       # 엣지 케이스 테스트
-└── playwright.config.ts
+│   ├── smoke/            # 스모크 테스트
+│   ├── student/          # 학생 기능 테스트
+│   ├── teacher/          # 교사 기능 테스트
+│   └── validation/       # 유효성 검증 테스트
+├── reports/              # 테스트 리포트
+└── screenshots/          # 테스트 스크린샷
 ```
+
+> **참고:** `playwright.config.ts`는 `frontend/` 루트에 위치한다.
 
 ### 테스트 실행
 

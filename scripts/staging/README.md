@@ -330,4 +330,4 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 - [Staging 배포 가이드](../../docs/STAGING_DEPLOYMENT.md)
 - [Terraform 구성](../../terraform/README.md)
-- [Helm Chart](../../charts/exam-platform/README.md)
+- Helm Chart: `charts/exam-platform/`

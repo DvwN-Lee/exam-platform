@@ -123,13 +123,19 @@ interface QuestionResult {
 ### 응시 가능 시험 목록
 
 ```
-GET /api/v1/exams/available/
+GET /exams/available/
+```
+
+### 시험 정보 조회
+
+```
+GET /exams/{id}/info/
 ```
 
 ### 시험 시작
 
 ```
-POST /api/v1/exams/{id}/start/
+POST /exams/{id}/start/
 ```
 
 **Response:**
@@ -146,33 +152,39 @@ POST /api/v1/exams/{id}/start/
 ### 답안 저장
 
 ```
-POST /api/v1/exams/{id}/answer/
+POST /exams/{id}/save-answer/
 ```
 
 **Request:**
 ```json
 {
   "question_id": 1,
-  "answer": "선택지 내용" | [1, 3]  // 주관식 or 객관식
+  "answer": "선택지 내용" | [1, 3]
 }
 ```
 
 ### 시험 제출
 
 ```
-POST /api/v1/exams/{id}/submit/
+POST /exams/{id}/submit/
 ```
 
 ### 결과 조회
 
 ```
-GET /api/v1/exams/{id}/result/
+GET /exams/{id}/result/
 ```
 
-### 결과 목록
+### 제출 목록
 
 ```
-GET /api/v1/exams/results/
+GET /submissions/my/
+```
+
+### 진행 중 시험 상태
+
+```
+GET /exams/{id}/status/
 ```
 
 ## 데이터 타입

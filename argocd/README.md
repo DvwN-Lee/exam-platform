@@ -43,6 +43,8 @@ argocd/
 │   │   ├── cluster-secret-store.yaml
 │   │   └── kustomization.yaml
 │   └── kustomization.yaml
+├── generated/                          # ArgoCD가 생성한 Application 매니페스트
+├── infra/                              # 인프라 관련 Application (CSStore 등)
 ├── install/
 │   └── values.yaml                 # ArgoCD Helm 설치 values
 └── README.md

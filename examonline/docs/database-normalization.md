@@ -104,11 +104,11 @@ class TestPaperInfo(models.Model):
 - 출제자/작성자 탈퇴 시 모든 문제와 시험지가 삭제됨
 - 다른 사용자가 해당 문제/시험지를 사용 중일 수 있음
 
-**해결책**: SET_NULL로 변경
+**해결책**: SET_NULL로 변경 + 필드명 수정 (`creat_user` → `create_user`)
 ```python
 # AFTER
 class TestQuestionInfo(models.Model):
-    creat_user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
+    create_user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
 
 class TestPaperInfo(models.Model):
     create_user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
@@ -309,7 +309,7 @@ class TestScores(models.Model):
 | **TeacherInfo** | `user`: ForeignKey → OneToOneField | 1:1 관계 강제 |
 | **TeacherInfo** | `subject`: CASCADE → PROTECT | 과목 삭제 방지 |
 | **TestQuestionInfo** | `subject`: default → PROTECT | 과목 삭제 방지 |
-| **TestQuestionInfo** | `creat_user`: default → SET_NULL | 출제자 삭제 시 문제 보존 |
+| **TestQuestionInfo** | `creat_user` → `create_user`: SET_NULL | 출제자 삭제 시 문제 보존 + 필드명 수정 |
 | **TestQuestionInfo** | `image`: nullable 추가 | 선택적 이미지 업로드 |
 | **TestQuestionInfo** | 인덱스 추가 (subject, type, degree) | 필터링 성능 향상 |
 | **TestQuestionInfo** | 인덱스 추가 (is_del, is_share) | 상태 필터링 성능 향상 |
