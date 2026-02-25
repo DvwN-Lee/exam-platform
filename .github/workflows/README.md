@@ -6,10 +6,12 @@ GitHub Actions 기반 CI/CD Pipeline 구성입니다.
 
 ```
 .github/workflows/
-├── ci.yml           # CI Pipeline
-├── cd-dev.yml       # Dev 환경 배포
-├── cd-staging.yml   # Staging 환경 배포
-└── cd-prod.yml      # Production 환경 배포
+├── ci.yml                    # CI Pipeline (lint, type-check, test, build)
+├── e2e.yml                   # E2E Tests (Playwright, PR/Push/Manual)
+├── infrastructure-test.yml   # Infrastructure Tests (Terraform, Helm)
+├── cd-dev.yml                # Dev 환경 배포
+├── cd-staging.yml            # Staging 환경 배포
+└── cd-prod.yml               # Production 환경 배포
 ```
 
 ## CI Pipeline (`ci.yml`)
@@ -25,12 +27,14 @@ GitHub Actions 기반 CI/CD Pipeline 구성입니다.
 
 | Job | 설명 | 의존성 |
 |-----|------|--------|
-| `lint-backend` | ruff check, ruff format | - |
-| `type-check` | mypy | - |
+| `changes` | 변경 감지 (dorny/paths-filter) | - |
+| `lint-backend` | ruff check, ruff format | changes |
+| `type-check` | mypy | changes |
 | `test-backend` | pytest + coverage | lint-backend, type-check |
-| `frontend` | TypeScript check, ESLint, Build | - |
+| `frontend` | TypeScript check, ESLint, Build | changes |
 | `docker-build` | Docker 이미지 빌드 (push 없음) | test-backend, frontend |
-| `e2e` | Playwright E2E 테스트 | test-backend, frontend |
+
+> **참고:** E2E 테스트는 별도 워크플로우(`e2e.yml`)로 분리되었다.
 
 ## CD Pipeline - Dev (`cd-dev.yml`)
 

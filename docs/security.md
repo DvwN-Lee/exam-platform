@@ -228,13 +228,13 @@ Production 환경에서는 배포 Domain만 허용하도록 환경 변수로 관
 | Secret | 환경 변수 | 비고 |
 |--------|-----------|------|
 | Django Secret Key | `SECRET_KEY` | Production에서 미설정 시 `ValueError` 발생 |
-| DB Password | `POSTGRES_PASSWORD` | - |
-| MongoDB Password | `MONGODB_PASSWORD` | 선택적 |
-| Redis URL | `REDIS_URL` | - |
-| AWS Credentials | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | S3 사용 시 |
+| JWT Secret Key | `JWT_SECRET_KEY` | JWT 서명 키 |
+| DB Host/Port/Name/User/Password | `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Cloud SQL 접속 정보 |
+| Redis Host/Port/Password | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Memorystore 접속 정보 |
+| GCS Bucket | `GCS_BUCKET_NAME` | Cloud Storage Bucket |
 
 - Development: `.env` 파일 + `python-dotenv`로 로드
-- Production: Kubernetes Secret / GCP Secret Manager에서 환경 변수로 주입
+- Production: External Secrets Operator를 통해 GCP Secret Manager에서 Kubernetes Secret으로 동기화 후 환경 변수로 주입
 
 ---
 
@@ -412,7 +412,7 @@ GCP Secret Manager --> ClusterSecretStore --> ExternalSecret --> Kubernetes Secr
 
 | 구성 요소 | 역할 | 파일 |
 |-----------|------|------|
-| `ClusterSecretStore` | GCP Secret Manager Backend 연결 | `argocd/add-ons/external-secrets/cluster-secret-store.yaml` |
+| `ClusterSecretStore` | GCP Secret Manager Backend 연결 | `argocd/infra/cluster-secret-store/cluster-secret-store.yaml` |
 | `ExternalSecret` | Secret Manager Key -> K8s Secret 동기화 (1h 주기) | `charts/exam-platform/templates/external-secret.yaml` |
 | Workload Identity | Pod -> GCP API 인증 (Static Key 없이) | `terraform/modules/gke/main.tf:88-90` |
 

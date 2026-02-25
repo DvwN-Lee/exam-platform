@@ -18,7 +18,7 @@
 
 | 필드 | 값 |
 |------|-----|
-| 아이디 | demoteacher01 |
+| 아이디 | demo_teacher |
 | Password | demo1234! |
 
 ### 3. 로그인 버튼 클릭

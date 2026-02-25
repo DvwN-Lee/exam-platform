@@ -41,13 +41,15 @@ Backend Pod
 
 ### GCP Secret Manager Key Naming
 
-GCP Secret Manager에서 각 Secret은 다음 형식으로 저장된다.
+GCP Secret Manager에서 각 Secret은 개별 Key로 저장된다.
 
 ```
-exam-platform-{환경}-{카테고리}
+examonline-{환경}-{카테고리}
 ```
 
-각 Secret은 JSON 형태로 여러 Key-Value Pair를 포함한다.
+예시: `examonline-prod-db-host`, `examonline-staging-redis-password`
+
+각 Secret Key는 단일 값을 포함하며, ExternalSecret이 이를 Kubernetes Secret의 각 Data 필드에 매핑한다.
 
 ---
 
@@ -70,59 +72,41 @@ Local/Dev 환경에서는 `charts/exam-platform/templates/secret.yaml`이 렌더
 
 ### 1. GCP Secret Manager에 Secret 등록
 
-Terraform으로 Cloud SQL, Memorystore를 생성하면 접속 정보가 출력된다. 해당 값을 GCP Secret Manager에 수동 등록한다.
+Terraform으로 Cloud SQL, Memorystore를 생성하면 접속 정보가 출력된다. 해당 값을 GCP Secret Manager에 개별 Key로 등록한다.
 
 ```bash
-# DB Secret 등록
-gcloud secrets create exam-platform-{ENV}-db \
-  --replication-policy="automatic"
+# DB Secret 등록 (개별 Key)
+for KEY in db-host db-port db-name db-user db-password; do
+  gcloud secrets create examonline-{ENV}-${KEY} \
+    --replication-policy="automatic"
+done
 
-gcloud secrets versions add exam-platform-{ENV}-db \
-  --data-file=- <<EOF
-{
-  "POSTGRES_HOST": "...",
-  "POSTGRES_PORT": "5432",
-  "POSTGRES_DB": "...",
-  "POSTGRES_USER": "...",
-  "POSTGRES_PASSWORD": "..."
-}
-EOF
+echo -n "10.x.x.x" | gcloud secrets versions add examonline-{ENV}-db-host --data-file=-
+echo -n "5432" | gcloud secrets versions add examonline-{ENV}-db-port --data-file=-
+echo -n "examonline" | gcloud secrets versions add examonline-{ENV}-db-name --data-file=-
+echo -n "examonline" | gcloud secrets versions add examonline-{ENV}-db-user --data-file=-
+echo -n "{PASSWORD}" | gcloud secrets versions add examonline-{ENV}-db-password --data-file=-
 
 # Redis Secret 등록
-gcloud secrets create exam-platform-{ENV}-redis \
-  --replication-policy="automatic"
+for KEY in redis-host redis-port redis-password; do
+  gcloud secrets create examonline-{ENV}-${KEY} \
+    --replication-policy="automatic"
+done
 
-gcloud secrets versions add exam-platform-{ENV}-redis \
-  --data-file=- <<EOF
-{
-  "REDIS_HOST": "...",
-  "REDIS_PORT": "6379",
-  "REDIS_PASSWORD": "..."
-}
-EOF
+echo -n "10.x.x.x" | gcloud secrets versions add examonline-{ENV}-redis-host --data-file=-
+echo -n "6379" | gcloud secrets versions add examonline-{ENV}-redis-port --data-file=-
+echo -n "{PASSWORD}" | gcloud secrets versions add examonline-{ENV}-redis-password --data-file=-
 
 # App Secret 등록
-gcloud secrets create exam-platform-{ENV}-app \
-  --replication-policy="automatic"
+gcloud secrets create examonline-{ENV}-django-secret-key --replication-policy="automatic"
+gcloud secrets create examonline-{ENV}-jwt-secret-key --replication-policy="automatic"
 
-gcloud secrets versions add exam-platform-{ENV}-app \
-  --data-file=- <<EOF
-{
-  "SECRET_KEY": "...",
-  "JWT_SECRET_KEY": "..."
-}
-EOF
+echo -n "{SECRET}" | gcloud secrets versions add examonline-{ENV}-django-secret-key --data-file=-
+echo -n "{SECRET}" | gcloud secrets versions add examonline-{ENV}-jwt-secret-key --data-file=-
 
 # GCS Secret 등록
-gcloud secrets create exam-platform-{ENV}-gcs \
-  --replication-policy="automatic"
-
-gcloud secrets versions add exam-platform-{ENV}-gcs \
-  --data-file=- <<EOF
-{
-  "GCS_BUCKET_NAME": "..."
-}
-EOF
+gcloud secrets create examonline-{ENV}-gcs-bucket-name --replication-policy="automatic"
+echo -n "{BUCKET_NAME}" | gcloud secrets versions add examonline-{ENV}-gcs-bucket-name --data-file=-
 ```
 
 ### 2. Workload Identity 설정
@@ -167,13 +151,8 @@ kubectl get externalsecret -n {NAMESPACE}
 
 ```bash
 # 1. 새 Secret Version 추가
-gcloud secrets versions add exam-platform-{ENV}-app \
-  --data-file=- <<EOF
-{
-  "SECRET_KEY": "{NEW_VALUE}",
-  "JWT_SECRET_KEY": "{NEW_VALUE}"
-}
-EOF
+echo -n "{NEW_VALUE}" | gcloud secrets versions add examonline-{ENV}-django-secret-key --data-file=-
+echo -n "{NEW_VALUE}" | gcloud secrets versions add examonline-{ENV}-jwt-secret-key --data-file=-
 
 # 2. 즉시 동기화 (1시간 대기 불가 시)
 kubectl annotate externalsecret exam-platform-app \

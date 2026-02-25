@@ -24,6 +24,8 @@ frontend/src/
     ├── MotionWrapper.tsx     # 페이지 전환 wrapper
     ├── StaggerContainer.tsx  # Stagger Container
     ├── StaggerItem.tsx       # Stagger 아이템
+    ├── StaggerTableBody.tsx  # 테이블 Body Stagger
+    ├── StaggerTableRow.tsx   # 테이블 Row Stagger
     ├── AnimatedCard.tsx      # 호버/탭 카드
     ├── FadeIn.tsx            # 단순 페이드인
     └── AnimatedProgress.tsx  # 프로그레스 바 애니메이션
@@ -35,12 +37,12 @@ frontend/src/
 
 | 상수 | 값 | 용도 |
 |------|-----|------|
-| `instant` | 0.1 | 즉각적인 피드백 |
-| `fast` | 0.2 | 빠른 전환 |
-| `normal` | 0.3 | 기본 전환 |
-| `slow` | 0.5 | 강조 전환 |
-| `slower` | 0.8 | 페이지 전환 |
-| `chart` | 0.8 | 차트 애니메이션 |
+| `instant` | 0.08 | 즉각적인 피드백 |
+| `fast` | 0.15 | 빠른 전환 |
+| `normal` | 0.25 | 기본 전환 |
+| `slow` | 0.4 | 강조 전환 |
+| `slower` | 0.5 | 페이지 전환 |
+| `chart` | 0.5 | 차트 애니메이션 |
 
 ### EASING (Material Design 기반)
 
@@ -50,6 +52,8 @@ frontend/src/
 | `easeIn` | `[0.4, 0.0, 1, 1]` | 퇴장 애니메이션 |
 | `easeInOut` | `[0.4, 0.0, 0.2, 1]` | 양방향 전환 |
 | `spring` | `{ stiffness: 300, damping: 30 }` | 탄성 효과 |
+| `springBouncy` | `{ stiffness: 400, damping: 10 }` | 바운스 탄성 |
+| `springGentle` | `{ stiffness: 200, damping: 25 }` | 부드러운 탄성 |
 
 ### STAGGER (초 단위)
 
@@ -63,13 +67,13 @@ frontend/src/
 
 ### Dashboard
 
-- **TeacherDashboard**: 통계 카드 stagger, 차트 애니메이션, 테이블 row stagger
-- **StudentDashboard**: 진행 중 시험 카드, 최근 결과 리스트 stagger
+- **TeacherDashboard**: 통계 카드 stagger, 차트 FadeIn slideUp, 최근 활동 stagger
+- **StudentDashboard**: 통계 카드 stagger, 점수 추이 차트, 예정 시험/최근 성적 stagger
 
 ### Auth Pages
 
-- **LoginPage**: 폼 요소 순차 등장, 역할 선택 버튼 호버/탭 효과, 일러스트레이션 floating 애니메이션
-- **RegisterPage**: 동일한 패턴 적용
+- **LoginPage**: 폼 요소 순차 등장, 소셜 로그인 버튼 호버 y 이동, 일러스트레이션 floating 애니메이션
+- **RegisterPage**: 역할 선택 버튼 호버/탭 효과, 동일한 stagger 패턴 적용
 
 ### List Pages
 
