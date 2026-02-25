@@ -16,15 +16,15 @@ features/auth/
 
 ### LoginPage
 
-로그인 폼과 역할 선택 UI를 제공한다.
+로그인 폼을 제공한다. 역할 선택 UI는 없으며 RegisterPage에서만 역할을 선택한다.
 
 #### 주요 기능
 
-- 역할 선택 (학생/교사)
 - 아이디/비밀번호 입력
-- 로그인 유지 옵션
-- 소셜 로그인 버튼 (Google, Kakao)
+- 로그인 유지 옵션 (remember 체크박스)
+- 소셜 로그인 버튼 (Google, Kakao) - 준비 중
 - 회원가입 페이지 이동
+- 비밀번호 찾기 (준비 중)
 
 #### 폼 검증 Schema
 
@@ -32,13 +32,8 @@ features/auth/
 const loginSchema = z.object({
   username: z.string().min(1, '아이디를 입력해주세요'),
   password: z.string().min(1, 'Password를 입력해주세요'),
+  remember: z.boolean(),
 })
-```
-
-#### 상태 관리
-
-```typescript
-const [selectedRole, setSelectedRole] = useState<'student' | 'teacher'>('student')
 ```
 
 ### RegisterPage
@@ -48,25 +43,37 @@ const [selectedRole, setSelectedRole] = useState<'student' | 'teacher'>('student
 #### 주요 기능
 
 - 역할 선택 (학생/교사)
-- 기본 정보 입력 (아이디, 비밀번호, 이메일, 닉네임)
+- 기본 정보 입력 (아이디, 이메일, 닉네임, 비밀번호)
 - 비밀번호 확인
-- 교사 전용: 담당 과목 선택
-- 약관 동의
+- 학생 전용: 학생 이름
+- 교사 전용: 교사 이름, 담당 과목 선택
+- `FIELD_ORDER` 기준 첫 번째 에러만 표시하는 `firstErrorField` 패턴 적용
 
 #### 폼 검증 Schema
 
 ```typescript
-const registerSchema = z.object({
-  username: z.string().min(4, '아이디는 4자 이상이어야 합니다'),
-  password: z.string().min(6, '비밀번호는 6자 이상이어야 합니다'),
-  password_confirm: z.string(),
-  email: z.string().email('올바른 이메일 형식이 아닙니다'),
-  nick_name: z.string().min(2, '닉네임은 2자 이상이어야 합니다'),
-  subject_id: z.number().optional(),  // 교사 전용
-}).refine((data) => data.password === data.password_confirm, {
-  message: '비밀번호가 일치하지 않습니다',
-  path: ['password_confirm'],
-})
+const registerSchema = z
+  .object({
+    username: z
+      .string()
+      .min(USERNAME_MIN_LENGTH, `아이디는 ${USERNAME_MIN_LENGTH}자 이상이어야 합니다`)
+      .regex(/^[a-zA-Z0-9_]+$/, '아이디는 영문, 숫자, 밑줄(_)만 사용 가능합니다'),
+    email: z.string().email('올바른 이메일 주소를 입력해주세요'),
+    nick_name: z.string().min(NICKNAME_MIN_LENGTH, `닉네임은 ${NICKNAME_MIN_LENGTH}자 이상이어야 합니다`),
+    password: z
+      .string()
+      .min(PASSWORD_MIN_LENGTH, `Password는 ${PASSWORD_MIN_LENGTH}자 이상이어야 합니다`),
+    password2: z.string(),
+    user_type: z.enum(['student', 'teacher']),
+    student_name: z.string().optional(),
+    teacher_name: z.string().optional(),
+    subject_id: z.number().optional(),
+  })
+  .refine((data) => data.password === data.password2, {
+    message: 'Password가 일치하지 않습니다',
+    path: ['password2'],
+  })
+  // + student_name, teacher_name, subject_id 조건부 검증 refine
 ```
 
 ## API 연동
@@ -74,7 +81,7 @@ const registerSchema = z.object({
 ### 로그인
 
 ```
-POST /api/v1/users/login/
+POST /auth/token/
 ```
 
 **Request:**
@@ -89,7 +96,6 @@ POST /api/v1/users/login/
 ```json
 {
   "access": "jwt_access_token",
-  "refresh": "jwt_refresh_token",
   "user": {
     "id": 1,
     "username": "string",
@@ -100,10 +106,12 @@ POST /api/v1/users/login/
 }
 ```
 
+> Refresh Token은 HttpOnly Cookie로 전송된다. 토큰 갱신은 `POST /auth/token/refresh/`로 수행한다.
+
 ### 회원가입
 
 ```
-POST /api/v1/users/register/
+POST /auth/register/
 ```
 
 **Request:**
@@ -111,10 +119,13 @@ POST /api/v1/users/register/
 {
   "username": "string",
   "password": "string",
+  "password2": "string",
   "email": "string",
   "nick_name": "string",
   "user_type": "student" | "teacher",
-  "subject_id": 1  // 교사 전용
+  "student_name": "string",
+  "teacher_name": "string",
+  "subject_id": 1
 }
 ```
 
@@ -126,8 +137,8 @@ POST /api/v1/users/register/
 |------|------|
 | 전체 카드 | FadeIn + SlideUp |
 | 폼 요소 | Stagger 순차 등장 |
-| 역할 선택 버튼 | whileHover scale, whileTap scale |
-| 소셜 로그인 버튼 | whileHover y 이동 |
+| 역할 선택 버튼 (RegisterPage) | whileHover scale, whileTap scale |
+| 소셜 로그인 버튼 (LoginPage) | whileHover y 이동 |
 | 일러스트 아이콘 | Floating 애니메이션 |
 | 기능 리스트 | Stagger 순차 등장 |
 
@@ -164,14 +175,20 @@ const itemVariants = {
 
 ## 인증 상태 관리
 
-Zustand `authStore`를 사용하여 인증 상태를 관리한다.
+Zustand `authStore`를 사용하여 인증 상태를 관리한다. `persist` 미들웨어를 통해 `user` 정보를 LocalStorage에 보존한다.
 
 ```typescript
-interface AuthState {
-  user: User | null
-  accessToken: string | null
-  refreshToken: string | null
-  setAuth: (user: User, access: string, refresh: string) => void
+interface AuthStore extends AuthState {
+  setAuth: (user: User, accessToken: string) => void
+  setUser: (user: User) => void
+  setTokens: (accessToken: string) => void
   logout: () => void
+  initializeAuth: () => Promise<void>
 }
 ```
+
+### 주요 동작
+
+- `setAuth`: 로그인 시 user, accessToken 설정
+- `initializeAuth`: 앱 초기화 시 LocalStorage token으로 인증 복원. user가 없으면 `GET /users/me/`로 복원 시도
+- `logout`: token 삭제 및 상태 초기화

@@ -91,6 +91,8 @@ exam-platform/
 │   └── values-*.yaml        # 환경별 Values
 ├── .github/workflows/       # CI/CD Pipeline
 └── docs/                    # 프로젝트 문서
+    ├── architecture/        # 아키텍처 문서 + ADR
+    ├── demo/                # Demo 시나리오 + Screenshot
     └── features/            # 기능별 상세 문서
 ```
 

@@ -107,7 +107,7 @@ const { fields, append, remove } = useFieldArray({
 ### 문제 목록 조회
 
 ```
-GET /api/v1/questions/
+GET /questions
 ```
 
 **Query Parameters:**
@@ -119,16 +119,28 @@ GET /api/v1/questions/
 | `ordering` | string | 정렬 기준 |
 | `page` | number | 페이지 번호 |
 
+### 내 문제 목록
+
+```
+GET /questions/my
+```
+
+### 공유 문제 목록
+
+```
+GET /questions/shared
+```
+
 ### 문제 상세 조회
 
 ```
-GET /api/v1/questions/{id}/
+GET /questions/{id}
 ```
 
 ### 문제 생성
 
 ```
-POST /api/v1/questions/
+POST /questions/
 ```
 
 **Request:**
@@ -149,19 +161,32 @@ POST /api/v1/questions/
 ### 문제 수정
 
 ```
-PUT /api/v1/questions/{id}/
+PATCH /questions/{id}
 ```
 
 ### 문제 삭제
 
 ```
-DELETE /api/v1/questions/{id}/
+DELETE /questions/{id}
+```
+
+### 문제 공유 설정
+
+```
+POST /questions/{id}/share
+```
+
+**Request:**
+```json
+{
+  "is_share": true
+}
 ```
 
 ### 과목 목록 조회
 
 ```
-GET /api/v1/subjects/
+GET /subjects/
 ```
 
 ## 데이터 타입

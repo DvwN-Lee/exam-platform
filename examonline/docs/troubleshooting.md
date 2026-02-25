@@ -106,7 +106,7 @@ test code에서 사용한 URL path와 실제 `urls.py`에 등록된 path 불일�
 
 ```python
 # urls.py 확인
-router.register('exams', ExamTakingViewSet, basename='exam-taking')
+router.register('exams', ExamTakingViewSet, basename='exam')
 
 # 실제 생성되는 URL
 /api/v1/exams/
@@ -130,7 +130,7 @@ url = "/api/v1/exams/available/"
 - Django shell에서 URL reverse 테스트
   ```python
   from django.urls import reverse
-  reverse('exam-taking-available')
+  reverse('exam-available')
   ```
 
 ---
@@ -340,7 +340,7 @@ LOGGING = {
 
 ### P0-1: 시험 제출 N+1 Query 최적화
 
-**File**: `apps/examination/api/taking_views.py:295-360`
+**File**: `apps/examination/api/taking_views.py` (submit action)
 
 #### 증상
 
@@ -402,7 +402,7 @@ for answer_item in answers:
 
 ### P0-2: 시험지 미리보기 Prefetch 누락
 
-**File**: `apps/testpaper/api/views.py:105-131`
+**File**: `apps/testpaper/api/views.py` (preview action)
 
 #### 증상
 
@@ -438,7 +438,7 @@ def preview(self, request, pk=None):
 
 ### P0-3: Refresh Token HttpOnly Cookie 전환
 
-**Files**: `apps/user/api/views.py:31-96`, `config/api.py:83-109`
+**Files**: `apps/user/api/views.py` (CustomTokenObtainPairView, CustomTokenRefreshView), `config/api.py` (CORS settings)
 
 #### 보안 취약점
 
@@ -527,7 +527,7 @@ $ .venv/bin/python -m pytest apps/examination/api/test_taking_coverage.py -v
 ============================= test session starts ==============================
 platform darwin -- Python 3.14.0, pytest-9.0.2, pluggy-1.6.0
 django: version: 5.2.9, settings: config.local
-rootdir: /Users/idongju/Desktop/Git/OnlineExam-v2/examonline
+rootdir: /Users/idongju/Desktop/Git/exam-platform/examonline
 configfile: pyproject.toml
 plugins: django-4.11.1, cov-7.0.0
 collecting ... collected 24 items
@@ -567,7 +567,7 @@ $ .venv/bin/python -m pytest apps/testpaper/api/tests.py -v
 ============================= test session starts ==============================
 platform darwin -- Python 3.14.0, pytest-9.0.2, pluggy-1.6.0
 django: version: 5.2.9, settings: config.local
-rootdir: /Users/idongju/Desktop/Git/OnlineExam-v2/examonline
+rootdir: /Users/idongju/Desktop/Git/exam-platform/examonline
 configfile: pyproject.toml
 plugins: django-4.11.1, cov-7.0.0
 collecting ... collected 19 items
@@ -1092,7 +1092,7 @@ $ .venv/bin/python -m pytest apps/user/api/test_dashboard_coverage.py -v
 ============================= test session starts ==============================
 platform darwin -- Python 3.14.0, pytest-9.0.2, pluggy-1.6.0
 django: version: 5.2.9, settings: config.local
-rootdir: /Users/idongju/Desktop/Git/OnlineExam-v2/examonline
+rootdir: /Users/idongju/Desktop/Git/exam-platform/examonline
 configfile: pyproject.toml
 plugins: django-4.11.1, cov-7.0.0
 collecting ... collected 18 items
@@ -1339,7 +1339,7 @@ Frontend에서 시험 결과 목록 및 상세 페이지에서 testpaper 정보 
 `my_submissions` API endpoint (`/api/v1/exams/my/`) 응답에 `test_paper` field 미포함.
 
 ```python
-# 문제가 되는 code (taking_views.py:550-560)
+# 문제가 되는 code (taking_views.py: my_submissions action)
 submission_data = {
     'id': submission.id,
     'exam': submission.exam,
@@ -1352,14 +1352,14 @@ submission_data = {
 
 **수정 파일**
 
-`examonline/apps/examination/api/taking_views.py:553`
+`examonline/apps/examination/api/taking_views.py` (my_submissions action)
 
 **해결**
 
 `submission_data` dictionary에 `test_paper` field 추가:
 
 ```python
-# After (taking_views.py:550-561)
+# After (taking_views.py: my_submissions action)
 submission_data = {
     'id': submission.id,
     'exam': submission.exam,
@@ -1461,7 +1461,7 @@ Button component에 `onClick` handler 미정의.
 
 **수정 파일**
 
-`frontend/src/features/examinations/ExaminationDetailPage.tsx:236-238`
+`frontend/src/features/examinations/ExaminationDetailPage.tsx`
 
 **해결**
 
@@ -1501,11 +1501,11 @@ Django CORS 설정(`CORS_ALLOWED_ORIGINS`)에 port 5177이 포함되지 않음. 
 
 **수정 파일**
 
-`examonline/config/api.py:74-87`
+`examonline/config/api.py` (CORS_ALLOWED_ORIGINS)
 
 **해결**
 
-`CORS_ALLOWED_ORIGINS`에 port 5175-5177 추가:
+`CORS_ALLOWED_ORIGINS`에 port 5175-5179 추가:
 
 ```python
 # Before
@@ -1526,12 +1526,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5175",
     "http://localhost:5176",
     "http://localhost:5177",
+    "http://localhost:5178",
+    "http://localhost:5179",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
     "http://127.0.0.1:5175",
     "http://127.0.0.1:5176",
     "http://127.0.0.1:5177",
+    "http://127.0.0.1:5178",
+    "http://127.0.0.1:5179",
 ]
 ```
 
@@ -1837,4 +1841,4 @@ Build: Success (1,148 KB)
 
 - [Coverage Improvement Report](./coverage-improvement-report.md)
 - [Phase 4 API Test Results](./phase4-api-test-results.md)
-- [Django QuerySet API Reference](https://docs.djangoproject.com/en/5.0/ref/models/querysets/)
+- [Django QuerySet API Reference](https://docs.djangoproject.com/en/5.2/ref/models/querysets/)

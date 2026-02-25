@@ -21,7 +21,8 @@ terraform/
 │   ├── memorystore/          # Memorystore (Redis)
 │   ├── gcs/                  # Cloud Storage Bucket
 │   ├── gcs-state-bucket/     # Terraform State Bucket
-│   └── gar/                  # Artifact Registry
+│   ├── gar/                  # Artifact Registry
+│   └── cloud-build/          # Cloud Build
 └── environments/
     ├── gcp-staging/          # GCP Staging 환경
     └── gcp-prod/             # GCP Production 환경
@@ -63,6 +64,7 @@ terraform apply -var-file=terraform.tfvars
 | `gcs` | Cloud Storage | Bucket, Lifecycle, IAM |
 | `gcs-state-bucket` | Terraform State Bucket | GCS Bucket, Versioning, UBLA |
 | `gar` | Artifact Registry | Docker Repository |
+| `cloud-build` | Cloud Build | Build Trigger, Configuration |
 
 ### 3. Production 환경 배포
 

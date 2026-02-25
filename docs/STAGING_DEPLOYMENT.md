@@ -24,7 +24,7 @@ OnlineExam-v2 프로젝트를 GCP Staging 환경에 배포하고 E2E 테스트�
 **프로비저닝되는 리소스:**
 
 - VPC Network (10.1.0.0/16)
-- GKE Cluster (Regional, 2 nodes, e2-standard-2)
+- GKE Cluster (Zonal asia-northeast3-a, 1 node, e2-standard-2)
 - Cloud SQL PostgreSQL 16 (db-g1-small)
 - Memorystore Redis (Standard HA, 2GB)
 - Google Cloud Storage (Assets)
@@ -89,9 +89,8 @@ bash deploy-all.sh
 1. Prerequisites 확인
 2. Terraform Infrastructure 배포
 3. Docker 이미지 빌드 및 Push
-4. Kubernetes Secrets 구성
-5. Helm Chart 배포
-6. E2E 테스트 실행
+4. Helm Chart 배포 (ExternalSecret으로 Secret 자동 동기화)
+5. E2E 테스트 실행
 
 **예상 소요 시간:** 20-30분
 
@@ -141,22 +140,17 @@ bash 03-build-push-images.sh
 - Backend: `asia-northeast3-docker.pkg.dev/{project}/exam-platform/backend:1.0.0-staging`
 - Frontend: `asia-northeast3-docker.pkg.dev/{project}/exam-platform/frontend:1.0.0-staging`
 
-### Step 4: Kubernetes Secrets 구성
+### Step 4: Helm Chart 배포
+
+Helm Chart 배포는 `deploy-all.sh` 내부에서 자동으로 수행된다. 수동 배포가 필요한 경우:
 
 ```bash
-bash 04-configure-secrets.sh
-```
-
-생성되는 Secrets:
-
-- `db-credentials`: Cloud SQL 연결 정보
-- `redis-credentials`: Redis 연결 정보
-- `app-secrets`: Django Secret Key, JWT Secret Key
-
-### Step 5: Helm Chart 배포
-
-```bash
-bash 05-helm-deploy.sh
+helm upgrade --install exam-platform ./charts/exam-platform \
+  --namespace exam-platform-staging \
+  --create-namespace \
+  --values ./charts/exam-platform/values-staging.yaml \
+  --atomic \
+  --timeout 10m
 ```
 
 배포되는 리소스:
@@ -164,9 +158,10 @@ bash 05-helm-deploy.sh
 - Backend Deployment (2 replicas)
 - Frontend Deployment (2 replicas)
 - Services (ClusterIP)
-- Ingress (GCE Load Balancer)
+- Ingress (NGINX Ingress Controller)
+- ExternalSecret (GCP Secret Manager 동기화)
 
-### Step 6: E2E 테스트 실행
+### Step 5: E2E 테스트 실행
 
 ```bash
 bash 06-run-e2e-tests.sh
@@ -224,24 +219,22 @@ bash cleanup.sh
 
 Staging 환경에 자동 배포하려면:
 
-1. `release/staging` 브랜치에 Push
+1. `release/*` 브랜치에 Push (CI 성공 후 자동 트리거)
 
 ```bash
-git checkout -b release/staging
-git push origin release/staging
+git checkout -b release/v1.0.0
+git push origin release/v1.0.0
 ```
 
-2. 또는 Workflow를 수동으로 실행
-
-- GitHub Actions 탭에서 "CD - Staging Full Deployment" Workflow 선택
-- "Run workflow" 클릭
+CI Workflow 성공 시 `cd-staging.yml`이 자동 실행된다.
 
 ### Workflow 단계
 
-1. Terraform Infrastructure 프로비저닝
-2. Docker 이미지 빌드 및 Push
-3. GKE Cluster 배포
-4. (선택) E2E 테스트 실행
+1. Branch명에서 Version 추출 (예: `release/v1.2.3` -> `v1.2.3`)
+2. Docker 이미지 빌드 및 Artifact Registry Push
+3. Helm Chart를 사용한 GKE 배포 (`--atomic`, 10분 Timeout)
+4. Rollout Status 검증
+5. Slack 알림
 
 ### 필요한 GitHub Secrets
 
@@ -285,7 +278,7 @@ gcloud services vpc-peerings list --network=vpc --project=$GCP_PROJECT_ID
 **해결:** Ingress 상태를 모니터링하며 대기 (최대 5분):
 
 ```bash
-kubectl get ingress -n default -w
+kubectl get ingress -n exam-staging -w
 ```
 
 ### Issue 4: E2E 테스트 실패 (네트워크 타임아웃)
@@ -295,7 +288,7 @@ kubectl get ingress -n default -w
 **해결:**
 
 ```bash
-kubectl wait --for=condition=Ready pod -l app=backend -n default --timeout=300s
+kubectl wait --for=condition=Ready pod -l app=backend -n exam-staging --timeout=300s
 ```
 
 ### Issue 5: Docker 이미지 Push 실패
@@ -313,13 +306,13 @@ gcloud auth configure-docker asia-northeast3-docker.pkg.dev --quiet
 ### External IP 확인
 
 ```bash
-kubectl get ingress -n default
+kubectl get ingress -n exam-staging
 ```
 
 ### /etc/hosts 설정
 
 ```bash
-EXTERNAL_IP=$(kubectl get ingress -n default -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
+EXTERNAL_IP=$(kubectl get ingress -n exam-staging -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
 echo "$EXTERNAL_IP staging.examonline.com" | sudo tee -a /etc/hosts
 ```
 
@@ -334,13 +327,13 @@ http://staging.examonline.com
 ### Backend 로그
 
 ```bash
-kubectl logs -f -l app=backend -n default
+kubectl logs -f -l app=backend -n exam-staging
 ```
 
 ### Frontend 로그
 
 ```bash
-kubectl logs -f -l app=frontend -n default
+kubectl logs -f -l app=frontend -n exam-staging
 ```
 
 ### Ingress Controller 로그
@@ -354,19 +347,19 @@ kubectl logs -f -n kube-system -l k8s-app=glbc
 ### Pod 상태
 
 ```bash
-kubectl get pods -n default
+kubectl get pods -n exam-staging
 ```
 
 ### Service 상태
 
 ```bash
-kubectl get svc -n default
+kubectl get svc -n exam-staging
 ```
 
 ### Ingress 상태
 
 ```bash
-kubectl get ingress -n default
+kubectl get ingress -n exam-staging
 ```
 
 ### Cloud SQL 상태
@@ -386,7 +379,7 @@ gcloud redis instances describe exam-redis --region=asia-northeast3 --project=$G
 - [Terraform 구성](../terraform/README.md)
 - [Helm Chart 가이드](../charts/exam-platform/README.md)
 - [E2E 테스트 가이드](../frontend/e2e/README.md)
-- [GitHub Actions Workflow](.github/workflows/cd-staging-full.yml)
+- [GitHub Actions CD Staging Workflow](../.github/workflows/cd-staging.yml)
 
 ## 문의
 
@@ -398,8 +391,8 @@ gcloud redis instances describe exam-redis --region=asia-northeast3 --project=$G
 **로그 수집 명령어:**
 
 ```bash
-kubectl get all -n default > deployment-status.txt
-kubectl logs -l app=backend -n default --tail=100 > backend-logs.txt
-kubectl logs -l app=frontend -n default --tail=100 > frontend-logs.txt
-kubectl describe ingress -n default > ingress-status.txt
+kubectl get all -n exam-staging > deployment-status.txt
+kubectl logs -l app=backend -n exam-staging --tail=100 > backend-logs.txt
+kubectl logs -l app=frontend -n exam-staging --tail=100 > frontend-logs.txt
+kubectl describe ingress -n exam-staging > ingress-status.txt
 ```

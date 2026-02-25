@@ -16,12 +16,12 @@ tests/terratest/
 │   ├── kubernetes.go           # Kubernetes 테스트 유틸리티
 │   └── playwright.go           # Playwright 테스트 통합
 ├── terraform/                  # Terraform 모듈 테스트
-│   ├── vpc/vpc_test.go
-│   ├── eks/eks_test.go
-│   ├── rds/rds_test.go
-│   ├── elasticache/elasticache_test.go
-│   ├── s3/s3_test.go
-│   └── ecr/ecr_test.go
+│   ├── gcp-vpc/
+│   ├── gke/
+│   ├── cloudsql/
+│   ├── memorystore/
+│   ├── gcs/
+│   └── gar/
 └── helm/                       # Helm Chart 테스트
     ├── template_test.go        # Template 렌더링 검증
     └── deployment_test.go      # Integration 배포 테스트
@@ -33,7 +33,7 @@ tests/terratest/
 - Terraform 1.7.0 이상
 - Helm 3.14.0 이상
 - Kind (Integration 테스트 시)
-- Node.js 20 이상 (Playwright 테스트 시)
+- Node.js 22 이상 (Playwright 테스트 시)
 
 ## 설치
 
@@ -46,19 +46,19 @@ go mod download
 
 ### Terraform 모듈 테스트
 
-Terraform Plan을 실행하여 모듈 구성을 검증한다. 실제 AWS 리소스를 생성하지 않는다.
+Terraform Plan을 실행하여 모듈 구성을 검증한다. 실제 GCP 리소스를 생성하지 않는다.
 
 ```bash
 # 전체 Terraform 테스트 실행
 go test -v -timeout 30m ./terraform/...
 
 # 특정 모듈만 테스트
-go test -v -timeout 30m ./terraform/vpc/...
-go test -v -timeout 30m ./terraform/eks/...
-go test -v -timeout 30m ./terraform/rds/...
-go test -v -timeout 30m ./terraform/elasticache/...
-go test -v -timeout 30m ./terraform/s3/...
-go test -v -timeout 30m ./terraform/ecr/...
+go test -v -timeout 30m ./terraform/gcp-vpc/...
+go test -v -timeout 30m ./terraform/gke/...
+go test -v -timeout 30m ./terraform/cloudsql/...
+go test -v -timeout 30m ./terraform/memorystore/...
+go test -v -timeout 30m ./terraform/gcs/...
+go test -v -timeout 30m ./terraform/gar/...
 ```
 
 ### Helm Chart 테스트
@@ -106,12 +106,12 @@ npx playwright test smoke/
 
 | Module | 검증 항목 |
 |--------|----------|
-| VPC | Plan 유효성, Subnet 수, NAT Gateway, Internet Gateway, Output 존재 |
-| EKS | Cluster/NodeGroup 생성, IAM Role, Security Group, Spot Instance, Public Access |
-| RDS | Instance 생성, Encryption, Multi-AZ, Parameter Group, Output 존재 |
-| ElastiCache | Replication Group, Multi-AZ, Auth Token, Transit Encryption |
-| S3 | Bucket 설정, Versioning, Lifecycle, CORS, Server-Side Encryption |
-| ECR | Repository 생성, Lifecycle Policy, Image Scanning, Immutable Tags |
+| gcp-vpc | Plan 유효성, Subnet 수, Cloud NAT, Cloud Router, Output 존재 |
+| gke | Cluster/NodePool 생성, Workload Identity, Shielded Nodes, Master Authorized Networks |
+| cloudsql | Instance 생성, Encryption, Private IP, SSL, Output 존재 |
+| memorystore | Redis Instance, Auth Token, Transit Encryption |
+| gcs | Bucket 설정, Versioning, Lifecycle, IAM |
+| gar | Repository 생성, Docker Format, Cleanup Policy |
 
 ### Helm Chart Tests
 
@@ -199,7 +199,7 @@ helm-template-tests ──┬──▶ integration-tests ──▶ playwright-sm
 |-----|------|-------|
 | `RUN_INTEGRATION_TESTS` | Integration 테스트 활성화 | `false` |
 | `RUN_PLAYWRIGHT_TESTS` | Playwright 테스트 활성화 | `false` |
-| `PLAYWRIGHT_BASE_URL` | Playwright 테스트 대상 URL | `http://localhost:3000` |
+| `PLAYWRIGHT_BASE_URL` | Playwright 테스트 대상 URL | `http://localhost:5173` |
 | `BACKEND_URL` | Backend API URL | `${PLAYWRIGHT_BASE_URL}/api/v1` |
 
 ## Troubleshooting
