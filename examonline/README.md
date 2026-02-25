@@ -70,8 +70,9 @@ examonline/
 ├── core/                   # 공통 모듈
 │   └── api/
 │       └── pagination.py   # 페이지네이션
-├── docker/                 # Docker 설정
 ├── docs/                   # 문서
+├── Dockerfile              # Docker 빌드 설정
+├── docker-compose.dev.yml  # 개발 DB Container
 └── manage.py
 ```
 
@@ -240,6 +241,7 @@ response.set_cookie(
 
 - [Troubleshooting Guide](./docs/troubleshooting.md)
 - [Database Normalization](./docs/database-normalization.md)
+- [API Test Results](./docs/api-test-results.md)
 - [Phase 3 Testing Plan](./docs/phase3-testing-plan.md)
 - [Phase 4 API Test Results](./docs/phase4-api-test-results.md)
 - [Coverage Improvement Report](./docs/coverage-improvement-report.md)

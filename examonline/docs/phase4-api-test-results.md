@@ -4,7 +4,7 @@
 
 - 테스트 일시: 2025-12-19
 - API 서버: http://localhost:8001
-- 테스트 대상: Test Paper Management API (8개 endpoint)
+- 테스트 대상: Test Paper Management API (9개 endpoint)
 
 ## 테스트 결과 요약
 
@@ -197,21 +197,21 @@
 
 ## API Endpoint 목록
 
-1. `POST /api/v1/papers/` - 시험지 생성
-2. `GET /api/v1/papers/` - 시험지 목록 조회
-3. `GET /api/v1/papers/{id}/` - 시험지 상세 조회
-4. `PATCH /api/v1/papers/{id}/` - 시험지 부분 수정
-5. `PUT /api/v1/papers/{id}/` - 시험지 전체 수정
-6. `DELETE /api/v1/papers/{id}/` - 시험지 삭제
-7. `POST /api/v1/papers/{id}/add_questions/` - 문제 추가
-8. `DELETE /api/v1/papers/{id}/remove-question/{question_id}/` - 문제 제거
-9. `GET /api/v1/papers/{id}/preview/` - 미리보기 (문제+옵션)
+1. `POST /api/v1/testpapers/` - 시험지 생성
+2. `GET /api/v1/testpapers/` - 시험지 목록 조회
+3. `GET /api/v1/testpapers/{id}/` - 시험지 상세 조회
+4. `PATCH /api/v1/testpapers/{id}/` - 시험지 부분 수정
+5. `PUT /api/v1/testpapers/{id}/` - 시험지 전체 수정
+6. `DELETE /api/v1/testpapers/{id}/` - 시험지 삭제
+7. `POST /api/v1/testpapers/{id}/add_questions/` - 문제 추가
+8. `DELETE /api/v1/testpapers/{id}/remove-question/{question_id}/` - 문제 제거
+9. `GET /api/v1/testpapers/{id}/preview/` - 미리보기 (문제+옵션)
 
 ## 결론
 
 Phase 4 Test Paper Management API의 모든 기능이 정상적으로 동작하며, 요구사항을 충족함.
 
-- 8개 핵심 endpoint 정상 동작
+- 9개 핵심 endpoint 정상 동작
 - 자동 계산 로직 정상 동작
 - 권한 제어 정상 동작
 - 비즈니스 로직 검증 정상 동작
