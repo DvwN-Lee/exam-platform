@@ -178,9 +178,9 @@ npx playwright test tests/auth/
 
 | Workflow | 실행 테스트 | 트리거 |
 |----------|------------|--------|
-| `ci.yml` | pytest + Vitest | PR (backend/frontend 변경) |
+| `ci.yml` | pytest + Vitest | PR / push (backend/frontend 변경) |
 | `e2e.yml` | Playwright (3-tier) | PR/Push |
-| `infrastructure-test.yml` | Terratest | terraform/ 변경 |
+| `infrastructure-test.yml` | Terratest | terraform/, charts/, argocd/ 변경 |
 
 `paths-filter`를 활용하여 변경된 파일 경로에 해당하는 Workflow만 실행한다. Backend 코드 변경 시 pytest만, Frontend 코드 변경 시 Vitest만 실행하여 불필요한 파이프라인 비용을 절감한다.
 
@@ -188,7 +188,16 @@ npx playwright test tests/auth/
 
 ## 7. AI-Assisted 테스트 작성
 
-pytest, Vitest, Terratest 테스트를 Claude Code와 함께 작성했다. 3개 언어의 테스트 패턴 차이를 AI가 파악하고 각 레이어에 맞는 구조로 코드를 생성하도록 프롬프트를 구성했다. E2E 테스트는 `fix(e2e)` 21개 커밋으로 기록된 반복 디버깅을 통해 안정화했다.
+pytest, Vitest, Terratest 테스트를 Claude Code와 함께 작성했다. 3개 언어에서 나타난 프롬프트 전략의 차이가 있다.
+
+| 레이어 | AI 활용 전략 |
+|--------|------------|
+| pytest | `conftest.py` 픽스처 격리 패턴, `APIClient` 인증 설정, Edge Case 시나리오 생성 |
+| Vitest | 컴포넌트 렌더링 + 사용자 인터랙션 시나리오를 RTL 쿼리 기반으로 구성 |
+| Terratest | GCP 리소스 생성 후 `retry.DoWithRetry` 패턴으로 검증 타이밍 처리 |
+| Playwright | 페이지 오브젝트 패턴 + Smoke/CI/Full 티어별 태그 구분 |
+
+E2E 테스트는 `fix(e2e)` 21개 커밋으로 기록된 반복 디버깅을 통해 안정화했다. 대표 사례로 DateTimePicker 컴포넌트 클릭 타이밍 이슈가 있으며, `waitFor` 조건과 `retry` 패턴을 조합하여 해결했다. AI가 생성한 selector 코드에서 주로 발견된 오류는 동적 DOM 변화에 대응하지 못하는 고정 셀렉터 사용이었고, 이를 `getByRole`·`getByText` 기반 접근으로 수정하는 패턴을 반복 적용했다.
 
 ---
 
