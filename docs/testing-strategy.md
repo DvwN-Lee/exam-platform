@@ -174,7 +174,7 @@ npx playwright test tests/auth/
 
 ## 6. CI/CD 통합
 
-6개 GitHub Actions Workflow에서 테스트 실행을 자동화한다.
+테스트 실행에 관여하는 3개 GitHub Actions Workflow를 자동화한다. (전체 프로젝트에는 CD 포함 6개 Workflow가 존재한다.)
 
 | Workflow | 실행 테스트 | 트리거 |
 |----------|------------|--------|
