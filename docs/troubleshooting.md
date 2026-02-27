@@ -1,6 +1,6 @@
 # Exam Platform Troubleshooting Guide
 
-프로젝트 개발 및 운영 과정에서 발생한 주요 이슈와 해결 방법을 정리한 문서입니다.
+프로젝트 개발 및 운영 과정에서 발생한 주요 이슈와 해결 방법을 정리한 문서입니다. 이슈 추적 및 해결 과정에서 Claude Code를 활용한 AI-Assisted Debugging을 적용했습니다.
 
 ---
 
