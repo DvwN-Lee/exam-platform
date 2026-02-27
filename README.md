@@ -30,7 +30,9 @@
 - **Package Manager**: uv
 
 ### Development Tools
-- **Development Tools**: Claude Code, GitHub Actions, ArgoCD
+- **AI Pair Programmer**: Claude Code
+- **CI/CD**: GitHub Actions
+- **GitOps**: ArgoCD
 
 ### Frontend
 - **Framework**: React 19, TypeScript 5.9
@@ -67,8 +69,6 @@
 - 변경에 대한 자신감 있는 리팩터링
 
 ### AI-Assisted Development
-
-Claude Code를 AI Pair Programmer로 활용하여 9개 도메인에 걸쳐 개발 생산성을 극대화한다.
 
 | 지표 | 수치 |
 |------|------|
