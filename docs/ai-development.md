@@ -163,7 +163,7 @@ Phase 2: Scrum 회의 (합의)
 | Conventional Commits | 89.8% | ~98% | fact-checker |
 | MCP 서버 확인 경로 | settings.json | settings.local.json | fact-checker |
 
-quality-reviewer가 "500+ 커밋을 근거 없는 표현이 신뢰도를 손상시킨다"는 VETO를 제기했고, `git rev-list --count HEAD`로 실측한 288로 수정했다. 과장된 수치 하나가 전체 포트폴리오의 신뢰성을 훼손할 수 있다는 점에서 VETO 메커니즘이 실질적인 역할을 했다.
+quality-reviewer가 "500+"와 같은 근거 없는 표현이 신뢰도를 손상시킨다는 VETO를 제기했고, `git rev-list --count HEAD`로 실측한 288로 수정했다. 과장된 수치 하나가 문서 전체의 신뢰성을 훼손할 수 있다는 점에서 VETO 메커니즘이 실질적인 역할을 했다.
 
 #### 3.7.4 구현 단계: Subagent-Driven Development
 
