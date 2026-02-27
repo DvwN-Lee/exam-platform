@@ -53,7 +53,12 @@ db.sqlite3-journal
 # AI Tools
 .claude/
 .gemini/
+.gemini-mcp/
 .serena/
+
+# Internal planning documents
+docs/_doc-architecture-spec.md
+docs/ai-portfolio-strategy.md
 
 # uv
 .uv/
