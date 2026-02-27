@@ -816,6 +816,19 @@ graph LR
 | Permission Policy | settings.local.json 기반 도메인별 권한 제어 |
 | Memory | MEMORY.md, helm-tostring.md (세션 간 학습 축적) |
 
+Claude Code는 터미널과 완전히 통합되어 Bash 명령을 직접 실행한다. 개발자가 검토·승인한 명령만 실행되는 Permission Policy 구조로, AI 자동화와 인간 통제를 균형 있게 유지한다.
+
+기본 워크플로우:
+
+```
+Developer → Claude Code (터미널) → [Bash / MCP] → git / kubectl / terraform / GitHub
+                                ↑
+                    settings.local.json (Permission Policy: 도메인별 권한 제어)
+                    MEMORY.md (세션 간 프로젝트 지식 축적)
+```
+
+MCP 서버 연동으로 브라우저 자동화(Playwright), 코드베이스 분석(Serena), 문서 조회(Context7), PR/Issue 관리(GitHub)를 단일 세션에서 처리한다.
+
 ### 8.2 개발 성과
 
 | 지표 | 수치 |
