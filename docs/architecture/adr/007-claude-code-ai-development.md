@@ -23,6 +23,15 @@ Claude Code, GitHub Copilot, Cursor, Windsurf를 포함한 AI 개발 도구를 �
 
 **Claude Code**를 주요 AI Pair Programmer로 채택하고, 개발 전 영역(Backend, Frontend, Infra, CI/CD, 테스트, 문서화)에 활용한다.
 
+### 기본 워크플로우
+
+```
+Developer → Claude Code (터미널) → [Bash / MCP] → git / kubectl / terraform / GitHub
+                                ↑
+                    settings.local.json (Permission Policy: 도메인별 권한 제어)
+                    ~/.claude/.../MEMORY.md (세션 간 프로젝트 지식 축적)
+```
+
 ### 활용 도메인 (9개)
 
 | 도메인 | 활용 내용 |
@@ -88,7 +97,7 @@ Claude Code, GitHub Copilot, Cursor, Windsurf를 포함한 AI 개발 도구를 �
 
 ## 참고 자료 (References)
 
-- [AI-Assisted Development Workflow](../../docs/ai-development.md)
-- [Testing Strategy](../../docs/testing-strategy.md)
+- [AI-Assisted Development Workflow](../../../docs/ai-development.md)
+- [Testing Strategy](../../../docs/testing-strategy.md)
 - [Architecture Overview - Section 8](../README.md)
 - `.claude/settings.local.json`: Permission Policy 및 실사용 MCP 서버 기록
