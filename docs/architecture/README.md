@@ -802,6 +802,39 @@ graph LR
 
 ---
 
+## 8. Development Methodology
+
+1인 개발 환경에서 프로덕션 수준의 시스템을 구축하기 위해 Claude Code를 AI Pair Programmer로 채택하고, 9개 도메인에 걸친 AI-Assisted Development Workflow를 운영한다.
+
+### 8.1 AI-Assisted Development 개요
+
+| 항목 | 내용 |
+|------|------|
+| 도구 | Claude Code (AI Pair Programmer) |
+| 활용 도메인 | Backend, Frontend, Terraform, K8s, Helm, GCP, Docker, Git, GitHub |
+| MCP 연동 | GitHub, Playwright, Chrome DevTools, Serena, Context7 |
+| Permission Policy | settings.local.json 기반 도메인별 권한 제어 |
+| Memory | MEMORY.md, helm-tostring.md (세션 간 학습 축적) |
+
+### 8.2 개발 성과
+
+| 지표 | 수치 |
+|------|------|
+| 개발 기간 | 10주 |
+| 총 커밋 | 288 |
+| 테스트 파일 | 62개 (Python 11 + TypeScript 40 + Go 11) |
+| pytest 테스트 | 957개, 95% 커버리지 |
+| 문서 | 57개 |
+
+### 8.3 관련 의사결정
+
+AI-Assisted Development 도구 선택 근거와 대안 비교는 ADR-007에 기록되어 있다.
+
+- [ADR-007: Claude Code 기반 AI-Assisted Development Workflow](adr/007-claude-code-ai-development.md)
+- [AI-Assisted Development Workflow](../../docs/ai-development.md)
+
+---
+
 ## 관련 문서
 
 | 문서 | 설명 |
@@ -813,3 +846,4 @@ graph LR
 | [`docs/architecture/adr/`](./adr/README.md) | Architecture Decision Records |
 | [`docs/secret-management.md`](../secret-management.md) | Secret Management 운영 가이드 |
 | [`docs/operational-changes.md`](../operational-changes.md) | Operational Changes Log |
+| [`docs/ai-development.md`](../../docs/ai-development.md) | AI-Assisted Development Workflow |
