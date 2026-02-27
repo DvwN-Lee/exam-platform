@@ -802,6 +802,59 @@ graph LR
 
 ---
 
+## 8. Development Methodology
+
+1인 개발 환경에서 프로덕션 수준의 시스템을 구축하기 위해 Claude Code를 AI Pair Programmer로 채택하고, 9개 도메인에 걸친 AI-Assisted Development Workflow를 운영한다.
+
+### 8.1 AI-Assisted Development 개요
+
+| 항목 | 내용 |
+|------|------|
+| 도구 | Claude Code (AI Pair Programmer) |
+| 활용 도메인 | Backend, Frontend, Terraform, K8s, Helm, GCP, Docker, Git, GitHub |
+| MCP 연동 | GitHub, Playwright, Chrome DevTools, Serena, Context7 |
+| Permission Policy | settings.local.json 기반 도메인별 권한 제어 |
+| Memory | MEMORY.md, helm-tostring.md (세션 간 학습 축적) |
+
+Claude Code는 터미널과 완전히 통합되어 Bash 명령을 직접 실행한다. 개발자가 검토·승인한 명령만 실행되는 Permission Policy 구조로, AI 자동화와 인간 통제를 균형 있게 유지한다.
+
+기본 워크플로우:
+
+```
+Developer → Claude Code (터미널) → [Bash / MCP] → git / kubectl / terraform / GitHub
+                                ↑
+                    settings.local.json (Permission Policy: 도메인별 권한 제어)
+                    MEMORY.md (세션 간 프로젝트 지식 축적)
+```
+
+MCP 서버 연동으로 브라우저 자동화(Playwright), 코드베이스 분석(Serena), 문서 조회(Context7), PR/Issue 관리(GitHub)를 단일 세션에서 처리한다.
+
+### 8.2 개발 성과
+
+| 지표 | 수치 |
+|------|------|
+| 개발 기간 | 10주 |
+| 총 커밋 | 288 |
+| 테스트 파일 | 62개 (Python 11 + TypeScript 40 + Go 11) |
+| pytest 테스트 | 957개, 95% 커버리지 |
+| 문서 | 57개 |
+
+### 8.3 관련 의사결정
+
+AI 개발 도구 선택 과정에서 GitHub Copilot, Cursor, Windsurf를 검토한 후 Claude Code를 채택했다. 의사결정 근거는 ADR-007에 기록되어 있다.
+
+| 검토 기준 | Claude Code 선택 사유 |
+|----------|----------------------|
+| 컨텍스트 윈도우 | 200K 토큰으로 멀티파일 리팩터링 처리 |
+| MCP 연동 | 5개 서버 직접 통합 (타 도구 미지원) |
+| 터미널 통합 | Bash 완전 실행 (kubectl, terraform 직접 운영) |
+| Permission Policy | settings.local.json 기반 도메인별 권한 제어 |
+
+- [ADR-007: Claude Code 기반 AI-Assisted Development Workflow](adr/007-claude-code-ai-development.md)
+- [AI-Assisted Development Workflow](../ai-development.md)
+
+---
+
 ## 관련 문서
 
 | 문서 | 설명 |
@@ -813,3 +866,4 @@ graph LR
 | [`docs/architecture/adr/`](./adr/README.md) | Architecture Decision Records |
 | [`docs/secret-management.md`](../secret-management.md) | Secret Management 운영 가이드 |
 | [`docs/operational-changes.md`](../operational-changes.md) | Operational Changes Log |
+| [`docs/ai-development.md`](../ai-development.md) | AI-Assisted Development Workflow |

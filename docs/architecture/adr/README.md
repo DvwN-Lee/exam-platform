@@ -14,6 +14,7 @@
 | [004](./004-jwt-httponly-cookie-auth.md) | JWT HttpOnly Cookie 인증 전략 | 승인됨 | 2025-03-15 |
 | [005](./005-helm-app-of-apps-pattern.md) | Helm App of Apps Pattern 배포 구조 | 승인됨 | 2025-04-10 |
 | [006](./006-external-secrets-gcp-secret-manager.md) | External Secrets + GCP Secret Manager | 승인됨 | 2025-04-10 |
+| [007](./007-claude-code-ai-development.md) | Claude Code 기반 AI-Assisted Development Workflow | 승인됨 | 2025-12-18 |
 
 ---
 

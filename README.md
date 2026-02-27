@@ -6,6 +6,10 @@
 
 > **Demo 시나리오:** 교사 로그인부터 시험 생성, 학생 응시, 결과 확인까지의 전체 흐름을 Screenshot과 함께 확인할 수 있다. [Demo 문서 바로가기](docs/demo/README.md)
 
+> **AI-Assisted Development** — 이 프로젝트는 Claude Code를 AI Pair Programmer로 활용하여
+> 1인 개발자가 10주 만에 Full-Stack + DevOps + IaC + 4단계 테스트를 갖춘 프로덕션 시스템을 구축한 사례다.
+> [AI Development Workflow →](docs/ai-development.md)
+
 ## Migration Story
 
 | Before | After |
@@ -24,6 +28,11 @@
 - **Authentication**: SimpleJWT (HttpOnly Cookie)
 - **Testing**: pytest 8.3+ (95% 커버리지)
 - **Package Manager**: uv
+
+### Development Tools
+- **AI Pair Programmer**: Claude Code
+- **CI/CD**: GitHub Actions
+- **GitOps**: ArgoCD
 
 ### Frontend
 - **Framework**: React 19, TypeScript 5.9
@@ -58,6 +67,16 @@
 - Backend: 957개 테스트 함수, 95% 커버리지
 - Frontend: Playwright E2E 테스트
 - 변경에 대한 자신감 있는 리팩터링
+
+### AI-Assisted Development
+
+| 지표 | 수치 |
+|------|------|
+| 개발 기간 | 10주 (2025.12 ~ 2026.02) |
+| 총 커밋 | 288 |
+| 테스트 파일 | 62개 (Python 11 + TypeScript 40 + Go 11) |
+| AI 활용 범위 | 9개 도메인 |
+| MCP 연동 | 5개 서버 (GitHub, Playwright, Chrome DevTools, Serena, Context7) |
 
 ## Project Structure
 
@@ -232,6 +251,11 @@ npx playwright test    # E2E tests
 - [ArgoCD README](argocd/README.md)
 - [Security Architecture](docs/security.md)
 
+### AI Development
+
+- [AI-Assisted Development Workflow](docs/ai-development.md)
+- [ADR-007: Claude Code AI-Assisted Development](docs/architecture/adr/007-claude-code-ai-development.md)
+
 ## Infrastructure
 
 ### GCP (Google Cloud Platform)
@@ -274,6 +298,7 @@ App of Apps 패턴으로 Application 배포를 관리한다.
 | 4 | Examination System API | Done |
 | 5 | Frontend Development (React 19) | Done |
 | 6 | DevOps & Deployment (GKE, ArgoCD, CI/CD) | Done |
+| 7 | AI-Assisted Development Documentation | Done |
 
 ## License
 
