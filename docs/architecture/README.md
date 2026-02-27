@@ -828,10 +828,17 @@ graph LR
 
 ### 8.3 관련 의사결정
 
-AI-Assisted Development 도구 선택 근거와 대안 비교는 ADR-007에 기록되어 있다.
+AI 개발 도구 선택 과정에서 GitHub Copilot, Cursor, Windsurf를 검토한 후 Claude Code를 채택했다. 의사결정 근거는 ADR-007에 기록되어 있다.
+
+| 검토 기준 | Claude Code 선택 사유 |
+|----------|----------------------|
+| 컨텍스트 윈도우 | 200K 토큰으로 멀티파일 리팩터링 처리 |
+| MCP 연동 | 5개 서버 직접 통합 (타 도구 미지원) |
+| 터미널 통합 | Bash 완전 실행 (kubectl, terraform 직접 운영) |
+| Permission Policy | settings.local.json 기반 도메인별 권한 제어 |
 
 - [ADR-007: Claude Code 기반 AI-Assisted Development Workflow](adr/007-claude-code-ai-development.md)
-- [AI-Assisted Development Workflow](../../docs/ai-development.md)
+- [AI-Assisted Development Workflow](../ai-development.md)
 
 ---
 
@@ -846,4 +853,4 @@ AI-Assisted Development 도구 선택 근거와 대안 비교는 ADR-007에 기�
 | [`docs/architecture/adr/`](./adr/README.md) | Architecture Decision Records |
 | [`docs/secret-management.md`](../secret-management.md) | Secret Management 운영 가이드 |
 | [`docs/operational-changes.md`](../operational-changes.md) | Operational Changes Log |
-| [`docs/ai-development.md`](../../docs/ai-development.md) | AI-Assisted Development Workflow |
+| [`docs/ai-development.md`](../ai-development.md) | AI-Assisted Development Workflow |
