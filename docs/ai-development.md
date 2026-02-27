@@ -108,9 +108,18 @@ Claude Code를 AI Pair Programmer로 활용하되, AI 생성 출력은 반드시
 
 ### 3.6 CI/CD 파이프라인
 
-- 6개 GitHub Actions Workflow 설계 (ci, e2e, cd-dev, cd-staging, cd-prod, infrastructure-test)
-- `paths-filter` 기반 변경 감지로 불필요한 파이프라인 실행 방지
-- 3-tier E2E Scope: PR=Smoke, Main=CI, Manual=Full
+6개 GitHub Actions Workflow를 설계하여 변경 감지 기반 자동화를 구현한다.
+
+| Workflow | 트리거 | 역할 |
+|----------|--------|------|
+| `ci.yml` | PR (backend/frontend 변경 시) | pytest + coverage, Vitest, TypeScript 검사 |
+| `e2e.yml` | PR/Push (3-tier scope) | Playwright E2E (Smoke/CI/Full) |
+| `cd-dev.yml` | main push (backend 변경 시) | Dev 환경 자동 배포 |
+| `cd-staging.yml` | 수동 트리거 | Staging 환경 배포 |
+| `cd-prod.yml` | 수동 트리거 | Production 환경 배포 |
+| `infrastructure-test.yml` | terraform/ 변경 시 | Terratest Go 실행 |
+
+`paths-filter`를 활용하여 변경된 파일 경로에 따라 필요한 Job만 실행한다. E2E는 PR=Smoke(핵심 경로), Main=CI(전체), Manual=Full(전체+병렬) 3단계로 범위를 구분하여 파이프라인 실행 시간을 최적화한다.
 
 ---
 
@@ -151,6 +160,20 @@ Helm Chart에서 image tag를 순수 숫자(SHA digest 앞 7자리)로 사용할
 3. **최소 변경 해결**: "기존 values 구조를 변경하지 않고 template에서만 toString 처리하는 방법을 제안해라"
 
 이 접근법은 AI가 즉시 수정안을 제안하기 전에 문제를 정확히 진단하도록 유도하는 패턴이다.
+
+해결 전/후 코드:
+
+```yaml
+# Before: YAML이 tag 값을 int64로 해석하여 Helm template 렌더링 실패
+image:
+  tag: 1234567
+```
+
+```yaml
+# After: toString | quote로 문자열 강제 처리
+image:
+  tag: {{ .Values.image.tag | toString | quote }}
+```
 
 ### 5.4 MCP 연동 패턴
 
