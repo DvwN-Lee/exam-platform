@@ -1,6 +1,6 @@
 # Testing Strategy
 
-이 프로젝트는 4단계 테스트 피라미드를 기반으로 Python, TypeScript, Go 3개 언어로 총 62개 테스트 파일을 구성한다. 각 레이어는 독립적인 목적과 실행 환경을 가지며, CI/CD 파이프라인과 통합하여 자동화된 품질 검증을 수행한다.
+이 프로젝트는 4단계 테스트 피라미드를 기반으로 Python, TypeScript, Go 3개 언어로 총 67개 테스트 파일을 구성한다. 각 레이어는 독립적인 목적과 실행 환경을 가지며, CI/CD 파이프라인과 통합하여 자동화된 품질 검증을 수행한다.
 
 ---
 
@@ -17,15 +17,15 @@
     Vitest + RTL (9 files)
     ----------------------------
   [Backend Unit/Integration]
-pytest (11 files, 957개, 95% 커버리지)
+pytest (16 files, 957개, 95% 커버리지)
 ```
 
 | 레이어 | 도구 | 파일 수 | 특징 |
 |--------|------|---------|------|
-| Backend Unit/Integration | pytest | 11개 (Python) | 957개 테스트, 95% 커버리지 |
+| Backend Unit/Integration | pytest | 16개 (Python) | 957개 테스트, 95% 커버리지 |
 | Frontend Unit | Vitest + RTL | 9개 (TypeScript) | 컴포넌트·훅 단위 테스트 |
 | Infrastructure | Terratest | 11개 (Go) | GCP 모듈 unit + integration |
-| E2E | Playwright | 31개 (TypeScript) | 7개 카테고리, 3-tier scope |
+| E2E | Playwright | 31개 (TypeScript) | 12개 카테고리, 3-tier scope |
 
 ---
 
@@ -37,7 +37,7 @@ Django REST Framework API를 대상으로 pytest와 Django Test Client를 활용
 
 | 지표 | 수치 |
 |------|------|
-| 테스트 파일 | 11개 |
+| 테스트 파일 | 16개 |
 | 총 테스트 수 | 957개 |
 | 커버리지 | 95% |
 | 커버리지 목표 기준 | `--fail-under=90` |
@@ -57,6 +57,11 @@ Django REST Framework API를 대상으로 pytest와 Django Test Client를 활용
 | `test_taking.py` | 시험 응시 API |
 | `test_taking_coverage.py` | 응시 로직 커버리지 |
 | `test_full_e2e.py` | 전체 플로우 통합 테스트 |
+| `tests.py` (examination) | 시험 관리 API |
+| `tests.py` (testpaper) | 시험지 API |
+| `tests.py` (testquestion) | 문제 관리 API |
+| `tests.py` (core) | Core API |
+| `coverage_fix_tests.py` | 커버리지 엣지케이스 |
 
 ### 2.2 실행 방법
 
@@ -135,17 +140,22 @@ go test -v -timeout 30m ./...
 
 ### 5.1 테스트 범위
 
-브라우저 레벨에서 전체 사용자 플로우를 검증한다. 7개 카테고리, 31개 spec 파일로 구성된다.
+브라우저 레벨에서 전체 사용자 플로우를 검증한다. 12개 카테고리, 31개 spec 파일로 구성된다.
 
 | 카테고리 | 주요 검증 내용 |
 |----------|--------------|
 | auth | 로그인, 로그아웃, 인증 흐름 |
-| register | 회원가입, 유효성 검사 |
-| examination | 시험 생성, 수정, 삭제 |
-| exam-taking | 시험 응시, 제출 플로우 |
-| questions | 문제 관리 CRUD |
-| testpaper | 시험지 구성 |
+| common | 공통 UI 요소 검증 |
 | dashboard | 대시보드 지표 |
+| edge-cases | 엣지케이스 시나리오 |
+| integration | 통합 플로우 검증 |
+| layout | 레이아웃·반응형 검증 |
+| profile | 프로필 관리 |
+| security | 보안 관련 검증 |
+| smoke | 핵심 경로 스모크 테스트 |
+| student | 학생 역할 플로우 |
+| teacher | 교사 역할 플로우 |
+| validation | 입력 유효성 검사 |
 
 ### 5.2 3-Tier E2E Scope
 

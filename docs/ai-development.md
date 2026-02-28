@@ -77,7 +77,7 @@ Claude Code를 AI Pair Programmer로 활용하되, Human-in-the-Loop 원칙에 �
 
 | 레이어 | 도구 | 수량 |
 |--------|------|------|
-| Backend Unit/Integration | pytest | 15개 파일, 957개 테스트, 95% 커버리지 |
+| Backend Unit/Integration | pytest | 16개 파일, 957개 테스트, 95% 커버리지 |
 | Frontend Unit | Vitest + RTL | 9개 파일 |
 | Infrastructure | Terratest (Go) | 11개 파일 (6 unit + 3 integration + 2 Helm) |
 | E2E | Playwright | 31개 spec, 12개 카테고리 |
@@ -104,7 +104,7 @@ Claude Code를 AI Pair Programmer로 활용하되, Human-in-the-Loop 원칙에 �
 - Architecture Document (Mermaid 12개 이상 다이어그램)
 - ADR 7건 (대안 비교 + 트레이드오프 포함)
 - Troubleshooting Guide (20개 이상 이슈, 증상→원인→해결→검증 구조)
-- 57개 문서 전수 검토 → 정합성 100% 달성
+- 58개 문서 전수 검토 → 정합성 100% 달성
 
 ### 3.6 CI/CD 파이프라인
 
@@ -201,10 +201,10 @@ quality-reviewer가 "500+"와 같은 근거 없는 표현이 신뢰도를 손상
 | 총 커밋 | 309 |
 | PR | 86개 |
 | Issue | 101개 |
-| 테스트 파일 | 66개 (Python 15 + TypeScript 40 + Go 11) |
+| 테스트 파일 | 67개 (Python 16 + TypeScript 40 + Go 11) |
 | pytest 테스트 수 | 957개 |
 | 테스트 커버리지 | 95% |
-| 문서 | 57개 |
+| 문서 | 58개 |
 | Terraform 모듈 | 8개 |
 | CI/CD Workflow | 6개 |
 | Conventional Commits | ~98% |
