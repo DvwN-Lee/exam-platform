@@ -7,7 +7,7 @@
 > **Demo 시나리오:** 교사 로그인부터 시험 생성, 학생 응시, 결과 확인까지의 전체 흐름을 Screenshot과 함께 확인할 수 있다. [Demo 문서 바로가기](docs/demo/README.md)
 
 > **AI-Assisted Development** — 이 프로젝트는 Claude Code를 AI Pair Programmer로 활용하여
-> 1인 개발자가 10주 만에 Full-Stack + DevOps + IaC + 4단계 테스트를 갖춘 프로덕션 시스템을 구축한 사례다.
+> Full-Stack + DevOps + IaC + 4단계 테스트를 갖춘 프로덕션 시스템을 구축한 프로젝트이다.
 > [AI Development Workflow →](docs/ai-development.md)
 
 ## Migration Story
