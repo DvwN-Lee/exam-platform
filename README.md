@@ -73,8 +73,8 @@
 | 지표 | 수치 |
 |------|------|
 | 개발 기간 | 10주 (2025.12 ~ 2026.02) |
-| 총 커밋 | 288 |
-| 테스트 파일 | 62개 (Python 11 + TypeScript 40 + Go 11) |
+| 총 커밋 | 309 |
+| 테스트 파일 | 67개 (Python 16 + TypeScript 40 + Go 11) |
 | AI 활용 범위 | 9개 도메인 |
 | MCP 연동 | 5개 서버 (GitHub, Playwright, Chrome DevTools, Serena, Context7) |
 
