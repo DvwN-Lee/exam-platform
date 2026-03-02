@@ -1,8 +1,8 @@
 # AI Exam Agent - Business Requirements Document
 
-> **Version**: 1.0 (Scrum 합의 완료)
+> **Version**: 1.1 (LLM Provider 변경 + 토큰 최적화 Scrum 합의)
 > **Date**: 2026-03-02
-> **Status**: PO + Tech Lead + Market Analyst 합의 완료
+> **Status**: PO + Tech Lead + Market Analyst 합의 완료 (v1.1)
 > **Timeline**: 1주 집중 개발 (agent-teams + subagent 자동화)
 > **Reviewers**: PO Agent, Tech Lead, Market Analyst
 
@@ -32,7 +32,7 @@
 2. **RAG 기반 교재 매핑**: 교재/노트를 벡터화하여 해당 내용에 정확히 매핑된 문제 생성
 3. **Self-critique 품질 보증**: AI가 생성한 문제를 다른 AI Agent가 자동 검수 (교육학적 타당성, 난이도 적절성, 정답 정확성)
 4. **교사 피드백 학습 루프**: 교사의 승인/거부/수정 이력이 향후 생성 품질에 반영되는 RLHF 유사 패턴
-5. **LLM-agnostic 설계**: 로컬(Ollama) ↔ 클라우드(Claude API) 전환 가능한 어댑터 패턴
+5. **LLM-agnostic 설계**: 로컬(Ollama) ↔ 클라우드(Gemini API) 전환 가능한 어댑터 패턴 — 실제 Claude → Gemini 마이그레이션 이력으로 Provider-agnostic 실증
 6. **MCP 생태계 활용 경험**: Claude Code MCP 서버 연동(GitHub, Playwright, Context7 등) 경험을 바탕으로 AI Agent 도구화 역량 증명
 
 ---
@@ -123,8 +123,10 @@ Interaction: LLM 호출 비용 추적, 생성 품질 대시보드, 장애 대응
 
 4. **LLM Provider 어댑터**
    - 로컬 개발: Ollama (llama3.2 또는 동등 무료 모델)
-   - 프로덕션 배포: Claude API (claude-sonnet-4-6)
-   - 환경 변수로 전환: `LLM_PROVIDER=ollama|claude`
+   - 프로덕션 배포: Gemini API free tier (gemini-2.5-flash)
+   - 전 Agent 동일 모델: Generator/Critic/Refiner 모두 gemini-2.5-flash 사용 (Critic의 정답 정확성 5/5 검증에 동등 이상 추론 능력 필요)
+   - 환경 변수로 전환: `LLM_PROVIDER=ollama|gemini`
+   - 추가 환경 변수: `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-2.5-flash`, `OLLAMA_BASE_URL=http://localhost:11434`
 
 **User Stories**:
 - US-1.1a: 교사로서 과목과 챕터 범위를 선택하여 문제 생성 요청을 제출할 수 있다
@@ -320,10 +322,10 @@ Infrastructure
                     └──────────────────────────────────┘
                                │
                     ┌──────────▼──────────────────────┐
-                    │        LLM Provider              │
+                    │        LLM Provider (Agnostic)    │
                     │  ┌──────────┐  ┌──────────────┐  │
-                    │  │ Ollama   │  │ Claude API   │  │
-                    │  │ (Local)  │  │ (Production) │  │
+                    │  │ Ollama   │  │ Gemini API   │  │
+                    │  │ (Local)  │  │ (Free Tier)  │  │
                     │  └──────────┘  └──────────────┘  │
                     └──────────────────────────────────┘
 ```
@@ -609,11 +611,24 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
    - pgvector >= 0.8.2 사용 필수 (CVE-2026-3172 수정 버전)
    - 테스트 DB에서 CREATE EXTENSION vector 자동 실행 설정 필요
 
+4. **Gemini API Free Tier 토큰 최적화 (Scrum v1.1 추가)**
+   - **Rate Limits**: 10 RPM, 250K TPM, 500 RPD (gemini-2.5-flash 기준)
+   - **배치 프롬프트 필수**: Generator/Critic/Refiner 모두 N개 문제를 1회 호출로 일괄 처리 (개별 호출 금지)
+   - **파이프라인 1회 호출 구성**:
+     - 최적: Generator 1회 + Critic 1회 = **2회 LLM 호출** (전체 Pass 시)
+     - 최악: Generator 1회 + (Critic+Refiner) × 3회 = **7회 LLM 호출** (3회 재시도)
+   - **토큰 예산**: 파이프라인 1회(5문제) ≈ 19,800 tokens (최적) ~ 39,900 tokens (최악). 250K TPM 내 충분
+   - **RPM이 실질 병목**: 10 RPM → 파이프라인 1회 = 12초(최적) ~ 42초(최악)
+   - **일일 사용 한도**: 500 RPD ÷ 3~7회/요청 = 하루 71~166개 생성 요청 가능
+   - **Rate Limiter 구현 필수**: 10 RPM 한도를 존중하는 요청 큐 + exponential backoff
+   - **Context Caching**: Gemini 2.5 Flash 무료 context caching 활용 — 시스템 프롬프트 + 교재 컨텍스트 캐싱으로 반복 호출 토큰 절감 (Bronze/Silver: optional, Gold: 적용)
+   - **모델 통일**: 전 Agent 동일 모델(gemini-2.5-flash) 사용. Critic 품질 검증에 경량 모델 사용 금지 (Veto 해소)
+
 ### 8.1 Performance
 
 | 지표 | 목표 | 비고 |
 |------|------|------|
-| 문제 생성 응답 시간 | 60초 이내 (5문제, Ollama) | 비동기 처리, polling 방식 |
+| 문제 생성 응답 시간 | 60초 이내 (5문제, Ollama) / 90초 이내 (5문제, Gemini API 배치) | 비동기 처리, polling 방식. Gemini API는 rate limit(10 RPM) 대기 포함 |
 | 교재 업로드 → 벡터화 | 120초 이내 (50페이지 PDF) | Background Task (Celery/Django-Q) |
 | RAG 검색 응답 | 2초 이내 | pgvector HNSW 인덱스 |
 | API 응답 시간 (CRUD) | 200ms 이내 | 기존 성능 기준 유지 |
@@ -622,7 +637,7 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 
 | 요구사항 | 설명 |
 |----------|------|
-| LLM 장애 대응 | Ollama 또는 Claude API 장애 시 graceful degradation (수동 출제로 fallback) |
+| LLM 장애 대응 | Ollama 또는 Gemini API 장애 시 graceful degradation (수동 출제로 fallback). Gemini free tier rate limit 초과 시 429 응답 → 대기 후 재시도 또는 Ollama fallback |
 | 데이터 일관성 | AI 생성 중 서버 재시작 시 GenerationRequest 상태 복구 |
 | 기존 기능 무중단 | AI 레이어 추가가 기존 957개 테스트에 영향 없음 |
 
@@ -630,7 +645,8 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 
 | 요구사항 | 설명 |
 |----------|------|
-| API Key 관리 | Claude API Key는 External Secrets로 관리 (기존 패턴 활용) |
+| API Key 관리 | Gemini API Key는 External Secrets로 관리 (기존 패턴 활용) |
+| Free Tier 데이터 정책 | Gemini free tier 사용 시 요청 데이터가 Google 제품 개선에 사용될 수 있음. 민감한 교재는 Paid tier 또는 로컬 Ollama 사용 권장. 프로덕션 환경에서는 Paid tier 전환 또는 Private LLM 배포 고려 |
 | 교재 접근 권한 | 교재는 업로드한 교사 + 같은 과목 교사만 접근 가능 |
 | AI 생성 이력 | 모든 생성 요청과 피드백은 감사 로그로 보존 |
 
@@ -654,7 +670,7 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 | 1주 개발 기간 | Agent-teams + subagent 자동화로 구현 속도 극대화 |
 | 기존 테스트 유지 | 957개 테스트 중 0개 실패 허용 |
 | Django 5.2 유지 | 기존 ORM, Admin, TDD 생태계 활용 |
-| 로컬 무료 LLM | 개발 시 비용 0원 (Ollama) |
+| 로컬+프로덕션 무료 LLM | 개발 Ollama + 프로덕션 Gemini API free tier = 비용 0원 |
 | PostgreSQL 단일 인스턴스 | 기존 DB에 pgvector extension 추가 |
 
 ### 9.2 Assumptions
@@ -701,7 +717,7 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 | K8s Ops Agent (Prometheus/Loki MCP) | P2 | GCP 배포 이후 |
 | 학습 분석 Agent (성적 패턴 → 맞춤 문제 추천) | P3 | 데이터 축적 필요 |
 | GCP 배포 + ArgoCD 통합 | P2 | 로컬 MVP 완료 후 |
-| Claude API 전환 + A/B 테스트 | P2 | 배포 시 |
+| Gemini Paid tier 전환 + 추가 Provider(Claude/OpenAI) A/B 테스트 | P2 | free tier 한도 초과 시 |
 | 블룸 택소노미 기반 난이도 자동 분류 | P3 | 교육학 도메인 지식 필요 |
 
 ---
@@ -749,7 +765,7 @@ After:
 
 | 기업 | 요구 역량 | 본 프로젝트 대응 |
 |------|-----------|------------------|
-| **토스 AI Engineer (Platform)** | AI Agent 서빙/운영, 도구화 | LangGraph 파이프라인 + LLM Provider 어댑터 + Celery 비동기 서빙 |
+| **토스 AI Engineer (Platform)** | AI Agent 서빙/운영, 도구화 | LangGraph 파이프라인 + LLM Provider 어댑터(Ollama/Gemini/Claude) + Celery 비동기 서빙 + 토큰 최적화(비용 0원 운영) |
 | **업스테이지 AI Agent Engineer** | 문제 해결 과정 중심 이력서 | 3회 재구축(모니터링) + AI Agent 추가의 기술 진화 서사 |
 | **카카오 AI 네이티브** | AI 네이티브 인재 | Claude Code로 개발 + AI Agent를 프로덕트에 통합 |
 | **라인플러스 AI Agent (Moonshot)** | AI Agent Platform 설계-구현-고도화 | Multi-Agent 아키텍처(Generator/Critic/Refiner) + K8s 운영 |
@@ -764,6 +780,7 @@ After:
 4. **"기존 957개 테스트를 유지하며 AI 레이어 추가하기"** — 레거시 확장의 실전 전략. 대형 서비스 기업에서 높이 평가
 5. **"교사 피드백이 AI 출제 품질을 개선하는 방법"** — Human-in-the-loop RLHF 유사 패턴
 6. **"Claude Code Agent-Teams로 1주 만에 AI 파이프라인 구축하기"** — 개발 프로세스 자체가 차별점
+7. **"Free Tier LLM으로 프로덕션 Multi-Agent 파이프라인 운영하기: 토큰 최적화 실전"** — 배치 프롬프트, Context Caching, Rate Limiter로 Gemini free tier(10 RPM, 500 RPD) 내 운영. "제약 조건 기반 엔지니어링" 서사
 
 ---
 
@@ -775,7 +792,7 @@ After:
 | AI Pipeline | LangGraph | latest | Multi-Agent Orchestration |
 | Vector DB | pgvector | latest | RAG 임베딩 저장/검색 |
 | LLM (Local) | Ollama | latest | 개발 환경 무료 LLM |
-| LLM (Production) | Claude API | claude-sonnet-4-6 | 프로덕션 LLM |
+| LLM (Production) | Gemini API | gemini-2.5-flash (free tier) | 프로덕션 LLM (비용 0원) |
 | Embedding | sentence-transformers | latest | 텍스트 임베딩 |
 | Task Queue | Celery + Redis | latest | LangGraph 파이프라인 비동기 실행 |
 | PDF Parsing | pdfplumber | latest | 교재 PDF 파싱 |

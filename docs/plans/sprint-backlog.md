@@ -35,6 +35,11 @@ AI 레이어는 현재 **0%**. 이번 Sprint에서 AI 출제 파이프라인을 
 2. **AI import lazy 처리**: apps/ai/apps.py의 ready()에서 heavy import 금지
 3. **pgvector >= 0.8.2**: CVE-2026-3172 수정 버전 핀 필수
 4. **기존 테스트 957개 무중단**: 기존 모델/API 변경 0건
+5. **Gemini API Free Tier 제약** (v1.1 추가):
+   - 10 RPM / 250K TPM / 500 RPD — Rate Limiter 필수
+   - 배치 프롬프트 필수 (개별 문제 호출 금지)
+   - 전 Agent 동일 모델(gemini-2.5-flash) — Critic에 경량 모델 사용 금지
+   - Context Caching: Bronze/Silver optional, Gold 적용
 
 ---
 
@@ -89,11 +94,11 @@ BRD Section 4 F3 참조. 교사 승인/거부/수정 → 향후 생성 품질 �
 | INF-1 | apps/ai/ Django 앱 스캐폴딩 + INSTALLED_APPS 등록 | Backend | P0 | 1 |
 | INF-2 | pgvector extension 설치 + Django migration | Backend | P0 | 2 |
 | INF-3 | Celery + Redis 설정 (docker-compose 포함) | Backend | P0 | 3 |
-| INF-4 | LLM Provider 어댑터 (Ollama ↔ Claude 전환) | Backend | P0 | 3 |
+| INF-4 | LLM Provider 어댑터 (Ollama ↔ Gemini 전환) + Rate Limiter + 배치 프롬프트 | Backend | P0 | 5 |
 | INF-5 | pyproject.toml 의존성 추가 (langgraph, pgvector, pdfplumber, celery 등) | Backend | P0 | 1 |
 | INF-6 | AI 테스트 fixture (conftest.py, LLM mock, pgvector 테스트 DB) | Backend | P0 | 2 |
 
-**Infra Total: 12 SP**
+**Infra Total: 14 SP** (INF-4 확장: Rate Limiter + 배치 프롬프트 sub-task 추가)
 
 ---
 
@@ -107,7 +112,8 @@ BRD Section 4 F3 참조. 교사 승인/거부/수정 → 향후 생성 품질 �
 |-----|------|-----------|-----|
 | 1 | apps/ai/ 스캐폴딩 + 모델 정의 + migration | INF-1, INF-2, INF-5 | `python manage.py migrate` 성공 |
 | 1 | Celery + Redis 설정 | INF-3 | Celery worker가 task를 수신/실행 |
-| 1 | LLM Provider 어댑터 구현 | INF-4 | `LLM_PROVIDER=ollama` 환경변수로 전환 확인 |
+| 1 | LLM Provider 어댑터 구현 (Ollama ↔ Gemini) | INF-4 | `LLM_PROVIDER=ollama\|gemini` 환경변수 전환 확인. `GEMINI_API_KEY`, `GEMINI_MODEL`, `OLLAMA_BASE_URL` 환경변수 지원 |
+| 1 | Rate Limiter + 배치 프롬프트 유틸리티 | INF-4 | 10 RPM 한도 존중하는 요청 큐 + exponential backoff. 배치 프롬프트 헬퍼 (N개 문제 1회 호출) |
 | 2 | 교재 업로드 API + PDF 파싱 + 청킹 | US-1.4 | PDF 업로드 → 청크 생성 → pgvector 저장 |
 | 2 | RAG 검색 서비스 구현 | US-1.1b | 쿼리 → 관련 청크 top-k 반환 |
 | 3 | LangGraph 파이프라인 (Generator 노드) | US-1.1c | 컨텍스트 → 문제 JSON 생성 |
@@ -248,3 +254,5 @@ Day 6 merge 시 실제 API 연동.
 | LangGraph + Django 통합 이슈 | 파이프라인 불가 | 중 | Celery에서 실행으로 우회, sync 뷰 유지 |
 | 1주 기간 초과 | Gold 미달 | 고 | Scope ladder — Silver 우선 확보 후 Gold 시도 |
 | Merge 충돌 | 통합 지연 | 저 | Frontend/Backend 디렉토리 완전 분리로 충돌 0건 |
+| Gemini free tier rate limit | 생성 지연/실패 | 중 | Rate Limiter(exponential backoff) + 배치 프롬프트 + Ollama fallback |
+| Gemini free tier 정책 변경 | API 사용 불가 | 저 | LLM-agnostic 어댑터 패턴으로 Ollama/Claude 등 즉시 전환 가능 |
