@@ -1,5 +1,20 @@
 # Architecture
 
+## 목차
+
+- [개요](#개요)
+- [1. System Overview](#1-system-overview)
+- [2. Technology Stack](#2-technology-stack)
+- [3. Backend Architecture](#3-backend-architecture)
+- [4. Frontend Architecture](#4-frontend-architecture)
+- [5. Infrastructure Architecture](#5-infrastructure-architecture)
+- [6. CI/CD Pipeline](#6-cicd-pipeline)
+- [7. Security](#7-security)
+- [8. Development Methodology](#8-development-methodology)
+- [관련 문서](#관련-문서)
+
+---
+
 ## 개요
 
 Exam Platform은 온라인 시험 관리 시스템으로, Django REST Backend와 React SPA Frontend로 구성된다.
@@ -66,7 +81,7 @@ graph TB
 |------|------|------|
 | Python | 3.14 | Runtime |
 | Django | 5.2+ | Web Framework |
-| Django REST Framework | 3.15+ | REST API |
+| Django REST Framework | 3.16 | REST API |
 | SimpleJWT | 5.3+ | JWT 인증 |
 | drf-spectacular | 0.27+ | OpenAPI Schema 생성 |
 | django-filter | 24.3+ | Query Filtering |
@@ -834,7 +849,7 @@ MCP 서버 연동으로 브라우저 자동화(Playwright), 코드베이스 분�
 | 지표 | 수치 |
 |------|------|
 | 개발 기간 | 10주 |
-| 총 커밋 | 288 |
+| 총 커밋 | 311 |
 | 테스트 파일 | 62개 (Python 11 + TypeScript 40 + Go 11) |
 | pytest 테스트 | 957개, 95% 커버리지 |
 | 문서 | 57개 |

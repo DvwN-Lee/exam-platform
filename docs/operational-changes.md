@@ -1,5 +1,7 @@
 # Operational Changes Log
 
+> **참고:** 이 문서는 운영 변경 이력을 기록하기 위한 템플릿이다. 프로젝트가 GCP 환경에서 운영된 기간 동안의 주요 변경 사항은 [Architecture Overview](architecture/README.md)와 Git 커밋 이력에서 확인할 수 있다.
+
 GitOps 외부에서 수행된 직접 변경 사항을 추적하는 문서이다.
 
 ArgoCD GitOps로 관리되지 않는 인프라 변경(GCP Console 직접 조작, `kubectl` 수동 명령, Terraform 외부 리소스 수정 등)을 기록하여, 운영 상태와 Git 상태 간 차이를 추적한다.

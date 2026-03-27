@@ -1,6 +1,6 @@
 # ArgoCD GitOps (App of Apps Pattern)
 
-ArgoCD 기반 GitOps 배포 구성입니다. App of Apps 패턴을 적용하여 Terraform과 ArgoCD의 책임을 분리했습니다.
+ArgoCD 기반 GitOps 배포 구성이다. App of Apps 패턴을 적용하여 Terraform과 ArgoCD의 책임을 분리한다.
 
 ## 아키텍처
 
@@ -68,14 +68,14 @@ argocd/
 
 ### 설치
 
-Terraform을 통해 자동 설치됩니다.
+Terraform을 통해 자동 설치된다.
 
 ```bash
 cd terraform/environments/gcp-staging
 terraform apply
 ```
 
-수동 설치가 필요한 경우:
+수동 설치가 필요한 경우 아래 절차를 따른다.
 
 ```bash
 # 1. ArgoCD namespace 생성
@@ -121,13 +121,13 @@ argocd login localhost:8080
 
 ### App of Apps Pattern
 
-Root App이 나머지 모든 Application을 자동으로 관리합니다. 새 Application이나 환경을 추가하려면:
+Root App이 나머지 모든 Application을 자동으로 관리한다. 새 Application이나 환경을 추가하려면:
 
 1. `argocd/applications/overlays/`에 새 디렉토리 생성
 2. `kustomization.yaml` 작성
 3. Git commit/push
 
-Root App이 변경을 감지하고 자동으로 새 Application을 생성합니다.
+Root App이 변경을 감지하고 자동으로 새 Application을 생성한다.
 
 ### 환경별 설정
 
@@ -173,15 +173,15 @@ argocd app get exam-dev --hard-refresh
 
 ### External Secrets Operator
 
-ESO는 ArgoCD Application으로 관리됩니다. 설정 변경 시:
+ESO는 ArgoCD Application으로 관리된다. 설정 변경 시:
 
 1. `argocd/add-ons/external-secrets/application.yaml` 수정
 2. Git commit/push
-3. ArgoCD가 자동으로 변경 적용
+3. ArgoCD가 자동으로 변경을 적용한다
 
 ### ClusterSecretStore
 
-GCP Secret Manager와의 연동 설정:
+GCP Secret Manager와의 연동 설정은 다음과 같다.
 
 ```yaml
 # argocd/add-ons/external-secrets/cluster-secret-store.yaml
@@ -306,7 +306,7 @@ configs:
 
 ## 알림 설정
 
-Slack 알림 설정은 `argocd/install/values.yaml`의 notifications 섹션에서 관리합니다.
+Slack 알림 설정은 `argocd/install/values.yaml`의 notifications 섹션에서 관리한다.
 
 ### Secret 생성
 

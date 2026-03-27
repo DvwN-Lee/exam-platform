@@ -74,7 +74,7 @@ docs/ai-portfolio-strategy.md
 htmlcov/
 
 # Frontend Testing
-frontend/test-results/
+**/test-results/
 frontend/e2e/.auth/
 frontend/e2e/reports/
 frontend/playwright-report/

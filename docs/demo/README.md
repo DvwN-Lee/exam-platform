@@ -1,5 +1,7 @@
 # Exam Platform Demo 시나리오
 
+> **참고:** Production 환경(`https://exam-platform.me`)은 프로젝트 완료 후 GCP 리소스 해제로 인해 현재 접속이 불가하다. 아래 데모 시나리오는 로컬 개발 환경에서도 동일하게 재현할 수 있다. 로컬 실행 방법은 [Quick Start](../../README.md#quick-start)를 참고한다.
+
 ## 개요
 
 Exam Platform의 전체 기능을 시연하는 데모 시나리오이다. 교사가 문제와 시험을 생성하고, 학생이 시험에 응시한 후 결과를 확인하는 전체 흐름을 다룬다.

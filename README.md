@@ -73,7 +73,7 @@
 | 지표 | 수치 |
 |------|------|
 | 개발 기간 | 10주 (2025.12 ~ 2026.02) |
-| 총 커밋 | 309 |
+| 총 커밋 | 311 |
 | 테스트 파일 | 67개 (Python 16 + TypeScript 40 + Go 11) |
 | AI 활용 범위 | 9개 도메인 |
 | MCP 연동 | 5개 서버 (GitHub, Playwright, Chrome DevTools, Serena, Context7) |
@@ -134,18 +134,23 @@ cd exam-platform
 
 # 2. Start database services
 docker compose -f examonline/docker-compose.dev.yml up -d
+# 예상 출력: Creating examonline-postgres-1 ... done / Creating examonline-redis-1 ... done
 
 # 3. Backend setup
 cd examonline
-uv sync
-uv run python manage.py migrate
+uv sync                       # Python 의존성 설치 (uv 미설치 시: pip install uv)
+uv run python manage.py migrate  # DB 마이그레이션 (OK 메시지 20개 이상 출력)
 uv run python manage.py runserver
+# 예상 출력: Starting development server at http://127.0.0.1:8000/
 
 # 4. Frontend setup (new terminal)
 cd frontend
 npm install
 npm run dev
+# 예상 출력: VITE ready in ~300ms → http://localhost:5173/
 ```
+
+> **문제 발생 시**: 포트 충돌, DB 연결 실패 등 일반적인 오류는 [Troubleshooting Guide](docs/troubleshooting.md)를 참고한다.
 
 #### Local Access URLs
 - Frontend: http://localhost:5173
@@ -229,32 +234,76 @@ npx playwright test    # E2E tests
 | GET | `/api/v1/examinations/` | 시험 목록 |
 | POST | `/api/v1/exams/{id}/submit/` | 시험 제출 |
 
+## Glossary
+
+| 약어/용어 | 정의 |
+|-----------|------|
+| ADR | Architecture Decision Record — 아키텍처 의사결정 기록 |
+| ArgoCD | Kubernetes 선언적 GitOps 연속 배포 도구 |
+| CORS | Cross-Origin Resource Sharing — 교차 출처 리소스 공유 |
+| CSRF | Cross-Site Request Forgery — 사이트 간 요청 위조 |
+| ESO | External Secrets Operator — Kubernetes 외부 시크릿 연동 |
+| GKE | Google Kubernetes Engine — Google 관리형 Kubernetes 서비스 |
+| Helm | Kubernetes 패키지 매니저 |
+| HPA | Horizontal Pod Autoscaler — 수평 파드 자동 확장 |
+| HSTS | HTTP Strict Transport Security — HTTPS 강제 전환 정책 |
+| JWT | JSON Web Token — 인증 토큰 표준 |
+| PDB | Pod Disruption Budget — 파드 중단 허용 범위 설정 |
+| PITR | Point-In-Time Recovery — 특정 시점 복구 |
+| RBAC | Role-Based Access Control — 역할 기반 접근 제어 |
+| UBLA | Uniform Bucket-Level Access — Cloud Storage 버킷 수준 통합 접근 제어 |
+| Workload Identity | GKE Pod에 GCP IAM 서비스 계정을 매핑하는 인증 방식 |
+| XSS | Cross-Site Scripting — 사이트 간 스크립팅 공격 |
+
+## Onboarding Guide
+
+처음 이 프로젝트를 접한다면, 역할에 따라 아래 순서로 문서를 읽는 것을 권장한다.
+
+**공통 (전체 개요 파악)**
+1. 이 README — 프로젝트 개요, 기술 스택, 구조
+2. [Architecture Overview](docs/architecture/README.md) — 시스템 아키텍처 전체 구조
+3. [Demo 시나리오](docs/demo/README.md) — 실제 사용 흐름 확인
+
+**Backend 개발자**
+4. [Backend README](examonline/README.md) — Django 앱 구조, API 설계
+5. [Testing Strategy](docs/testing-strategy.md) — 테스트 전략 및 실행 방법
+6. [Security Architecture](docs/security.md) — 인증/인가, 보안 정책
+
+**Frontend 개발자**
+4. [Frontend README](frontend/README.md) — React 앱 구조, 빌드 설정
+5. [Feature Documentation](docs/features/README.md) — 기능별 상세 문서
+6. [Animation System](docs/features/animation-system.md) — 애니메이션 패턴
+
+**Infrastructure / DevOps**
+4. [Terraform README](terraform/README.md) — GCP 인프라 코드
+5. [ArgoCD README](argocd/README.md) — GitOps 배포 구성
+6. [Secret Management](docs/secret-management.md) — 시크릿 관리 정책
+
 ## Documentation
 
 ### Architecture
-- [Architecture Overview](docs/architecture/README.md)
-- [Architecture Decision Records](docs/architecture/adr/README.md)
-- [Secret Management](docs/secret-management.md)
+- [Architecture Overview](docs/architecture/README.md) — 시스템 구조, 기술 스택, 배포 토폴로지 전체 설계
+- [Architecture Decision Records](docs/architecture/adr/README.md) — 주요 기술 선택의 근거와 대안 분석
+- [Secret Management](docs/secret-management.md) — ESO + GCP Secret Manager 기반 시크릿 관리 정책
 
 ### Backend
-- [Backend README](examonline/README.md)
-- [Troubleshooting Guide](examonline/docs/troubleshooting.md)
-- [Database Normalization](examonline/docs/database-normalization.md)
+- [Backend README](examonline/README.md) — Django 앱 구조, Service Layer, API 설계 패턴
+- [Troubleshooting Guide](examonline/docs/troubleshooting.md) — 개발 중 자주 발생하는 오류와 해결 방법
+- [Database Normalization](examonline/docs/database-normalization.md) — DB 스키마 정규화 과정과 결정
 
 ### Frontend
-- [Frontend README](frontend/README.md)
-- [Feature Documentation](docs/features/README.md)
-- [Animation System](docs/features/animation-system.md)
+- [Frontend README](frontend/README.md) — React 앱 구조, 빌드 설정, 개발 가이드
+- [Feature Documentation](docs/features/README.md) — 기능별(인증, 대시보드, 시험 등) 상세 문서 인덱스
+- [Animation System](docs/features/animation-system.md) — Framer Motion 기반 애니메이션 패턴
 
 ### Infrastructure
-- [Terraform README](terraform/README.md)
-- [ArgoCD README](argocd/README.md)
-- [Security Architecture](docs/security.md)
+- [Terraform README](terraform/README.md) — GCP 인프라를 코드로 관리하는 IaC 구성
+- [ArgoCD README](argocd/README.md) — App of Apps 패턴 기반 GitOps 배포
+- [Security Architecture](docs/security.md) — 인증/인가, 네트워크, 전송 보안 전체 아키텍처
 
 ### AI Development
-
-- [AI-Assisted Development Workflow](docs/ai-development.md)
-- [ADR-007: Claude Code AI-Assisted Development](docs/architecture/adr/007-claude-code-ai-development.md)
+- [AI-Assisted Development Workflow](docs/ai-development.md) — Claude Code 활용 AI 페어 프로그래밍 워크플로우
+- [ADR-007: Claude Code AI-Assisted Development](docs/architecture/adr/007-claude-code-ai-development.md) — AI 개발 도구 도입 결정 기록
 
 ## Infrastructure
 
