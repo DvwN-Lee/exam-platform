@@ -510,6 +510,31 @@ class FeedbackView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+# FeedbackService.approve() — 동시 approve 방지
+#
+# select_for_update + 중복 체크로 동일 문제에 대한 동시 승인 방지:
+#
+# ```python
+# def approve(self, generated_question, teacher):
+#     with transaction.atomic():
+#         gq = GeneratedQuestion.objects.select_for_update().get(
+#             id=generated_question.id
+#         )
+#         if TeacherFeedback.objects.filter(
+#             generated_question=gq, action="approve"
+#         ).exists():
+#             raise ValidationError("이미 승인된 문제입니다.")
+#
+#         tq = TestQuestionInfo.objects.create(...)
+#         if gq.tq_type == "xz":
+#             OptionInfo.objects.bulk_create([...])
+#         TeacherFeedback.objects.create(
+#             generated_question=gq, teacher=teacher,
+#             action="approve", saved_question=tq,
+#         )
+#         return tq
+# ```
+
 
 @extend_schema(
     tags=["ai-feedback"],
@@ -600,6 +625,22 @@ class GenerationRequestCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("유효한 난이도: jd, zd, kn")
         return value
 
+    def validate_material_ids(self, value):
+        if not value:
+            raise serializers.ValidationError("최소 1개의 교재를 선택하세요.")
+        materials = MaterialInfo.objects.filter(
+            id__in=value,
+            uploaded_by=self.context["request"].user,
+            status="ready",
+            is_del=False,
+        )
+        if materials.count() != len(value):
+            raise serializers.ValidationError(
+                "유효하지 않은 교재가 포함되어 있습니다. "
+                "본인이 업로드한 처리 완료(ready) 상태의 교재만 선택 가능합니다."
+            )
+        return value
+
 
 class GenerationRequestStatusSerializer(serializers.ModelSerializer):
     """생성 요청 상태 (POST 응답)"""
@@ -669,6 +710,31 @@ class FeedbackCreateSerializer(serializers.Serializer):
     edited_content = serializers.JSONField(required=False, allow_null=True)
 
     def validate(self, attrs):
+        # 소유권 검증: generation_id가 요청 교사의 것인지 확인
+        try:
+            generation = GenerationRequest.objects.get(
+                id=attrs["generation_id"],
+                requested_by=self.context["request"].user,
+            )
+        except GenerationRequest.DoesNotExist:
+            raise serializers.ValidationError(
+                {"generation_id": "해당 생성 요청에 대한 권한이 없습니다."}
+            )
+
+        # temp_id로 GeneratedQuestion 존재 확인
+        try:
+            generated_question = GeneratedQuestion.objects.get(
+                generation=generation,
+                temp_id=attrs["temp_id"],
+            )
+        except GeneratedQuestion.DoesNotExist:
+            raise serializers.ValidationError(
+                {"temp_id": "해당 문제를 찾을 수 없습니다."}
+            )
+
+        attrs["_generation"] = generation
+        attrs["_generated_question"] = generated_question
+
         if attrs["action"] == "reject" and not attrs.get("reject_reason"):
             raise serializers.ValidationError(
                 {"reject_reason": "거부 시 사유를 입력하세요."}
@@ -685,6 +751,23 @@ class FeedbackResponseSerializer(serializers.Serializer):
     feedback_id = serializers.IntegerField(source="id")
     question_id = serializers.IntegerField(source="saved_question_id", allow_null=True)
     status = serializers.CharField(default="saved")
+
+
+class FeedbackTrendSerializer(serializers.Serializer):
+    """피드백 통계 트렌드 항목"""
+    date = serializers.DateField()
+    approval_rate = serializers.FloatField()
+    count = serializers.IntegerField()
+
+
+class FeedbackStatsSerializer(serializers.Serializer):
+    """피드백 통계 — FeedbackStatsView 응답"""
+    total_generated = serializers.IntegerField()
+    approved = serializers.IntegerField()
+    rejected = serializers.IntegerField()
+    edited = serializers.IntegerField()
+    approval_rate = serializers.FloatField()
+    trend = FeedbackTrendSerializer(many=True)
 ```
 
 ### B.5 FilterSet 명세
@@ -991,11 +1074,27 @@ You are an exam question refiner. Improve the following questions based on criti
 출력: (DB 저장, side effect)
 
 로직:
-1. passed_questions → GeneratedQuestion (passed_quality_gate=True)
-2. failed_questions (max rounds 도달) → GeneratedQuestion (passed_quality_gate=False)
-3. GenerationRequest.status = "completed"
-4. GenerationRequest.completed_at = timezone.now()
+0. Idempotent 체크 (acks_late 중복 실행 방지):
+   if GeneratedQuestion.objects.filter(generation_id=generation_id).exists():
+       logger.warning("이미 저장된 결과, skip (idempotent)")
+       return state
+
+1. transaction.atomic() 블록 내에서 실행:
+   with transaction.atomic():
+       a. passed_questions → GeneratedQuestion.objects.bulk_create(
+              [GeneratedQuestion(..., passed_quality_gate=True) for q in passed]
+          )
+       b. failed_questions (max rounds 도달) → GeneratedQuestion.objects.bulk_create(
+              [GeneratedQuestion(..., passed_quality_gate=False) for q in failed]
+          )
+       c. GenerationRequest.objects.filter(id=generation_id).update(
+              status="completed", completed_at=timezone.now()
+          )
 ```
+
+**설계 근거**:
+- `transaction.atomic()`: questions와 status 업데이트의 원자성 보장. 중간 실패 시 전체 롤백.
+- Idempotent 체크: Celery `acks_late=True`에서 worker 재시작 시 task가 재실행될 수 있음. 이미 결과가 저장된 경우 중복 생성 방지.
 
 ### C.3 Celery Task 정의
 
@@ -1016,16 +1115,45 @@ def run_generation_pipeline(self, generation_id: str):
     """
     LangGraph 파이프라인 실행.
     Django request cycle 밖에서 Celery worker가 실행.
+
+    에러 핸들링 전략:
+    - SoftTimeLimitExceeded: partial save 시도 후 status="completed" (부분 결과) 또는 "failed"
+    - 일반 Exception: status 변경 없이 retry. max_retries 소진 시에만 status="failed"
+    - retry 전에 status="failed" 설정 금지 (race condition 방지)
     """
     from ai.services.pipeline import run_pipeline  # lazy import (BRD 제약 #2)
+    from celery.exceptions import SoftTimeLimitExceeded
+
     try:
         run_pipeline(generation_id)
+    except SoftTimeLimitExceeded:
+        # Timeout: partial save 시도
+        # 파이프라인 state에 passed_questions가 있으면 부분 저장
+        from ai.services.pipeline import try_partial_save
+        partial_saved = try_partial_save(generation_id)
+        if partial_saved:
+            GenerationRequest.objects.filter(id=generation_id).update(
+                status="completed",
+                completed_at=timezone.now(),
+                error_message="Timeout: partial results saved",
+            )
+        else:
+            GenerationRequest.objects.filter(id=generation_id).update(
+                status="failed",
+                error_message="파이프라인 실행 시간 초과 (3분)",
+            )
+        # SoftTimeLimitExceeded는 retry하지 않음 (시간 초과는 재시도해도 동일할 가능성 높음)
     except Exception as exc:
-        GenerationRequest.objects.filter(id=generation_id).update(
-            status="failed",
-            error_message=str(exc),
-        )
-        raise self.retry(exc=exc)
+        # retry 가능 여부 확인 (max_retries 소진 전이면 retry)
+        if self.request.retries < self.max_retries:
+            # status 변경 없이 retry — race condition 방지
+            raise self.retry(exc=exc)
+        else:
+            # max_retries 소진: 최종 실패 처리
+            GenerationRequest.objects.filter(id=generation_id).update(
+                status="failed",
+                error_message=f"최대 재시도 횟수 초과: {str(exc)}",
+            )
 
 
 @shared_task(
@@ -1048,6 +1176,26 @@ def process_material_task(self, material_id: int):
             status="error"
         )
         raise self.retry(exc=exc)
+
+
+# Startup health check — stale "generating" 상태 복구
+#
+# Celery worker 시작 시 또는 주기적 beat task로 실행:
+# "generating" 상태가 10분 이상 지속된 GenerationRequest를 "failed"로 전환.
+# worker 크래시/재시작 시 orphaned task 정리 목적.
+#
+# @shared_task(name="ai.cleanup_stale_generations")
+# def cleanup_stale_generations():
+#     cutoff = timezone.now() - timedelta(minutes=10)
+#     stale = GenerationRequest.objects.filter(
+#         status="generating", create_time__lt=cutoff
+#     )
+#     count = stale.update(
+#         status="failed",
+#         error_message="Worker 재시작으로 인한 자동 실패 처리",
+#     )
+#     if count:
+#         logger.warning(f"Stale generation requests cleaned up: {count}")
 ```
 
 ### C.4 Celery 설정
@@ -1171,15 +1319,16 @@ class GeminiProvider:
         api_key: str,
         model: str = "gemini-2.5-flash",
         timeout: int = 120,
+        redis_client=None,
     ):
         genai.configure(api_key=api_key)
         self.model_name_str = model
         self.model = genai.GenerativeModel(model)
         self.timeout = timeout
-        self._rate_limiter = RateLimiter(max_rpm=10)
+        self._rate_limiter = RedisRateLimiter(redis_client=redis_client, max_rpm=10)
 
     def generate(self, prompt: str, system_prompt: str = "") -> LLMResponse:
-        self._rate_limiter.wait()  # RPM 제한 대기
+        self._rate_limiter.acquire()  # Redis 기반 분산 RPM 제한 대기
 
         generation_config = genai.GenerationConfig(
             temperature=0.7,
@@ -1207,7 +1356,7 @@ class GeminiProvider:
             max_output_tokens=8192,
             response_mime_type="application/json",
         )
-        self._rate_limiter.wait()
+        self._rate_limiter.acquire()
         response = self.model.generate_content(
             contents=prompt,
             generation_config=generation_config,
@@ -1225,24 +1374,33 @@ class GeminiProvider:
 ```python
 # apps/ai/llm/rate_limiter.py
 import time
-import threading
+import django.core.cache
 
-class RateLimiter:
-    """Token bucket rate limiter for Gemini 10 RPM"""
-    def __init__(self, max_rpm: int = 10):
+
+class RedisRateLimiter:
+    """Redis 기반 분산 Rate Limiter (Celery prefork worker 간 공유)
+
+    기존 threading.Lock 기반 RateLimiter는 prefork worker 모델에서
+    프로세스 간 상태를 공유하지 못함 → Redis INCR + TTL로 교체.
+    """
+    def __init__(self, redis_client=None, max_rpm: int = 10):
+        self.redis = redis_client or django.core.cache.caches["default"].client.get_client()
         self.max_rpm = max_rpm
-        self.interval = 60.0 / max_rpm  # 6초 간격
-        self.last_request = 0.0
-        self._lock = threading.Lock()
 
-    def wait(self):
-        with self._lock:
-            now = time.monotonic()
-            elapsed = now - self.last_request
-            if elapsed < self.interval:
-                sleep_time = self.interval - elapsed
-                time.sleep(sleep_time)
-            self.last_request = time.monotonic()
+    def acquire(self):
+        """분산 RPM 카운터 기반 rate limiting.
+
+        Redis key: gemini:rpm:{현재 분} — 1분 TTL 자동 만료.
+        카운터가 max_rpm 초과 시 현재 분이 끝날 때까지 대기 후 재시도.
+        """
+        key = f"gemini:rpm:{int(time.time()) // 60}"
+        count = self.redis.incr(key)
+        if count == 1:
+            self.redis.expire(key, 60)
+        if count > self.max_rpm:
+            wait = 60 - (time.time() % 60)
+            time.sleep(wait)
+            return self.acquire()
 
 
 def with_retry(func, max_retries: int = 3, base_delay: float = 2.0):
@@ -1272,6 +1430,7 @@ def get_llm_provider() -> LLMProvider:
         return GeminiProvider(
             api_key=settings.GEMINI_API_KEY,
             model=getattr(settings, "GEMINI_MODEL", "gemini-2.5-flash"),
+            redis_client=None,  # None → RedisRateLimiter가 Django cache backend에서 자동 획득
         )
     else:
         from ai.llm.ollama import OllamaProvider  # lazy import

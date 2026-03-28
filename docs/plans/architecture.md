@@ -203,7 +203,7 @@ examonline/apps/
     │   ├── base.py                # LLMProvider Protocol (PEP 544)
     │   ├── ollama.py              # OllamaProvider (httpx)
     │   ├── gemini.py              # GeminiProvider (google-generativeai)
-    │   ├── rate_limiter.py        # Token bucket + exponential backoff
+    │   ├── rate_limiter.py        # Redis 기반 분산 Rate Limiter (INCR + TTL) + exponential backoff
     │   └── factory.py             # get_llm_provider() — 환경변수 기반
     │
     ├── services/                  # 비즈니스 로직 레이어
@@ -247,7 +247,8 @@ examonline/apps/
 │             .TestQuestionInfo, .OptionInfo        │
 └─────────────────────────────────────────────────┘
           │
-          │ (단방향. 역참조 없음)
+          │ (단방향. 기존 코드에서 역참조 사용 0건
+          │  — Django ORM 자동 역참조는 존재하나 기존 앱에서 미사용)
           ▼
 ┌─────────────────────────────────────────────────┐
 │  기존 앱 (user, testquestion, testpaper,         │
@@ -521,6 +522,11 @@ GET /api/v1/ai/generate/{id}/     │  DB 업데이트:
 soft_time_limit = 180초 (3분)
 time_limit = 210초 (3.5분, hard limit)
 max_retries = 2, retry_delay = 30초
+
+GenerationRequest 상태 전이:
+  pending → generating → completed | failed
+  ※ "reviewing" 상태는 교수자가 생성된 문제를 검토 중인 상태 (프론트엔드 전용).
+     Celery task와 무관하며, completed 이후 교수자 액션으로 전환됨.
 ```
 
 참조: `requirements-spec.md` C.3절 (Celery Task 정의), BRD Section 8.0 제약 #1
@@ -890,6 +896,27 @@ def approve(generated_question, teacher):
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
+#### Startup Recovery: Stale GenerationRequest 복구
+
+`time_limit=210초` hard kill (SIGKILL) 시 GenerationRequest가 "generating" 상태로
+영구 고착될 수 있음. 이를 방지하기 위한 복구 메커니즘:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  cleanup_stale_generations (Celery Beat task)                │
+│                                                             │
+│  주기: 매 5분 실행                                            │
+│  조건: status="generating" AND create_time < now() - 10분    │
+│  액션: status → "failed",                                    │
+│        error_message = "Worker 재시작으로 인한 자동 실패 처리"  │
+│                                                             │
+│  추가: Celery worker_ready signal 핸들러에서도 시작 시 1회 실행 │
+│        → worker 크래시 후 재시작 시 즉시 orphaned task 정리     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+참조: `requirements-spec.md` C.3절 cleanup_stale_generations task 정의
+
 ### 8.2 Helm Chart 변경 사항
 
 기존 Helm chart 구조 (`charts/exam-platform/`):
@@ -978,7 +1005,7 @@ services:
 로컬 개발:
   - prometheus_client 라이브러리로 /metrics 엔드포인트 노출
   - docker-compose.monitoring.yml overlay:
-    - Prometheus (scrape config → backend:8000/metrics, celery-worker:8000/metrics)
+    - Prometheus (scrape config → backend:8000/metrics, celery-worker:8001/metrics)
     - Grafana (provisioning → llm-overview.json)
 
 K8s (GKE):
@@ -1124,7 +1151,13 @@ llm-serving-observability 패턴 재활용 (`llm-serving-observability/proxy/met
 │  ┌──────────────────────────────────────────────────┐           │
 │  │ /metrics 엔드포인트 (prometheus_client)            │           │
 │  │ scrape_interval: 15s                              │           │
-│  │ targets: backend:8000, celery-worker:8000         │           │
+│  │ targets:                                          │           │
+│  │   backend:8000    — Django /metrics view           │           │
+│  │   celery-worker:8001 — start_http_server(8001)    │           │
+│  │                                                   │           │
+│  │ ※ Celery prefork worker는 Django HTTP 서버 없음.   │           │
+│  │   prometheus_client.start_http_server(port=8001)  │           │
+│  │   로 별도 메트릭 서버 기동 (worker_ready signal).   │           │
 │  └──────────────────────────────────────────────────┘           │
 └─────────────────────────────────────────────────────────────────┘
 ```

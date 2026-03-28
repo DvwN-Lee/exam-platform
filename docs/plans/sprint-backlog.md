@@ -101,11 +101,11 @@ AI 레이어는 현재 **0%**. 이번 Sprint에서 AI 출제 파이프라인 + O
 | INF-3 | Celery + Redis 설정 | Bronze | 2 | INF-3 단순화 (docker-compose만) |
 | INF-4 | LLM Provider 어댑터 + exponential backoff | Bronze | 3 | 복잡한 큐 제거, backoff만 |
 | INF-5 | pyproject.toml 의존성 (pymongo 제거 포함) | Bronze | 1 | |
-| INF-6 | AI 테스트 fixture | Silver | 1 | 기본 LLM mock만 |
+| INF-6 | AI 테스트 fixture | Bronze | 1 | 기본 LLM mock만 |
 | INF-7 | Prometheus 14개 메트릭 + Grafana 대시보드 | Bronze | 3 | llm-observation 코드 재사용 |
 | INF-8 | LangFuse CallbackHandler | Silver | 2 | fAInancial-agent 패턴 재사용 |
 
-**Bronze INF: 12 SP** / Silver INF: 15 SP
+**Bronze INF: 13 SP** / Silver INF: 15 SP
 
 ---
 
@@ -113,8 +113,8 @@ AI 레이어는 현재 **0%**. 이번 Sprint에서 AI 출제 파이프라인 + O
 
 | Tier | Infra | F1 | F2 | F3 | 합계 |
 |------|-------|-----|-----|-----|------|
-| **Bronze** | 12 | 14 | — | — | **26** |
-| **Silver** | +3 | +2 | +7 | +11 | **+23 = 49** |
+| **Bronze** | 13 | 14 | — | — | **27** |
+| **Silver** | +2 | +2 | +7 | +11 | **+22 = 49** |
 | **Gold** | — | +2 | +3 | +6 | **+11 = 60** |
 
 ---
@@ -188,7 +188,7 @@ AI 레이어는 현재 **0%**. 이번 Sprint에서 AI 출제 파이프라인 + O
 
 ## 7. AC 체크리스트 (v1.3)
 
-### Bronze (26 SP)
+### Bronze (27 SP)
 - [ ] operation 앱 + MongoDB 제거 완료
 - [ ] apps/ai/ Django 앱 정상 동작 (migrate, runserver)
 - [ ] 교재 PDF 업로드 → 청킹 → pgvector 저장

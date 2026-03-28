@@ -375,8 +375,7 @@ POST   /api/v1/ai/generate/
        }
        Response: {
            generation_id: uuid,
-           status: "generating",
-           estimated_time: int         // 예상 소요 시간(초)
+           status: "generating"
        }
 
 GET    /api/v1/ai/generate/{generation_id}/
@@ -475,7 +474,7 @@ class MaterialInfo(Model):
 class MaterialChunk(Model):
     material: FK(MaterialInfo)
     content: TextField
-    embedding: VectorField(dimensions=1536)  # pgvector
+    embedding: VectorField(dimensions=768)  # pgvector (무료 모델 all-MiniLM-L6-v2 기준 768 차원)
     page_number: IntegerField(null=True)
     chunk_index: IntegerField
     metadata: JSONField
@@ -517,7 +516,7 @@ class TeacherFeedback(Model):
     original_content: JSONField(null=True)  # 수정 전 원본
     edited_content: JSONField(null=True)    # 수정 후 내용
     saved_question: FK(TestQuestionInfo, null=True)  # 승인/수정 시 실제 저장된 문제
-    feedback_embedding: VectorField(dimensions=1536, null=True)  # 피드백 벡터화
+    feedback_embedding: VectorField(dimensions=768, null=True)  # 피드백 벡터화 (무료 모델 all-MiniLM-L6-v2 기준 768 차원)
     created_at: DateTimeField
 ```
 
@@ -690,7 +689,7 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 | M4 | `llm_time_per_output_token_seconds` | Histogram | TPOT |
 | M5 | `llm_input_tokens_total` | Counter | 누적 입력 토큰 |
 | M6 | `llm_output_tokens_total` | Counter | 누적 출력 토큰 |
-| M7 | `llm_requests_total` | Counter | 요청 수 (model, status, stream) |
+| M7 | `llm_requests_total` | Counter | 요청 수 (model, status, node) |
 | M8 | `llm_request_errors_total` | Counter | 에러 요청 수 |
 | M9 | `llm_active_requests` | Gauge | 현재 처리 중 요청 |
 | M10 | `llm_queue_depth` | Gauge | 대기 큐 깊이 |
