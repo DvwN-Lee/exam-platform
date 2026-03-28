@@ -1,10 +1,10 @@
 # AI Exam Agent - Business Requirements Document
 
-> **Version**: 1.2 (2-Layer Observability 추가, SAGA Scrum 합의)
+> **Version**: 1.3 (요구사항 재분석 + 아키텍처 재설계, SAGA 합의)
 > **Date**: 2026-03-02
-> **Status**: Architect + Researcher + Analyst 합의 완료 (v1.2)
+> **Status**: Architect(Opus) + Analyst(Sonnet) 합의 완료 (v1.3)
 > **Timeline**: 1주 집중 개발 (agent-teams + subagent 자동화)
-> **Reviewers**: PO Agent, Tech Lead, Market Analyst
+> **Reviewers**: PO Agent, Tech Lead, Market Analyst, Architect, Analyst
 
 ---
 
@@ -247,12 +247,11 @@ Interaction: LLM 호출 비용 추적, 생성 품질 대시보드, 장애 대응
 ```
 [현재 exam-platform]
 
-Django 5.2 (Backend)
+Django 5.2 (Backend) — 4개 앱 (operation 앱 제거: API 0개, 참조 0건 죽은 코드)
 ├── apps/user/          (UserProfile, StudentsInfo, TeacherInfo, SubjectInfo)
 ├── apps/testquestion/  (TestQuestionInfo, OptionInfo)
 ├── apps/testpaper/     (TestPaperInfo, TestPaperTestQ, TestScores)
-├── apps/examination/   (ExaminationInfo, ExamPaperInfo, ExamStudentsInfo)
-└── apps/operation/     (운영 관련)
+└── apps/examination/   (ExaminationInfo, ExamPaperInfo, ExamStudentsInfo)
 
 React 19 + TypeScript (Frontend)
 ├── features/questions/      (문제 CRUD)
@@ -262,10 +261,10 @@ React 19 + TypeScript (Frontend)
 ├── features/dashboard/      (대시보드)
 └── features/analytics/      (분석)
 
-Infrastructure
-├── PostgreSQL 18 + MongoDB 8 + Redis 8
+Infrastructure — MongoDB 제거 (health check 외 사용 0건, 코드에서 미참조)
+├── PostgreSQL 18 + Redis 8
 ├── GCP K3s + Terraform + ArgoCD
-├── Prometheus + Grafana + Loki (설계 완료, 배포 예정)
+├── Prometheus + Grafana (구현 후 배포 예정)
 └── Istio (mTLS)
 ```
 
@@ -729,8 +728,10 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 | 기존 테스트 유지 | 957개 테스트 중 0개 실패 허용 |
 | Django 5.2 유지 | 기존 ORM, Admin, TDD 생태계 활용 |
 | 로컬+프로덕션 무료 LLM | 개발 Ollama + 프로덕션 Gemini API free tier = 비용 0원 |
-| PostgreSQL 단일 인스턴스 | 기존 DB에 pgvector extension 추가 |
+| PostgreSQL 단일 인스턴스 | 기존 DB에 pgvector extension 추가. MongoDB 제거 |
 | Prometheus/Grafana 미배포 | Terraform `enable_managed_prometheus=false`(default). 구현 후 배포 예정 |
+| operation 앱 제거 | API 0개, 참조 0건 죽은 코드. INSTALLED_APPS에서 제거, 디렉토리 삭제 |
+| 기술 부채 보류 | EmailVerifyRecord(스텁), exam_state 하드코딩 — 이번 스프린트에서 건드리지 않음 |
 
 ### 9.2 Assumptions
 
@@ -751,11 +752,13 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 
 | Tier | 포함 범위 | 포트폴리오 임팩트 |
 |------|-----------|-------------------|
-| **Bronze** (최소) | F1(AI 생성) + Prometheus 14개 메트릭 + Grafana 대시보드 + 기존 테스트 100% 유지 | LLM 파이프라인 + 운영 모니터링 기반 확보 |
-| **Silver** (목표) | Bronze + F2(Self-critique) + LangFuse trace + 기본 UI | Multi-Agent 패턴 증명 + 2-Layer Observability |
-| **Gold** (이상적) | Silver + F3(피드백 루프) + LangFuse self-hosted + 커스텀 대시보드 + Alerting + 신규 테스트 50개+ | 완전한 HITL + 관측성 + 포트폴리오 극대화 |
+| **Bronze** (27SP) | INF-1~7(13SP) + F1 핵심: US-1.1a/b/c, US-1.4 (14SP) + 기존 테스트 100% | AI 생성 + Prometheus 14메트릭 + Grafana |
+| **Silver** (49SP) | Bronze + INF-8(LangFuse) + F2(US-2.1/2.2) + F3 핵심(US-3.1/3.2/3.4/3.5 Lite) + UI | Multi-Agent + HITL 기본 루프 + 2-Layer Observability |
+| **Gold** | Silver + US-1.5, US-2.3, US-3.3, US-3.5 Full, Alerting, LangFuse self-hosted K8s, 테스트 50개+ | 완전한 HITL + 관측성 극대화 |
 
-> **Priority**: 시간 부족 시 F3보다 F2에 집중한다. F2(Self-critique)가 포트폴리오에서 가장 강력한 차별점이다.
+> **v1.3 변경**: 74SP → 49SP로 재조정. F3을 20SP에서 9SP(핵심만)로 축소하되 US-3.5 Lite(2SP)로 HITL 서사 유지.
+> operation 앱(API 0건) + MongoDB(미사용) 제거로 스택 정리.
+> 6개 G 목표 모두 Silver에서 증명 가능.
 
 ### 10.1 Must-have (Sprint Goal)
 

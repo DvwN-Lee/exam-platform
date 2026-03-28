@@ -1,8 +1,8 @@
 # Sprint Backlog: AI Exam Agent
 
-> **Source**: [BRD v1.0](./2026-03-02-ai-exam-agent-brd.md)
+> **Source**: [BRD v1.3](./2026-03-02-ai-exam-agent-brd.md)
 > **Sprint Duration**: 1주 (Day 1-7)
-> **Sprint Goal**: Silver Tier — F1(AI 생성) + F2(Self-critique) + 기본 UI
+> **Sprint Goal**: Silver Tier (49 SP) — F1 + F2 + F3 핵심 + 2-Layer Observability
 > **Worktree 전략**: Frontend/Backend 완전 분리 (2개 worktree 비동기 병렬)
 
 ---
@@ -12,257 +12,265 @@
 ### 1.1 프로젝트 현황
 
 기존 exam-platform은 Django 5.2 + React 19 풀스택 시험 플랫폼이다.
-- Backend: 5개 Django 앱 (user, testquestion, testpaper, examination, operation)
-- Frontend: 10개 feature 디렉토리 (questions, testpapers, examinations, exams 등)
-- 테스트: 957개 (Backend 317 + Frontend 142 + E2E + Infra)
-- 인프라: GCP K3s + Terraform + ArgoCD + Prometheus/Grafana/Loki
+- Backend: **4개 Django 앱** (user, testquestion, testpaper, examination)
+  - operation 앱 제거 완료 (API 0개, 참조 0건 죽은 코드)
+- Frontend: 12개 feature 디렉토리 (auth, dashboard, questions 등)
+- 테스트: 957개 (Backend 95% 커버리지)
+- 인프라: GCP K3s + Terraform + ArgoCD
+  - MongoDB 제거 완료 (코드에서 미사용)
+  - Prometheus/Grafana 미배포 → 이번 Sprint에서 구현
 
-AI 레이어는 현재 **0%**. 이번 Sprint에서 AI 출제 파이프라인을 추가한다.
+AI 레이어는 현재 **0%**. 이번 Sprint에서 AI 출제 파이프라인 + Observability를 추가한다.
 
-### 1.2 Scope Ladder
+### 1.2 Scope Ladder (v1.3 재조정)
 
-| Tier | 범위 | 판정 기준 |
-|------|------|-----------|
-| **Bronze** (최소) | F1 동작 + 기존 테스트 100% | AI가 문제를 생성하고 DB에 저장 |
-| **Silver** (목표) | F1 + F2 + 기본 UI | Multi-Agent Self-critique 동작 + 교사 리뷰 UI |
-| **Gold** (이상적) | F1 + F2 + F3 + 대시보드 + 50개 테스트 | 피드백 루프 + 품질 개선 추이 시각화 |
+| Tier | 범위 | SP | 판정 기준 |
+|------|------|-----|-----------|
+| **Bronze** (27SP) | INF-1~7 + F1 핵심(US-1.1a/b/c, US-1.4) | 27 | AI 생성 + Prometheus 14메트릭 + Grafana |
+| **Silver** (49SP) | Bronze + INF-8 + F2(US-2.1/2.2) + F3 핵심(US-3.1/3.2/3.4/3.5L) + UI | 49 | Multi-Agent + HITL + 2-Layer Observability |
+| **Gold** | Silver + US-1.5, US-2.3, US-3.3, US-3.5 Full, Alerting, 테스트 50개+ | +20 | 완전한 HITL + 관측성 극대화 |
 
-> F2(Self-critique)가 포트폴리오 핵심 차별점. 시간 부족 시 F3보다 F2에 집중.
+> **v1.3 변경**: 74SP → 49SP. F3을 20SP→9SP 축소, US-3.5 Lite(2SP)로 HITL 서사 유지.
+> 6개 G 목표 모두 Silver에서 증명 가능.
 
 ### 1.3 기술 제약 (구현 시 필수 준수)
 
-1. **Celery worker 필수**: Django 뷰는 sync 유지, LangGraph는 Celery에서 실행
+1. **Celery worker 필수**: Django 뷰는 sync, LangGraph는 Celery에서 실행
 2. **AI import lazy 처리**: apps/ai/apps.py의 ready()에서 heavy import 금지
 3. **pgvector >= 0.8.2**: CVE-2026-3172 수정 버전 핀 필수
 4. **기존 테스트 957개 무중단**: 기존 모델/API 변경 0건
-5. **Gemini API Free Tier 제약** (v1.1 추가):
-   - 10 RPM / 250K TPM / 500 RPD — Rate Limiter 필수
+5. **Gemini API Free Tier 제약**:
+   - 10 RPM / 250K TPM / 500 RPD — Rate Limiter(exponential backoff) 필수
    - 배치 프롬프트 필수 (개별 문제 호출 금지)
-   - 전 Agent 동일 모델(gemini-2.5-flash) — Critic에 경량 모델 사용 금지
-   - Context Caching: Bronze/Silver optional, Gold 적용
+   - 전 Agent 동일 모델(gemini-2.5-flash)
+6. **기술 부채 보류**: EmailVerifyRecord, exam_state 하드코딩은 이번 Sprint에서 건드리지 않음
+
+### 1.4 Sprint 전 정리 작업 (SP 비용 없음)
+
+| 작업 | 내용 |
+|------|------|
+| operation 앱 제거 | config/base.py INSTALLED_APPS에서 제거, urls.py 주석 삭제, apps/operation/ 삭제 |
+| MongoDB 제거 | docker-compose.yml에서 mongodb 서비스/볼륨 제거, pyproject.toml pymongo 제거, config에서 MONGODB 블록 제거, health check MongoDB 코드 제거 |
 
 ---
 
-## 2. Epic & User Story 목록
+## 2. Epic & User Story 목록 (v1.3 재조정)
 
-### Epic 1: AI 문제 자동 생성 (F1)
+### Epic 1: AI 문제 자동 생성 (F1) — 14 SP
 
-BRD Section 4 F1 참조. 교사가 과목/범위/난이도를 지정하면 AI가 문제를 자동 생성.
+| ID | User Story | Tier | SP | 비고 |
+|----|-----------|------|-----|------|
+| US-1.1a | 과목과 챕터 범위를 선택하여 생성 요청 제출 | Bronze | 3 | |
+| US-1.1b | RAG가 교재에서 관련 컨텍스트 자동 수집 | Bronze | 4 | 단순화: top-k만, 리랭킹 제거 |
+| US-1.1c | 지정한 수(5-20개)의 문제 생성 결과 확인 | Bronze | 4 | 단순화 |
+| US-1.4 | 교재 PDF 업로드 → 벡터화 | Bronze | 3 | 진행률 표시 제거, 기본 업로드+벡터화만 |
+| US-1.2+1.3 | 유형/난이도 비율 설정 (통합) | Silver | 2 | 단일 폼으로 통합 |
+| US-1.5 | 교재 출처 확인 | **Gold** | 2 | 품질 점수 UI에 흡수 가능 |
 
-| ID | User Story | 구현 위치 | 우선순위 | Story Point |
-|----|-----------|-----------|----------|-------------|
-| US-1.1a | 교사로서 과목과 챕터 범위를 선택하여 문제 생성 요청을 제출할 수 있다 | Backend + Frontend | P0 | 3 |
-| US-1.1b | 교사로서 요청 제출 후 RAG가 교재에서 관련 컨텍스트를 자동 수집한 결과를 확인할 수 있다 | Backend + Frontend | P0 | 5 |
-| US-1.1c | 교사로서 수집된 컨텍스트 기반으로 지정한 수(5-20개)의 문제가 생성된 결과를 확인할 수 있다 | Backend + Frontend | P0 | 5 |
-| US-1.2 | 교사로서 생성할 문제의 유형(객관식/주관식/빈칸채우기) 비율을 지정할 수 있다 | Backend + Frontend | P1 | 2 |
-| US-1.3 | 교사로서 난이도(쉬움/보통/어려움) 분포를 지정할 수 있다 | Backend + Frontend | P1 | 2 |
-| US-1.4 | 교사로서 교재 PDF를 업로드하면 벡터화 진행 상태를 확인할 수 있다 | Backend + Frontend | P0 | 5 |
-| US-1.5 | 교사로서 생성된 문제가 교재의 어느 부분을 참조했는지 출처를 확인할 수 있다 | Frontend | P1 | 2 |
+**Silver까지 F1: 16 SP** / Gold 포함: 18 SP
 
-**F1 Total: 24 SP**
+### Epic 2: Multi-Agent 품질 보증 — Self-critique (F2) — 7 SP
 
-### Epic 2: Multi-Agent 품질 보증 — Self-critique (F2)
+| ID | User Story | Tier | SP | 비고 |
+|----|-----------|------|-----|------|
+| US-2.1 | 품질 검사 통과 문제만 검토 목록에 표시 | Silver | 5 | Critic + Quality Gate + Refiner |
+| US-2.2 | 품질 점수/상세 평가 확인 | Silver | 2 | 간소: 점수 + pass/fail 뱃지만 |
+| US-2.3 | 품질 기준 조정 | **Gold** | 3 | |
 
-BRD Section 4 F2 참조. Critic Agent가 생성된 문제를 자동 검수.
+**Silver까지 F2: 7 SP** / Gold 포함: 10 SP
 
-| ID | User Story | 구현 위치 | 우선순위 | Story Point |
-|----|-----------|-----------|----------|-------------|
-| US-2.1 | 교사로서 품질 검사를 통과한 문제만 검토 목록에서 볼 수 있다 | Backend + Frontend | P0 | 5 |
-| US-2.2 | 교사로서 AI가 검수한 품질 점수와 상세 평가를 확인할 수 있다 | Frontend | P1 | 3 |
-| US-2.3 | 교사로서 품질 기준을 조정할 수 있다 | Backend + Frontend | P2 | 3 |
+### Epic 3: 교사 피드백 학습 루프 (F3) — 9 SP
 
-**F2 Total: 11 SP**
+| ID | User Story | Tier | SP | 비고 |
+|----|-----------|------|-----|------|
+| US-3.1 | 승인/거부/수정 UI + API | Silver | 5 | 피드백 수집 핵심 |
+| US-3.2 | 거부 시 사유 입력 | Silver | 2 | US-3.1과 자연스러운 쌍 |
+| US-3.4 | AI 통계 (기존 대시보드에 섹션 추가) | Silver | 2 | 별도 페이지 아닌 기존 TeacherDashboard 확장 |
+| US-3.5 Lite | 기본 피드백 → 프롬프트 반영 | Silver | 2 | 벡터 검색 없이 최근 거부 사유 직접 삽입 |
+| US-3.3 | 원본-수정본 diff 저장 | **Gold** | 3 | |
+| US-3.5 Full | 피드백 벡터화 + 유사도 검색 few-shot | **Gold** | +3 | Lite→Full 업그레이드 |
 
-### Epic 3: 교사 피드백 학습 루프 (F3)
+**Silver까지 F3: 11 SP** / Gold 포함: 17 SP
 
-BRD Section 4 F3 참조. 교사 승인/거부/수정 → 향후 생성 품질 반영.
+### Infrastructure Stories — 13 SP
 
-| ID | User Story | 구현 위치 | 우선순위 | Story Point |
-|----|-----------|-----------|----------|-------------|
-| US-3.1 | 교사로서 AI 생성 문제를 한 줄씩 검토하며 승인/거부/수정할 수 있다 | Backend + Frontend | P1 | 5 |
-| US-3.2 | 교사로서 거부 시 사유를 선택하거나 직접 입력할 수 있다 | Backend + Frontend | P1 | 2 |
-| US-3.3 | 교사로서 수정 후 승인하면 원본과 수정본이 모두 저장된다 | Backend | P1 | 3 |
-| US-3.4 | 교사로서 AI 생성 품질의 개선 추이를 대시보드에서 확인할 수 있다 | Frontend | P2 | 5 |
-| US-3.5 | 교사로서 이전에 거부/수정한 유형의 문제가 다음 생성 시 피드백 기반 프롬프트에 반영된 것을 확인할 수 있다 | Backend | P2 | 5 |
+| ID | Story | Tier | SP | 비고 |
+|----|-------|------|-----|------|
+| INF-1 | apps/ai/ 스캐폴딩 + INSTALLED_APPS | Bronze | 1 | |
+| INF-2 | pgvector extension + migration | Bronze | 2 | |
+| INF-3 | Celery + Redis 설정 | Bronze | 2 | INF-3 단순화 (docker-compose만) |
+| INF-4 | LLM Provider 어댑터 + exponential backoff | Bronze | 3 | 복잡한 큐 제거, backoff만 |
+| INF-5 | pyproject.toml 의존성 (pymongo 제거 포함) | Bronze | 1 | |
+| INF-6 | AI 테스트 fixture | Silver | 1 | 기본 LLM mock만 |
+| INF-7 | Prometheus 14개 메트릭 + Grafana 대시보드 | Bronze | 3 | llm-observation 코드 재사용 |
+| INF-8 | LangFuse CallbackHandler | Silver | 2 | fAInancial-agent 패턴 재사용 |
 
-**F3 Total: 20 SP**
-
-### Infrastructure Stories (Sprint 전제 조건)
-
-| ID | Story | 구현 위치 | 우선순위 | Story Point |
-|----|-------|-----------|----------|-------------|
-| INF-1 | apps/ai/ Django 앱 스캐폴딩 + INSTALLED_APPS 등록 | Backend | P0 | 1 |
-| INF-2 | pgvector extension 설치 + Django migration | Backend | P0 | 2 |
-| INF-3 | Celery + Redis 설정 (docker-compose 포함) | Backend | P0 | 3 |
-| INF-4 | LLM Provider 어댑터 (Ollama ↔ Gemini 전환) + Rate Limiter + 배치 프롬프트 | Backend | P0 | 5 |
-| INF-5 | pyproject.toml 의존성 추가 (langgraph, pgvector, pdfplumber, celery 등) | Backend | P0 | 1 |
-| INF-6 | AI 테스트 fixture (conftest.py, LLM mock, pgvector 테스트 DB) | Backend | P0 | 2 |
-| INF-7 | Prometheus 메트릭 (14개) + `/metrics` 엔드포인트 + Grafana 대시보드 | Backend | P0 (Bronze) | 3 |
-| INF-8 | LangFuse CallbackHandler 통합 (graceful degradation) | Backend | P1 (Silver) | 2 |
-
-**Infra Total: 19 SP** (INF-4 확장 + INF-7/8 Observability 추가)
+**Bronze INF: 12 SP** / Silver INF: 15 SP
 
 ---
 
-## 3. Worktree별 Task 분배
+## 3. SP 총계
+
+| Tier | Infra | F1 | F2 | F3 | 합계 |
+|------|-------|-----|-----|-----|------|
+| **Bronze** | 12 | 14 | — | — | **26** |
+| **Silver** | +3 | +2 | +7 | +11 | **+23 = 49** |
+| **Gold** | — | +2 | +3 | +6 | **+11 = 60** |
+
+---
+
+## 4. Worktree별 Day 계획 (v1.3)
 
 ### Worktree A: `feature/ai-backend` (examonline/ 전용)
 
-담당 범위: 모든 Backend 구현 (F1+F2+F3 Backend + Infrastructure)
+| Day | Task | Story | SP | AC |
+|-----|------|-------|-----|-----|
+| 1 | 스캐폴딩 + 모델 + migration + 의존성 | INF-1,2,5 | 4 | `manage.py migrate` 성공 |
+| 2 | Celery+Redis + LLM 어댑터 (backoff) | INF-3,4 | 5 | Celery task 실행, LLM_PROVIDER 전환 |
+| 3 | 교재 업로드 API + RAG 서비스 + **Prometheus 계측 시작** | US-1.4, US-1.1b, INF-7 | 10 | PDF→청크→pgvector, top-k 검색, /metrics |
+| 4 | LangGraph Generator + 생성 API + 유형/난이도 | US-1.1a,c, US-1.2+1.3 | 9 | POST generate → polling → 결과 |
+| 5 | Critic Agent + Quality Gate + Refiner | US-2.1 | 5 | 4기준 평가, Score<14 → Refiner |
+| 6 | 피드백 API + US-3.5 Lite + LangFuse + 테스트 | US-3.1,3.2, US-3.5L, INF-8, INF-6 | 10 | approve/reject/edit, few-shot 삽입, trace |
+| 7 | 957개 테스트 확인 + Grafana 대시보드 JSON | — | 2 | 전체 통과 + 대시보드 완성 |
 
-| Day | Task | 관련 Story | AC |
-|-----|------|-----------|-----|
-| 1 | apps/ai/ 스캐폴딩 + 모델 정의 + migration | INF-1, INF-2, INF-5 | `python manage.py migrate` 성공 |
-| 1 | Celery + Redis 설정 | INF-3 | Celery worker가 task를 수신/실행 |
-| 1 | LLM Provider 어댑터 구현 (Ollama ↔ Gemini) | INF-4 | `LLM_PROVIDER=ollama\|gemini` 환경변수 전환 확인. `GEMINI_API_KEY`, `GEMINI_MODEL`, `OLLAMA_BASE_URL` 환경변수 지원 |
-| 1 | Rate Limiter + 배치 프롬프트 유틸리티 | INF-4 | 10 RPM 한도 존중하는 요청 큐 + exponential backoff. 배치 프롬프트 헬퍼 (N개 문제 1회 호출) |
-| 2 | 교재 업로드 API + PDF 파싱 + 청킹 | US-1.4 | PDF 업로드 → 청크 생성 → pgvector 저장 |
-| 2 | RAG 검색 서비스 구현 | US-1.1b | 쿼리 → 관련 청크 top-k 반환 |
-| 3 | LangGraph 파이프라인 (Generator 노드) | US-1.1c | 컨텍스트 → 문제 JSON 생성 |
-| 3 | 문제 생성 API (`POST /api/v1/ai/generate/`) | US-1.1a | 비동기 생성 요청 → generation_id 반환 |
-| 3 | 생성 상태 조회 API (`GET /api/v1/ai/generate/{id}/`) | US-1.1c | polling으로 생성 결과 확인 |
-| 4 | Critic Agent 노드 구현 | US-2.1 | 4개 기준 독립 평가, 점수 JSON 반환 |
-| 4 | Quality Gate + Refiner 루프 | US-2.1 | Score < 14 → Refiner → 재평가 (최대 3회) |
-| 5 | 교사 피드백 API (`POST /api/v1/ai/feedback/`) | US-3.1, US-3.2, US-3.3 | approve/reject/edit 액션 처리 |
-| 5 | 피드백 → 프롬프트 반영 로직 | US-3.5 | few-shot 예시 삽입 확인 |
-| 5 | 피드백 통계 API (`GET /api/v1/ai/feedback/stats/`) | US-3.4 | 승인율/거부율/추이 반환 |
-| 6 | Prometheus 메트릭 14개 + `/metrics` 엔드포인트 | INF-7 | prometheus_client 설치, 메트릭 SSOT 파일, Django endpoint 노출 |
-| 6 | Grafana 대시보드 JSON (llm-overview 기반) | INF-7 | LLM Overview + Gemini RPM/RPD + Quality Gate 패널 |
-| 6 | LangFuse CallbackHandler 통합 | INF-8 | 3단계 graceful degradation, LangGraph config 주입 |
-| 6 | AI 테스트 fixture + Unit Test 작성 | INF-6 | pytest apps/ai/ 통과 |
-| 7 | 기존 테스트 전체 실행 확인 | — | 957개 전체 통과 |
+**Backend 합계: 45 SP** (Day 3-4가 피크, Day 7 버퍼)
 
 ### Worktree B: `feature/ai-frontend` (frontend/ 전용)
 
-담당 범위: 모든 Frontend 구현 (F1+F2+F3 UI)
+| Day | Task | Story | SP | AC |
+|-----|------|-------|-----|-----|
+| 1 | types/ai.ts + api/ai.ts + 라우트/사이드바 | — | 2 | MSW mock 기반 독립 동작 |
+| 2 | 교재 업로드 UI + 목록 | US-1.4 | 2 | PDF 업로드 + 목록 표시 |
+| 3 | 생성 요청 폼 + polling UI | US-1.1a | 3 | 과목/범위/유형/난이도 설정 |
+| 4 | 생성 결과 목록 + 품질 점수 UI | US-1.1c, US-2.2 | 4 | 문제 목록 + 점수 뱃지 |
+| 5 | 교사 리뷰 UI (승인/거부/수정) | US-3.1, US-3.2 | 5 | 액션 버튼 + 거부 사유 입력 |
+| 6 | TeacherDashboard AI 섹션 + MSW→API 전환 | US-3.4 | 3 | 기존 대시보드에 AI 통계 위젯 |
+| 7 | Vitest 테스트 + US-2.2 마무리 | — | 3 | 주요 컴포넌트 테스트 |
 
-| Day | Task | 관련 Story | AC |
-|-----|------|-----------|-----|
-| 1 | AI 타입 정의 (`types/ai.ts`) | — | API Contract 기반 TypeScript 타입 |
-| 1 | AI API 클라이언트 (`api/ai.ts`) | — | MSW mock 기반 독립 동작 |
-| 1 | AI 라우트 등록 + 사이드바 메뉴 추가 | — | `/ai/generate`, `/ai/review` 라우트 |
-| 2 | 교재 업로드 UI | US-1.4 | PDF 드래그앤드롭 + 업로드 진행률 |
-| 2 | 교재 목록/관리 UI | US-1.4 | 업로드된 교재 목록 표시 |
-| 3 | 문제 생성 요청 폼 | US-1.1a, US-1.2, US-1.3 | 과목/범위/유형비율/난이도 설정 UI |
-| 3 | 생성 진행 상태 UI (polling) | US-1.1c | 생성 중 → 검토 중 → 완료 상태 표시 |
-| 4 | 생성 결과 목록 UI | US-1.1c, US-1.5 | 문제 목록 + 교재 출처 표시 |
-| 4 | 품질 점수 표시 UI | US-2.2 | 4개 기준 점수 + 총점 + pass/fail 뱃지 |
-| 5 | 교사 리뷰 UI (승인/거부/수정) | US-3.1, US-3.2 | 문제별 액션 버튼 + 거부 사유 모달 |
-| 5 | 문제 수정 에디터 | US-3.1 | 인라인 수정 + 저장 |
-| 6 | 피드백 대시보드 (승인율 추이 차트) | US-3.4 | Recharts 기반 추이 차트 |
-| 6 | MSW mock → 실제 API 전환 준비 | — | 환경변수로 mock/real 전환 |
-| 7 | Vitest 테스트 작성 | — | 주요 컴포넌트 테스트 통과 |
+**Frontend 합계: 22 SP** (Day 5가 피크, 나머지 여유)
 
 ---
 
-## 4. API Contract 요약
-
-PO가 Frontend/Backend 간 인터페이스를 확인할 때 참조. 상세는 BRD Section 5.3.
+## 5. API Contract 요약
 
 | Endpoint | Method | 용도 |
 |----------|--------|------|
 | `/api/v1/ai/materials/upload/` | POST | 교재 PDF 업로드 |
-| `/api/v1/ai/materials/` | GET | 교재 목록 조회 |
-| `/api/v1/ai/materials/{id}/` | GET | 교재 상세 조회 |
-| `/api/v1/ai/materials/{id}/` | DELETE | 교재 삭제 |
+| `/api/v1/ai/materials/` | GET | 교재 목록 |
+| `/api/v1/ai/materials/{id}/` | GET/DELETE | 교재 상세/삭제 |
 | `/api/v1/ai/generate/` | POST | 문제 생성 요청 (비동기) |
-| `/api/v1/ai/generate/{id}/` | GET | 생성 상태/결과 조회 (polling) |
+| `/api/v1/ai/generate/{id}/` | GET | 생성 상태/결과 (polling) |
 | `/api/v1/ai/feedback/` | POST | 교사 피드백 (approve/reject/edit) |
-| `/api/v1/ai/feedback/stats/` | GET | 피드백 통계 + 승인율 추이 |
+| `/api/v1/ai/feedback/stats/` | GET | 피드백 통계 + 승인율 |
+| `/metrics` | GET | Prometheus 메트릭 (14개) |
 
 ---
 
-## 5. Data Model 요약
-
-PO가 데이터 흐름을 이해할 때 참조. 상세는 BRD Section 6.
+## 6. Data Model 요약
 
 ```
 신규 모델 (apps/ai/):
   MaterialInfo        → 교재 파일 메타데이터
   MaterialChunk       → 교재 청크 + 벡터 임베딩 (pgvector)
-  GenerationRequest   → AI 생성 요청 (비동기 상태 관리)
-  GeneratedQuestion   → AI 생성 문제 (임시, 교사 검토 전)
-  TeacherFeedback     → 교사 피드백 (approve/reject/edit + 사유)
+  GenerationRequest   → AI 생성 요청 (비동기 상태)
+  GeneratedQuestion   → AI 생성 문제 (임시)
+  TeacherFeedback     → 교사 피드백 (approve/reject/edit)
 
-데이터 흐름:
-  교재 PDF → MaterialInfo → MaterialChunk (벡터화)
-  생성 요청 → GenerationRequest → GeneratedQuestion (AI 생성)
-  교사 검토 → TeacherFeedback → TestQuestionInfo (기존 모델로 변환, 승인 시)
+데이터 흐름 (AI → 기존 단방향 참조):
+  SubjectInfo ◄──FK── MaterialInfo, GenerationRequest
+  UserProfile ◄──FK── GenerationRequest, TeacherFeedback
+  TestQuestionInfo ◄──FK── TeacherFeedback.saved_question (승인 시에만)
+
+기존 모델 변경: 0건
 ```
 
-기존 모델 변경: **0건**. 승인된 문제만 기존 TestQuestionInfo로 변환.
-
 ---
 
-## 6. Acceptance Criteria 체크리스트
+## 7. AC 체크리스트 (v1.3)
 
-### Bronze (최소 완료 기준)
-- [ ] apps/ai/ Django 앱이 정상 동작 (migrate, runserver)
+### Bronze (26 SP)
+- [ ] operation 앱 + MongoDB 제거 완료
+- [ ] apps/ai/ Django 앱 정상 동작 (migrate, runserver)
 - [ ] 교재 PDF 업로드 → 청킹 → pgvector 저장
-- [ ] LangGraph 파이프라인으로 문제 3종(객관식/주관식/빈칸채우기) 생성
-- [ ] 생성된 문제가 TestQuestionInfo와 호환 가능한 형태
-- [ ] Prometheus 14개 메트릭 + `/metrics` 엔드포인트 동작
-- [ ] Grafana LLM Overview 대시보드 1개
+- [ ] LangGraph 파이프라인으로 문제 3종 생성
+- [ ] 생성된 문제가 TestQuestionInfo와 호환 가능
+- [ ] Prometheus 14개 메트릭 + `/metrics` 엔드포인트
+- [ ] Grafana LLM Overview 대시보드
 - [ ] 기존 957개 테스트 전체 통과
 
-### Silver (Sprint Goal)
-- [ ] Bronze 전체 + 아래 항목
-- [ ] Critic Agent가 4개 기준으로 품질 평가
+### Silver (49 SP) — Sprint Goal
+- [ ] Bronze 전체
+- [ ] Critic Agent 4개 기준 품질 평가
 - [ ] Quality Gate 통과/미달 자동 분류
-- [ ] LangFuse CallbackHandler 통합 (graceful degradation)
-- [ ] 기본 UI에서 생성 요청 → 결과 확인 가능
-- [ ] 품질 점수가 UI에 표시
+- [ ] LangFuse CallbackHandler (graceful degradation)
+- [ ] 유형/난이도 비율 설정 UI
+- [ ] 교사 승인/거부/수정 UI + API
+- [ ] 거부 사유 입력
+- [ ] TeacherDashboard에 AI 통계 섹션
+- [ ] 기본 피드백 → 프롬프트 반영 (US-3.5 Lite)
+- [ ] 품질 점수 UI 표시
 
-### Gold (이상적)
-- [ ] Silver 전체 + 아래 항목
-- [ ] 교사 승인/거부/수정 UI 동작
-- [ ] 피드백이 다음 생성 프롬프트에 반영 (few-shot)
-- [ ] 승인율 추이 대시보드
-- [ ] LangFuse self-hosted K8s 배포 + 커스텀 Grafana 패널
+### Gold
+- [ ] Silver 전체
+- [ ] 교재 출처 표시 (US-1.5)
+- [ ] 품질 기준 조정 (US-2.3)
+- [ ] 원본-수정본 diff 저장 (US-3.3)
+- [ ] US-3.5 Full (벡터 검색 few-shot)
 - [ ] Prometheus Alerting rules
-- [ ] 신규 AI 테스트 50개 이상
-
----
-
-## 7. Definition of Done
-
-각 User Story가 "완료"로 인정되려면:
-
-1. Backend: API가 정상 응답하고, pytest 테스트 통과
-2. Frontend: UI가 렌더링되고, Vitest 테스트 통과
-3. 기존 957개 테스트에 영향 없음
-4. API Contract (Section 5.3)과 일치하는 요청/응답
+- [ ] LangFuse self-hosted K8s
+- [ ] 신규 AI 테스트 50개+
 
 ---
 
 ## 8. 의존성 관계
 
 ```
-INF-1 (앱 스캐폴딩) ──→ 모든 Backend Story
-INF-2 (pgvector)    ──→ US-1.1b (RAG), US-1.4 (교재 벡터화)
-INF-3 (Celery)      ──→ US-1.1c (비동기 생성)
-INF-4 (LLM 어댑터)  ──→ US-1.1c (문제 생성), US-2.1 (Critic)
+INF-1 (스캐폴딩) ──→ 모든 Backend Story
+INF-2 (pgvector) ──→ US-1.1b (RAG), US-1.4 (벡터화)
+INF-3 (Celery)   ──→ US-1.1c (비동기 생성)
+INF-4 (LLM 어댑터) ──→ US-1.1c, US-2.1
 
 US-1.4 (교재 업로드) ──→ US-1.1b (RAG 검색)
-US-1.1b (RAG 검색)   ──→ US-1.1c (문제 생성)
+US-1.1b (RAG)        ──→ US-1.1c (문제 생성)
 US-1.1c (문제 생성)   ──→ US-2.1 (품질 검사)
 US-2.1 (품질 검사)    ──→ US-3.1 (교사 리뷰)
-US-3.1 (교사 리뷰)    ──→ US-3.5 (피드백 반영)
+US-3.1 (교사 리뷰)    ──→ US-3.5 Lite (피드백 반영)
 
-Frontend는 MSW mock으로 Backend 의존성 없이 독립 개발 가능.
-Day 6 merge 시 실제 API 연동.
+Frontend는 MSW mock으로 Backend 독립 개발.
+Day 7 merge 시 실제 API 연동.
 ```
 
 ---
 
 ## 9. Risk & Mitigation
 
-| Risk | 영향 | 확률 | 완화 방안 |
-|------|------|------|-----------|
-| Ollama 성능 부족 (M시리즈) | 생성 시간 60초 초과 | 중 | question_count 줄이기, 모델 경량화 |
-| pgvector + PG18 호환 이슈 | RAG 불가 | 저 | pgvector >= 0.8.2 핀, PoC Day 1에서 검증 |
-| LangGraph + Django 통합 이슈 | 파이프라인 불가 | 중 | Celery에서 실행으로 우회, sync 뷰 유지 |
-| 1주 기간 초과 | Gold 미달 | 고 | Scope ladder — Silver 우선 확보 후 Gold 시도 |
-| Merge 충돌 | 통합 지연 | 저 | Frontend/Backend 디렉토리 완전 분리로 충돌 0건 |
-| Gemini free tier rate limit | 생성 지연/실패 | 중 | Rate Limiter(exponential backoff) + 배치 프롬프트 + Ollama fallback |
-| Gemini free tier 정책 변경 | API 사용 불가 | 저 | LLM-agnostic 어댑터 패턴으로 Ollama/Claude 등 즉시 전환 가능 |
+| Risk | 확률 | 완화 방안 |
+|------|------|-----------|
+| LangGraph + Django + Celery 통합 | 중 | Day 3 시작 전 30분 PoC 스파이크 → 막히면 Day 4 carry |
+| Gemini free tier rate limit | 중 | exponential backoff + 배치 프롬프트 + Ollama fallback |
+| Day 3-4 과부하 (10+9 SP) | 고 | Day 3 carry 허용, Critic을 단순 함수로 먼저 구현 후 LangGraph 통합 |
+| pgvector + PG18 호환 | 저 | pgvector >= 0.8.2 핀, Day 1 PoC |
+| Merge 충돌 | 저 | examonline/ vs frontend/ 물리적 분리, 충돌 0건 |
+| Gemini free tier 정책 변경 | 저 | LLM-agnostic 어댑터로 즉시 전환 가능 |
+
+---
+
+## 10. 아키텍처 변경 요약 (v1.3)
+
+### 제거
+- `apps/operation/` (API 0개, 참조 0건)
+- MongoDB 서비스 + pymongo 의존성 (코드 미사용)
+
+### 추가
+- `apps/ai/` (5개 모델, LangGraph 파이프라인, Celery task)
+- Prometheus 14개 메트릭 + Grafana 대시보드
+- LangFuse CallbackHandler (graceful degradation)
+- Celery Worker 서비스 (docker-compose)
+
+### 데이터 흐름
+```
+AI → 기존 (단방향 FK 참조)
+기존 모델 수정: 0건
+기존 API 수정: 0건
+기존 테스트 영향: 0건
+```
