@@ -1,8 +1,8 @@
 # AI Exam Agent - Business Requirements Document
 
-> **Version**: 1.1 (LLM Provider 변경 + 토큰 최적화 Scrum 합의)
+> **Version**: 1.2 (2-Layer Observability 추가, SAGA Scrum 합의)
 > **Date**: 2026-03-02
-> **Status**: PO + Tech Lead + Market Analyst 합의 완료 (v1.1)
+> **Status**: Architect + Researcher + Analyst 합의 완료 (v1.2)
 > **Timeline**: 1주 집중 개발 (agent-teams + subagent 자동화)
 > **Reviewers**: PO Agent, Tech Lead, Market Analyst
 
@@ -23,6 +23,7 @@
 | G3 | Self-critique 패턴으로 AI 출력 품질 자동 보증 | Multi-Agent 패턴 실무 적용 |
 | G4 | Human-in-the-loop 교사 피드백 반영 | Production AI 시스템의 핵심 패턴 |
 | G5 | 기존 957개 테스트 체계 유지하며 AI 레이어 추가 | 기존 코드 품질을 훼손하지 않는 확장 능력 |
+| G6 | 2-Layer Observability (LangFuse + Prometheus) | 기존 프로젝트 패턴 재활용 → 3-프로젝트 통합 역량 증명 |
 
 ### 1.3 Differentiators (기존 edu-platform 대비)
 
@@ -34,6 +35,7 @@
 4. **교사 피드백 학습 루프**: 교사의 승인/거부/수정 이력이 향후 생성 품질에 반영되는 RLHF 유사 패턴
 5. **LLM-agnostic 설계**: 로컬(Ollama) ↔ 클라우드(Gemini API) 전환 가능한 어댑터 패턴 — 실제 Claude → Gemini 마이그레이션 이력으로 Provider-agnostic 실증
 6. **MCP 생태계 활용 경험**: Claude Code MCP 서버 연동(GitHub, Playwright, Context7 등) 경험을 바탕으로 AI Agent 도구화 역량 증명
+7. **2-Layer Observability**: LangFuse(trace-level) + Prometheus(aggregate-level) 이중 관측성. 기존 프로젝트(llm-serving-observability, fAInancial-agent) 패턴을 재활용한 3-프로젝트 통합 아키텍처
 
 ---
 
@@ -263,7 +265,7 @@ React 19 + TypeScript (Frontend)
 Infrastructure
 ├── PostgreSQL 18 + MongoDB 8 + Redis 8
 ├── GCP K3s + Terraform + ArgoCD
-├── Prometheus + Grafana + Loki
+├── Prometheus + Grafana + Loki (설계 완료, 배포 예정)
 └── Istio (mTLS)
 ```
 
@@ -659,6 +661,62 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 | API Test | 기존 pytest 체계와 동일한 패턴 |
 | E2E Test | Playwright로 교재 업로드 → 생성 → 검토 → 승인 전체 흐름 |
 
+### 8.5 Observability Requirements (v1.2 SAGA 합의)
+
+> **설계 원칙**: 2-Layer Observability — trace-level(LangFuse) + aggregate-level(Prometheus)
+> **소스**: llm-serving-observability(Prometheus 패턴) + fAInancial-agent(LangFuse 패턴) 재활용
+> **구현 예산**: ~15시간 (직접복사 1h + 패턴참조 7h + 신규작성 7h)
+
+#### Layer 1: LangFuse (Trace-level) — fAInancial-agent 패턴
+
+| 항목 | 내용 |
+|------|------|
+| SDK | `langfuse>=3.0.0,<4` (CallbackHandler) |
+| 통합 방식 | LangGraph config에 `callbacks=[langfuse_handler]` 주입 |
+| Graceful Degradation | 3단계: 패키지 미설치 → 환경변수 미설정 → 초기화 예외 → 각 단계에서 None 반환, 앱 정상 동작 |
+| 추적 항목 | 생성 요청별 trace, 노드별 span(Generator/Critic/Refiner), 토큰 사용량, Gemini API 비용, 세션(generation_request_id) |
+| 환경 변수 | `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_HOST` |
+| 배포 (로컬) | `docker-compose.langfuse.yml` overlay (PostgreSQL + ClickHouse + Redis + MinIO + Worker + Web) |
+| 배포 (K8s) | LangFuse 공식 Helm chart 또는 LangFuse Cloud 무료 티어 (월 50K observations) |
+
+#### Layer 2: Prometheus (Aggregate-level) — llm-serving-observability 패턴
+
+**기존 이식 메트릭 (10개)**:
+
+| ID | 이름 | 타입 | 용도 |
+|----|------|------|------|
+| M1 | `llm_request_duration_seconds` | Histogram | E2E 지연시간 (P50/P95/P99) |
+| M2 | `llm_ttft_seconds` | Histogram | Time to First Token |
+| M3 | `llm_tokens_per_second` | Histogram | 출력 토큰 생성 속도 |
+| M4 | `llm_time_per_output_token_seconds` | Histogram | TPOT |
+| M5 | `llm_input_tokens_total` | Counter | 누적 입력 토큰 |
+| M6 | `llm_output_tokens_total` | Counter | 누적 출력 토큰 |
+| M7 | `llm_requests_total` | Counter | 요청 수 (model, status, stream) |
+| M8 | `llm_request_errors_total` | Counter | 에러 요청 수 |
+| M9 | `llm_active_requests` | Gauge | 현재 처리 중 요청 |
+| M10 | `llm_queue_depth` | Gauge | 대기 큐 깊이 |
+
+**Exam/Gemini 특화 신규 메트릭 (4개)**:
+
+| ID | 이름 | 타입 | 용도 |
+|----|------|------|------|
+| M12 | `gemini_rate_limit_hits_total` | Counter | 429 응답 횟수 |
+| M13 | `gemini_rpm_remaining` | Gauge | 10 RPM 중 잔여 슬롯 |
+| M14 | `exam_quality_gate_total` | Counter | Quality Gate 통과/미달 (labels: result) |
+| M15 | `exam_generation_duration_seconds` | Histogram | 전체 생성 요청 소요시간 (Celery task) |
+
+**계측 위치**: Django `/metrics` 엔드포인트 (`prometheus_client`), Celery task decorator, Gemini API 래퍼
+**Grafana 대시보드**: llm-overview.json 기반 + Gemini RPM/RPD + Quality Gate 패널 추가
+
+#### Scope Ladder별 Observability 배치
+
+| 항목 | Bronze | Silver | Gold |
+|------|--------|--------|------|
+| Prometheus 메트릭 | 14개 (10 이식 + 4 신규) | Bronze 유지 | + Alerting rules |
+| Grafana 대시보드 | LLM Overview 1개 | Bronze 유지 | + Quality/Rate 전용 패널 |
+| LangFuse trace | 미적용 | CallbackHandler + Cloud/Docker | Self-hosted K8s |
+| `/metrics` 엔드포인트 | 필수 | 필수 | 필수 |
+
 ---
 
 ## 9. Constraints & Assumptions
@@ -672,6 +730,7 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 | Django 5.2 유지 | 기존 ORM, Admin, TDD 생태계 활용 |
 | 로컬+프로덕션 무료 LLM | 개발 Ollama + 프로덕션 Gemini API free tier = 비용 0원 |
 | PostgreSQL 단일 인스턴스 | 기존 DB에 pgvector extension 추가 |
+| Prometheus/Grafana 미배포 | Terraform `enable_managed_prometheus=false`(default). 구현 후 배포 예정 |
 
 ### 9.2 Assumptions
 
@@ -692,9 +751,9 @@ Day 7:   E2E test + 문서화 + 포트폴리오 정리
 
 | Tier | 포함 범위 | 포트폴리오 임팩트 |
 |------|-----------|-------------------|
-| **Bronze** (최소) | F1(AI 생성) 동작 + 기존 테스트 100% 유지 | "LLM Wrapper" 수준, 차별성 부족 |
-| **Silver** (목표) | F1 + F2(Self-critique) + 기본 UI | Multi-Agent 패턴 증명, 핵심 차별점 확보 |
-| **Gold** (이상적) | F1 + F2 + F3(피드백 루프) + 대시보드 + 신규 테스트 50개+ | 완전한 HITL 서사, 최적 포트폴리오 |
+| **Bronze** (최소) | F1(AI 생성) + Prometheus 14개 메트릭 + Grafana 대시보드 + 기존 테스트 100% 유지 | LLM 파이프라인 + 운영 모니터링 기반 확보 |
+| **Silver** (목표) | Bronze + F2(Self-critique) + LangFuse trace + 기본 UI | Multi-Agent 패턴 증명 + 2-Layer Observability |
+| **Gold** (이상적) | Silver + F3(피드백 루프) + LangFuse self-hosted + 커스텀 대시보드 + Alerting + 신규 테스트 50개+ | 완전한 HITL + 관측성 + 포트폴리오 극대화 |
 
 > **Priority**: 시간 부족 시 F3보다 F2에 집중한다. F2(Self-critique)가 포트폴리오에서 가장 강력한 차별점이다.
 
@@ -757,9 +816,27 @@ Before:
 After:
 "AI Agent가 교재 기반으로 문제를 자동 출제하고,
  Multi-Agent Self-critique로 품질을 보증하며,
- 교사 피드백으로 지속 개선되는 AI-Operated Exam Platform."
-→ LangGraph + RAG + Multi-Agent + Human-in-the-loop 역량 증명
+ 교사 피드백으로 지속 개선되는 AI-Operated Exam Platform.
+ 2-Layer Observability로 파이프라인 전체를 추적/모니터링."
+→ LangGraph + RAG + Multi-Agent + Human-in-the-loop + Observability 역량 증명
 ```
+
+### 12.1.1 3-프로젝트 Observability 통합 서사
+
+```
+llm-serving-observability (Prometheus + Grafana 패턴 확립)
+     ↓ 메트릭 정의, 대시보드 패턴 재사용
+fAInancial-agent (LangFuse v3 + LangGraph CallbackHandler 패턴 확립)
+     ↓ trace 통합 패턴, graceful degradation 재사용
+AI Exam Platform → 2-Layer Observability 완성
+     Layer 1: LangFuse (trace-level) — 노드별 추적, 비용 계산
+     Layer 2: Prometheus (aggregate) — 14개 메트릭, Grafana 대시보드
+```
+
+이 서사가 전달하는 메시지:
+- "기존에 만든 것을 추상화하여 새 프로젝트에 이식하는 패턴 재사용 역량"
+- "단일 프로젝트가 아닌 일관된 Observability 전략을 갖춘 시니어 레벨 판단력"
+- "LLM Observability를 day one부터 구축한 프로덕션 인식"
 
 ### 12.2 채용 타겟별 매핑
 
@@ -781,6 +858,7 @@ After:
 5. **"교사 피드백이 AI 출제 품질을 개선하는 방법"** — Human-in-the-loop RLHF 유사 패턴
 6. **"Claude Code Agent-Teams로 1주 만에 AI 파이프라인 구축하기"** — 개발 프로세스 자체가 차별점
 7. **"Free Tier LLM으로 프로덕션 Multi-Agent 파이프라인 운영하기: 토큰 최적화 실전"** — 배치 프롬프트, Context Caching, Rate Limiter로 Gemini free tier(10 RPM, 500 RPD) 내 운영. "제약 조건 기반 엔지니어링" 서사
+8. **"LangFuse + Prometheus로 구축하는 2-Layer LLM Observability"** — 3개 프로젝트 패턴 통합 서사. LangFuse(ClickHouse 인수 $15B 맥락) trace-level + Prometheus aggregate-level. 기존 프로젝트 코드 재활용으로 ~15시간 구현
 
 ---
 
@@ -799,5 +877,8 @@ After:
 | Frontend | React + TypeScript | 19 | 기존 유지 + AI UI 추가 |
 | Database | PostgreSQL + pgvector | 18 | 기존 DB + 벡터 확장 |
 | Testing | pytest + Playwright | latest | 기존 체계 확장 |
+| Observability (Trace) | LangFuse | v3 | LangGraph 노드별 trace, 토큰/비용 추적 |
+| Observability (Metrics) | Prometheus + prometheus_client | latest | 14개 LLM/Exam 메트릭 수집 |
+| Observability (Dashboard) | Grafana | latest | LLM Overview + Exam AI 대시보드 |
 | Infra | GCP K3s + Terraform | 기존 | 배포 인프라 |
 | GitOps | ArgoCD | 기존 | 선언적 배포 |

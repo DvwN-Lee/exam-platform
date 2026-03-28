@@ -97,8 +97,10 @@ BRD Section 4 F3 참조. 교사 승인/거부/수정 → 향후 생성 품질 �
 | INF-4 | LLM Provider 어댑터 (Ollama ↔ Gemini 전환) + Rate Limiter + 배치 프롬프트 | Backend | P0 | 5 |
 | INF-5 | pyproject.toml 의존성 추가 (langgraph, pgvector, pdfplumber, celery 등) | Backend | P0 | 1 |
 | INF-6 | AI 테스트 fixture (conftest.py, LLM mock, pgvector 테스트 DB) | Backend | P0 | 2 |
+| INF-7 | Prometheus 메트릭 (14개) + `/metrics` 엔드포인트 + Grafana 대시보드 | Backend | P0 (Bronze) | 3 |
+| INF-8 | LangFuse CallbackHandler 통합 (graceful degradation) | Backend | P1 (Silver) | 2 |
 
-**Infra Total: 14 SP** (INF-4 확장: Rate Limiter + 배치 프롬프트 sub-task 추가)
+**Infra Total: 19 SP** (INF-4 확장 + INF-7/8 Observability 추가)
 
 ---
 
@@ -124,6 +126,9 @@ BRD Section 4 F3 참조. 교사 승인/거부/수정 → 향후 생성 품질 �
 | 5 | 교사 피드백 API (`POST /api/v1/ai/feedback/`) | US-3.1, US-3.2, US-3.3 | approve/reject/edit 액션 처리 |
 | 5 | 피드백 → 프롬프트 반영 로직 | US-3.5 | few-shot 예시 삽입 확인 |
 | 5 | 피드백 통계 API (`GET /api/v1/ai/feedback/stats/`) | US-3.4 | 승인율/거부율/추이 반환 |
+| 6 | Prometheus 메트릭 14개 + `/metrics` 엔드포인트 | INF-7 | prometheus_client 설치, 메트릭 SSOT 파일, Django endpoint 노출 |
+| 6 | Grafana 대시보드 JSON (llm-overview 기반) | INF-7 | LLM Overview + Gemini RPM/RPD + Quality Gate 패널 |
+| 6 | LangFuse CallbackHandler 통합 | INF-8 | 3단계 graceful degradation, LangGraph config 주입 |
 | 6 | AI 테스트 fixture + Unit Test 작성 | INF-6 | pytest apps/ai/ 통과 |
 | 7 | 기존 테스트 전체 실행 확인 | — | 957개 전체 통과 |
 
@@ -196,12 +201,15 @@ PO가 데이터 흐름을 이해할 때 참조. 상세는 BRD Section 6.
 - [ ] 교재 PDF 업로드 → 청킹 → pgvector 저장
 - [ ] LangGraph 파이프라인으로 문제 3종(객관식/주관식/빈칸채우기) 생성
 - [ ] 생성된 문제가 TestQuestionInfo와 호환 가능한 형태
+- [ ] Prometheus 14개 메트릭 + `/metrics` 엔드포인트 동작
+- [ ] Grafana LLM Overview 대시보드 1개
 - [ ] 기존 957개 테스트 전체 통과
 
 ### Silver (Sprint Goal)
 - [ ] Bronze 전체 + 아래 항목
 - [ ] Critic Agent가 4개 기준으로 품질 평가
 - [ ] Quality Gate 통과/미달 자동 분류
+- [ ] LangFuse CallbackHandler 통합 (graceful degradation)
 - [ ] 기본 UI에서 생성 요청 → 결과 확인 가능
 - [ ] 품질 점수가 UI에 표시
 
@@ -210,6 +218,8 @@ PO가 데이터 흐름을 이해할 때 참조. 상세는 BRD Section 6.
 - [ ] 교사 승인/거부/수정 UI 동작
 - [ ] 피드백이 다음 생성 프롬프트에 반영 (few-shot)
 - [ ] 승인율 추이 대시보드
+- [ ] LangFuse self-hosted K8s 배포 + 커스텀 Grafana 패널
+- [ ] Prometheus Alerting rules
 - [ ] 신규 AI 테스트 50개 이상
 
 ---
