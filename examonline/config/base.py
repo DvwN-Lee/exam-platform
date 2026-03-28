@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     "testquestion",
     "testpaper",
     "examination",
-    "operation",
 ]
 
 AUTH_USER_MODEL = "user.UserProfile"

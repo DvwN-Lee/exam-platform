@@ -26,7 +26,6 @@ urlpatterns = [
     path("api/v1/", include("testpaper.api.urls")),
     path("api/v1/", include("examination.api.urls")),
     path("api/v1/", include("core.api.urls")),
-    # path('api/v1/', include('operation.api.urls')),
 ]
 
 # E2E 테스트 전용 API (E2E_TEST_API_ENABLED=true일 때만 활성화)

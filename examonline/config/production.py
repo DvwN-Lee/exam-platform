@@ -54,22 +54,6 @@ POSTGRES_SSLMODE = os.getenv("POSTGRES_SSLMODE")
 if POSTGRES_SSLMODE:
     DATABASES["default"]["OPTIONS"]["sslmode"] = POSTGRES_SSLMODE
 
-# MongoDB configuration
-MONGODB_SSL_ENABLED = os.getenv("MONGODB_SSL", "False").lower() == "true"
-MONGODB = {
-    "host": os.getenv("MONGODB_HOST"),
-    "port": int(os.getenv("MONGODB_PORT", 27017)),
-    "database": os.getenv("MONGODB_DATABASE"),
-    "username": os.getenv("MONGODB_USER"),
-    "password": os.getenv("MONGODB_PASSWORD"),
-    "authSource": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
-}
-
-# MongoDB SSL 설정 (Docker 환경에서는 False, Cloud 환경에서는 True)
-if MONGODB_SSL_ENABLED:
-    MONGODB["ssl"] = True
-    MONGODB["ssl_cert_reqs"] = os.getenv("MONGODB_SSL_CERT_REQS", "CERT_REQUIRED")
-
 # Cache (Redis)
 REDIS_SSL_ENABLED = os.getenv("REDIS_SSL", "False").lower() == "true"
 CACHES = {

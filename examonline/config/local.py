@@ -51,15 +51,6 @@ DATABASES = {
     }
 }
 
-# MongoDB configuration (for logs and analytics)
-MONGODB = {
-    "host": os.getenv("MONGODB_HOST", "localhost"),
-    "port": int(os.getenv("MONGODB_PORT", 27017)),
-    "database": os.getenv("MONGODB_DATABASE", "examonline_logs"),
-    "username": os.getenv("MONGODB_USER", ""),
-    "password": os.getenv("MONGODB_PASSWORD", ""),
-}
-
 # Cache (Redis)
 CACHES = {
     "default": {

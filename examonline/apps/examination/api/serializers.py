@@ -439,25 +439,6 @@ class ExamQuestionSerializer(serializers.ModelSerializer):
         return 0
 
 
-class ExamInfoSerializer(serializers.Serializer):
-    """
-    시험 정보 조회용 Serializer (시험 시작 전).
-    """
-
-    exam_id = serializers.IntegerField()
-    exam_name = serializers.CharField()
-    subject_name = serializers.CharField()
-    start_time = serializers.DateTimeField()
-    end_time = serializers.DateTimeField()
-    duration = serializers.IntegerField(help_text="시험 시간 (분)")
-    total_score = serializers.IntegerField()
-    passing_score = serializers.IntegerField()
-    question_count = serializers.IntegerField()
-    questions = ExamQuestionSerializer(many=True)
-    is_started = serializers.BooleanField()
-    is_submitted = serializers.BooleanField()
-
-
 class AnswerItemSerializer(serializers.Serializer):
     """개별 답안 Serializer"""
 
@@ -485,22 +466,6 @@ class AnswerSubmissionSerializer(serializers.Serializer):
         if not value:
             raise serializers.ValidationError("최소 1개 이상의 답안이 필요합니다.")
         return value
-
-
-class ExamStatusSerializer(serializers.Serializer):
-    """
-    시험 응시 상태 Serializer.
-    """
-
-    exam_id = serializers.IntegerField()
-    exam_name = serializers.CharField()
-    is_started = serializers.BooleanField()
-    is_submitted = serializers.BooleanField()
-    start_time = serializers.DateTimeField(allow_null=True)
-    submit_time = serializers.DateTimeField(allow_null=True)
-    time_remaining = serializers.IntegerField(allow_null=True, help_text="남은 시간 (분)")
-    draft_answers = serializers.JSONField(allow_null=True)
-    score = serializers.IntegerField(allow_null=True)
 
 
 class SaveDraftSerializer(serializers.Serializer):

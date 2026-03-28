@@ -75,7 +75,6 @@ SPECTACULAR_SETTINGS = {
         {"name": "papers", "description": "시험지 관리 API"},
         {"name": "exams", "description": "시험 관리 API"},
         {"name": "scores", "description": "성적 관리 API"},
-        {"name": "operations", "description": "운영 기능 API"},
     ],
 }
 

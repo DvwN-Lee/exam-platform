@@ -31,32 +31,6 @@ class IsStudent(BasePermission):
         )
 
 
-class IsOwnerOrTeacher(BasePermission):
-    """
-    Permission class that allows access to:
-    - Teachers (full access)
-    - Object owners (full access to their own objects)
-    - Others (read-only access)
-    """
-
-    def has_object_permission(self, request, view, obj):
-        # Teachers have full access
-        if request.user.user_type == "teacher":
-            return True
-
-        # Read permissions are allowed to any authenticated user
-        if request.method in SAFE_METHODS:
-            return True
-
-        # Write permissions are only allowed to the owner
-        if hasattr(obj, "user"):
-            return obj.user == request.user
-        if hasattr(obj, "create_user"):
-            return obj.create_user == request.user
-
-        return False
-
-
 class IsExamCreator(BasePermission):
     """
     Permission class that allows access only to the exam creator.
